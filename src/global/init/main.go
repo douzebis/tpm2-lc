@@ -78,10 +78,11 @@ func main() {
 			Bytes: ekBytes,
 		},
 	)
-	glog.V(10).Infof("     akPubPEM: \n%v", string(ekPubPEM))
 
-	err = ioutil.WriteFile("ek.pem", ekPubPEM, 0644)
+	err = ioutil.WriteFile("TPM-CA/ek.pem", ekPubPEM, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
+
+	glog.V(10).Infof("Wrote TPM-CA/ek.pem")
 }
