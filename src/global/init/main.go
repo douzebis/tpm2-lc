@@ -6,23 +6,8 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"flag"
+	"io/ioutil"
 
-	//	"strconv"
-	//	"strings"
-	//
-	//	"crypto/x509"
-	//	"encoding/hex"
-	//	"encoding/pem"
-	//	"io/ioutil"
-	//
-	//	"github.com/golang/protobuf/proto"
-	//
-	//	//"github.com/gogo/protobuf/proto"
-	//	"github.com/golang/glog"
-	//	"github.com/google/go-tpm-tools/client"
-	//
-	//	pb "github.com/google/go-tpm-tools/proto/tpm"
-	//	"github.com/google/go-tpm-tools/server"
 	"github.com/golang/glog"
 	"github.com/google/go-tpm-tools/client"
 	"github.com/google/go-tpm/tpm2"
@@ -36,14 +21,8 @@ var handleNames = map[string][]tpm2.HandleType{
 }
 
 var (
-	//	mode           = flag.String("mode", "", "seal,unseal")
 	tpmPath = flag.String("tpm-path", "/dev/tpmrm0", "Path to the TPM device (character device or a Unix socket).")
-	// ekPubFile      = flag.String("ekPubFile", "", "ekPub file in PEM format")
-	// sealedDataFile = flag.String("sealedDataFile", "", "sealedDataFile file")
-	// secret         = flag.String("secret", "meet me at...", "secret")
-	// pcrsValues     = flag.String("pcrValues", "", "SHA256 PCR Values to seal against 23=foo,20=bar.")
-	// pcrMap         = map[uint32][]byte{}
-	flush = flag.String("flush", "all", "Flush contexts, must be oneof transient|saved|loaded|all")
+	flush   = flag.String("flush", "all", "Flush contexts, must be oneof transient|saved|loaded|all")
 )
 
 func main() {
@@ -79,26 +58,30 @@ func main() {
 		glog.Fatalf("Unable to load SRK from TPM: %v", err)
 	}
 
-	kPublicKey, _, _, err := tpm2.ReadPublic(rwc, ek.Handle())
+	ekPublicKey, _, _, err := tpm2.ReadPublic(rwc, ek.Handle())
 	if err != nil {
-		glog.Fatalf("Error tpmEkPub.Key() failed: %s", err)
+		glog.Fatalf("tpm2.ReadPublic() failed: %s", err)
 	}
 
-	ap, err := kPublicKey.Key()
+	ekp, err := ekPublicKey.Key()
 	if err != nil {
-		glog.Fatalf("reading Key() failed: %s", err)
+		glog.Fatalf("ekPublicKey.Key() failed: %s", err)
 	}
-	akBytes, err := x509.MarshalPKIXPublicKey(ap)
+	ekBytes, err := x509.MarshalPKIXPublicKey(ekp)
 	if err != nil {
-		glog.Fatalf("Unable to convert ekpub: %v", err)
+		glog.Fatalf("x509.MarshalPKIXPublicKey() failed: %v", err)
 	}
 
-	rakPubPEM := pem.EncodeToMemory(
+	ekPubPEM := pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "PUBLIC KEY",
-			Bytes: akBytes,
+			Bytes: ekBytes,
 		},
 	)
-	glog.V(10).Infof("     akPubPEM: \n%v", string(rakPubPEM))
+	glog.V(10).Infof("     akPubPEM: \n%v", string(ekPubPEM))
 
+	err = ioutil.WriteFile("ek.pem", ekPubPEM, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	}
 }
