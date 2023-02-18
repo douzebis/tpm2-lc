@@ -340,7 +340,7 @@ func main() {
 	}
 
 	var rawWalues []asn1.RawValue
-	rawWalues = append(rawWalues, asn1.RawValue{Tag: 2, Class: 2, Bytes: []byte("example.com")})
+	rawWalues = append(rawWalues, asn1.RawValue{Tag: 12, Class: 0, Bytes: []byte("id:%TPM_FIRMWARE_VERSION%")})
 	values, err = asn1.Marshal(rawWalues)
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
