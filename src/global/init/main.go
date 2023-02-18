@@ -43,6 +43,7 @@ func parse(values []byte, indent string) {
 		glog.V(10).Infof("%sRest1 %s", indent, string(rest))
 		rest, _ = asn1.Unmarshal(rest, &v)
 		glog.V(10).Infof("%sLen2 %d", indent, len(rest))
+		glog.V(10).Infof("%sv.Bytes %d", indent, len(v.Bytes))
 		glog.V(10).Infof("%sRest2 %s", indent, string(rest))
 		glog.V(10).Infof("%sClass %d", indent, v.Class)
 		glog.V(10).Infof("%sTag %d", indent, v.Tag)
