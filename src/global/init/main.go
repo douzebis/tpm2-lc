@@ -341,43 +341,83 @@ func main() {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
 
-	a, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 6, Bytes: []byte("g")})
+	a1, err := asn1.Marshal(asn1.RawValue{
+		Class: 0,
+		Tag:   6,
+		Bytes: []byte{103, 129, 5, 2, 1}, // ASN1 encoding for 2.23.133.2.1
+	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	b, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 12, Bytes: []byte("id:%TPM_FIRMWARE_VERSION%")})
+	b1, err := asn1.Marshal(asn1.RawValue{
+		Class: 0,
+		Tag:   12,
+		Bytes: []byte("id:%TPM_MANUFACTURER%"),
+	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	c, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 16, IsCompound: true, Bytes: append(a[:], b[:]...)})
+	c1, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 16, IsCompound: true, Bytes: append(a1[:], b1[:]...)})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	a2, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 6, Bytes: []byte("g")})
+	a2, err := asn1.Marshal(asn1.RawValue{
+		Class: 0,
+		Tag:   6,
+		Bytes: []byte{103, 129, 5, 2, 2}, // ASN1 encoding for 2.23.133.2.2
+	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	b2, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 12, Bytes: []byte("id:%TPM_FIRMWARE_VERSION%")})
+	b2, err := asn1.Marshal(asn1.RawValue{
+		Class: 0,
+		Tag:   12,
+		Bytes: []byte("id:%TPM_MODEL%"),
+	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	c2, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 16, IsCompound: true, Bytes: append(a2[:], b2[:]...)})
+	c2, err := asn1.Marshal(asn1.RawValue{
+		Class:      0,
+		Tag:        16,
+		IsCompound: true, Bytes: append(a2[:], b2[:]...),
+	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	d, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 17, IsCompound: true, Bytes: append(c[:], c2[:]...)})
+	d, err := asn1.Marshal(asn1.RawValue{
+		Class:      0,
+		Tag:        17,
+		IsCompound: true,
+		Bytes:      append(c1[:], c2[:]...),
+	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	e, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 16, IsCompound: true, Bytes: d})
+	e, err := asn1.Marshal(asn1.RawValue{
+		Class:      0,
+		Tag:        16,
+		IsCompound: true,
+		Bytes:      d,
+	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	f, err := asn1.Marshal(asn1.RawValue{Class: 2, Tag: 4, IsCompound: true, Bytes: e})
+	f, err := asn1.Marshal(asn1.RawValue{
+		Class:      2,
+		Tag:        4,
+		IsCompound: true,
+		Bytes:      e,
+	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	g, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 16, IsCompound: true, Bytes: f})
+	g, err := asn1.Marshal(asn1.RawValue{
+		Class:      0,
+		Tag:        16,
+		IsCompound: true,
+		Bytes:      f,
+	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
