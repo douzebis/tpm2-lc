@@ -52,6 +52,10 @@ func main() {
 		for _, ext := range certificate.Extensions {
 			// filter the custom extensions by customOID
 			glog.V(10).Infof("extension %s", ext.Id.String())
+			if ext.Id.String() == "2.5.29.17" {
+				glog.V(10).Infof("Critical %s", ext.Critical)
+				glog.V(10).Infof("Value %s", string(ext.Value))
+			}
 		}
 	} else {
 		glog.V(10).Infof("Block has type %s", block.Type)
