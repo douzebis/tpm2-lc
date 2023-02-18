@@ -176,7 +176,8 @@ func main() {
 	// Use the PEM decoder and parse the private key
 	//pemBlock, _ := pem.Decode(ekPubPEM)
 	//priv, e := x509.ParsePKCS1PrivateKey(pemBlock.Bytes)
-	ekPrivKey, err := x509.ParsePKCS1PrivateKey(ekPubBytes)
+	ekPemBlock, _ := pem.Decode(ekPubPEM)
+	ekPrivKey, err := x509.ParsePKCS1PrivateKey(ekPemBlock.Bytes)
 	if err != nil {
 		glog.Fatalf("x509.ParsePKCS1PrivateKey() failed: %v", err)
 	}
