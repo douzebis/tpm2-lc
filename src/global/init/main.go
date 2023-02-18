@@ -206,6 +206,15 @@ func main() {
 	//extSubjectAltName.Value = []byte("DirName:/2.23.133.2.2=id:TPM_MODEL+2.23.133.2.1=id:TPM_MANUFACTURER+2.23.133.2.3=id:TPM_FIRMWARE_VERSION")
 	extSubjectAltName.Value = []byte("")
 
+	subjectAltName := asn1.ObjectIdentifier{2, 5, 29, 17}
+	rawValues := []asn1.RawValue{
+		{Class: 2, Tag: 6, Bytes: []byte("URI: toto")},
+	}
+	values, err := asn1.Marshal(rawValues)
+	if err != nil {
+		glog.Fatalf("asn1.Marshal() failed: %v", err)
+	}
+
 	tpmTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
@@ -216,7 +225,8 @@ func main() {
 		NotAfter:  time.Now().AddDate(10, 0, 0),
 		KeyUsage:  x509.KeyUsageKeyEncipherment,
 		// Add subjectAltName
-		ExtraExtensions: []pkix.Extension{extSubjectAltName},
+		//ExtraExtensions: []pkix.Extension{extSubjectAltName},
+		ExtraExtensions: []pkix.Extension{{Id: subjectAltName, Critical: true, Value: values}},
 		//ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		BasicConstraintsValid: true,
 		IsCA:                  false,
