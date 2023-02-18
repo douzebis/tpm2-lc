@@ -176,14 +176,18 @@ func main() {
 	// Use the PEM decoder and parse the private key
 	//pemBlock, _ := pem.Decode(ekPubPEM)
 	//priv, e := x509.ParsePKCS1PrivateKey(pemBlock.Bytes)
-	ekPemBlock, _ := pem.Decode(ekPubPEM)
-	ekPublicKey, err := x509.ParsePKIXPublicKey(ekPemBlock.Bytes)
-	if err != nil {
-		glog.Fatalf("x509.ParsePKCS1PublicKey() failed: %v", err)
-	}
-	switch typ := ekPublicKey.(type) {
+	//ekPemBlock, _ := pem.Decode(ekPubPEM)
+	//ekPublicKey, err := x509.ParsePKIXPublicKey(ekPemBlock.Bytes)
+	//if err != nil {
+	//	glog.Fatalf("x509.ParsePKCS1PublicKey() failed: %v", err)
+	//}
+	switch typ := ekPubKey.(type) {
 	case *rsa.PublicKey:
-		glog.V(10).Infof("ekPublicKey is of type RSA: %s", typ)
+		glog.V(10).Infof("ekPublicKey is of type RSA")
+	}
+	ekPublicKey, err := ekPubKey.(*rsa.PublicKey)
+	if err != nil {
+		glog.Fatalf(".(*rsa.PublicKey) failed: %v", err)
 	}
 
 	// --- Create TPM EK certificate -------------------------------------------
