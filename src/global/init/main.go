@@ -49,13 +49,12 @@ func parse(rest []byte, indent string) {
 		glog.V(10).Infof("%sClass %d", indent, v.Class)
 		glog.V(10).Infof("%sTag %d", indent, v.Tag)
 		glog.V(10).Infof("%sIsCompound %v", indent, v.IsCompound)
+		glog.V(10).Infof("%sBytes %s", indent, base64.StdEncoding.EncodeToString(v.Bytes))
 		if v.IsCompound {
 			//nextv := make([]byte, len(v.Bytes))
 			//copy(nextv, v.Bytes)
-			glog.V(10).Infof("%sBytes %s", indent, string(v.Bytes))
 			parse(v.Bytes, indent+"  ")
 		} else {
-			glog.V(10).Infof("%sBytes %s", indent, string(v.Bytes))
 			//glog.V(10).Infof("%sFullBytes %s", indent, string(v.FullBytes))
 		}
 	}
