@@ -85,6 +85,20 @@ func main() {
 						glog.V(10).Infof("isCompound %v", tutu.IsCompound)
 						glog.V(10).Infof("bytes %s", string(tutu.Bytes))
 						glog.V(10).Infof("fullBytes %s", string(tutu.FullBytes))
+
+						var ante asn1.RawValue
+						asn1.Unmarshal(toto.Bytes, &ante)
+						rest2 := ante.Bytes
+						for len(rest2) > 0 {
+							var leaf asn1.RawValue
+							rest2, _ = asn1.Unmarshal(rest2, &leaf)
+							glog.V(10).Infof("class %d", leaf.Class)
+							glog.V(10).Infof("tag %d", leaf.Tag)
+							glog.V(10).Infof("isCompound %v", leaf.IsCompound)
+							glog.V(10).Infof("bytes %s", string(leaf.Bytes))
+							glog.V(10).Infof("fullBytes %s", string(tleafutu.FullBytes))
+						}
+
 					}
 				}
 
