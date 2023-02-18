@@ -339,14 +339,19 @@ func main() {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
 
-	var a []asn1.RawValue
-	a = append(a, asn1.RawValue{Class: 0, Tag: 16, IsCompound: true})
-	a = append(a, asn1.RawValue{Tag: 6, Class: 0, Bytes: []byte("g")})
-	a = append(a, asn1.RawValue{Tag: 12, Class: 0, Bytes: []byte("id:%TPM_FIRMWARE_VERSION%")})
-	values, err = asn1.Marshal(a)
+	a, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 6, Bytes: []byte("g")})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
+	b, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 12, Bytes: []byte("id:%TPM_FIRMWARE_VERSION%")})
+	if err != nil {
+		glog.Fatalf("asn1.Marshal() failed: %v", err)
+	}
+	c, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 16, IsCompound: true})
+	if err != nil {
+		glog.Fatalf("asn1.Marshal() failed: %v", err)
+	}
+	values = append(append(a[:], b[:]...), c[:]...)
 
 	tpmTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
