@@ -32,11 +32,12 @@ var (
 	flush   = flag.String("flush", "all", "Flush contexts, must be oneof transient|saved|loaded|all")
 )
 
-func parse(values []byte, indent string) {
+func parse(rest []byte, indent string) {
 	//glog.V(10).Infof("%s", string(values))
-	var seq asn1.RawValue
-	asn1.Unmarshal(values, &seq)
-	rest := seq.Bytes
+	glog.V(10).Infof("%sValueslen %d", indent, len(values))
+	//var seq asn1.RawValue
+	//rest, _ := asn1.Unmarshal(values, &seq)
+	//rest := seq.Bytes
 	for len(rest) > 0 {
 		var v asn1.RawValue
 		glog.V(10).Infof("%sLen1 %d", indent, len(rest))
