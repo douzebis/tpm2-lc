@@ -347,11 +347,11 @@ func main() {
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	c, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 16, IsCompound: true})
+	c, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 16, IsCompound: true, Bytes: append(a[:], b[:]...)})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	values = append(append(a[:], b[:]...), c[:]...)
+	values = c
 
 	tpmTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
