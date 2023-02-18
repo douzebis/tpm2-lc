@@ -61,7 +61,6 @@ func main() {
 	} else {
 		glog.V(10).Infof("Block has type %s", block.Type)
 	}
-	return
 
 	// === Create certificate for TPM CA =======================================
 
@@ -245,6 +244,7 @@ func main() {
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
+	values, _ = base64.StdEncoding.DecodeString("MGOkYTBfMV0wFwYFZ4EFAgIMDmlkOiVUUE1fTU9ERUwlMB4GBWeBBQIBDBVpZDolVFBNX01BTlVGQUNUVVJFUiUwIgYFZ4EFAgMMGWlkOiVUUE1fRklSTVdBUkVfVkVSU0lPTiU=")
 
 	tpmTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
