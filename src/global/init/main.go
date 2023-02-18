@@ -52,6 +52,7 @@ func parse(rest []byte, indent string) {
 		if v.IsCompound {
 			//nextv := make([]byte, len(v.Bytes))
 			//copy(nextv, v.Bytes)
+			glog.V(10).Infof("%sBytes %s", indent, string(v.Bytes))
 			parse(v.Bytes, indent+"  ")
 		} else {
 			glog.V(10).Infof("%sBytes %s", indent, string(v.Bytes))
