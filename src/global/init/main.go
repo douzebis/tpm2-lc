@@ -41,7 +41,7 @@ func main() {
 
 	// --- Create RSA key for TPM CA -------------------------------------------
 
-	tpmCaPrivKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	tpmCaPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		glog.Fatalf("rsa.GenerateKey() failed: %v", err)
 	}
@@ -65,7 +65,7 @@ func main() {
 	tpmCaTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
-			Organization: []string{"TPM CA"},
+			Organization: []string{"TPM Inc"},
 			CommonName:   "TPM CA",
 		},
 		NotBefore:             time.Now(),
@@ -173,4 +173,54 @@ func main() {
 
 	glog.V(10).Infof("Wrote TPM-CA/ek.pem")
 
+	// --- Create TPM EK certificate -------------------------------------------
+
+	tpmTemplate := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization: []string{"TPM Inc"},
+			CommonName:   "TPM",
+		},
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().AddDate(10, 0, 0),
+		SubjectKeyId: []byte{1, 2, 3, 4, 6},
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+	}
+
+	//dummyPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	//if err != nil {
+	//	glog.Fatalf("rsa.GenerateKey() failed: %v", err)
+	//}
+
+	tpmBytes, err := x509.CreateCertificate(
+		rand.Reader,
+		tpmTemplate,
+		&tpmCaTemplate,
+		&ekPubKey,
+		tpmCaPrivKey)
+	if err != nil {
+		glog.Fatalf("x509.CreateCertificate() failed: %v", err)
+	}
+
+	// pem encode
+	tpmPEM := []byte(pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: tpmBytes,
+		},
+	))
+
+	err = ioutil.WriteFile("TPM-CA/tpm.crt", tpmPEM, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	}
+
+	glog.V(10).Infof("Wrote TPM-CA/tpm.crt")
+
+	//certPEM := new(bytes.Buffer)
+	//pem.Encode(certPEM, &pem.Block{
+	//	Type:  "CERTIFICATE",
+	//	Bytes: certBytes,
+	//})
 }
