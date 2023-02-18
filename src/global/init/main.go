@@ -34,7 +34,7 @@ var (
 
 func parse(rest []byte, indent string) {
 	//glog.V(10).Infof("%s", string(values))
-	glog.V(10).Infof("%sValueslen %d", indent, len(values))
+	glog.V(10).Infof("%sValueslen %d", indent, len(rest))
 	//var seq asn1.RawValue
 	//rest, _ := asn1.Unmarshal(values, &seq)
 	//rest := seq.Bytes
