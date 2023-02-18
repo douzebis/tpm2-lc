@@ -75,16 +75,16 @@ func main() {
 					glog.V(10).Infof("FullBytes %s", string(v.FullBytes))
 
 					var toto asn1.RawValue
-					asn1.Unmarshal(rest, &toto)
+					asn1.Unmarshal(v.Bytes, &toto)
 					titi := toto.Bytes
 					for len(titi) > 0 {
 						var tutu asn1.RawValue
 						rest, _ = asn1.Unmarshal(rest, &tutu)
-						glog.V(10).Infof("Class %d", tutu.Class)
-						glog.V(10).Infof("Tag %d", tutu.Tag)
-						glog.V(10).Infof("IsCompound %v", tutu.IsCompound)
-						glog.V(10).Infof("Bytes %s", string(tutu.Bytes))
-						glog.V(10).Infof("FullBytes %s", string(tutu.FullBytes))
+						glog.V(10).Infof("class %d", tutu.Class)
+						glog.V(10).Infof("tag %d", tutu.Tag)
+						glog.V(10).Infof("isCompound %v", tutu.IsCompound)
+						glog.V(10).Infof("bytes %s", string(tutu.Bytes))
+						glog.V(10).Infof("fullBytes %s", string(tutu.FullBytes))
 					}
 				}
 
