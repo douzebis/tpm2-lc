@@ -213,7 +213,7 @@ func main() {
 		NotAfter:  time.Now().AddDate(10, 0, 0),
 		KeyUsage:  x509.KeyUsageKeyEncipherment,
 		// Add subjectAltName
-		//ExtraExtensions: []pkix.Extension{extSubjectAltName},
+		ExtraExtensions: []pkix.Extension{extSubjectAltName},
 		//ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		BasicConstraintsValid: true,
 		IsCA:                  false,
