@@ -83,61 +83,61 @@ func main() {
 			glog.V(10).Infof("extension %s", ext.Id.String())
 			if ext.Id.String() == "2.5.29.17" {
 				parse(ext.Value, "")
-				return
-				glog.V(10).Infof("Critical %s", ext.Critical)
-				glog.V(10).Infof("Value %s", base64.StdEncoding.EncodeToString(ext.Value))
-				//var oid asn1.ObjectIdentifier
-				//asn1.Unmarshal(ext.Value, &oid)
-				//glog.V(10).Infof("Oid %v", oid)
-				//for _, tmp := range oid {
-				//	glog.V(10).Infof("Oid %d", tmp)
-				//}
-				var seq asn1.RawValue
-				asn1.Unmarshal(ext.Value, &seq)
-				rest := seq.Bytes
-				for len(rest) > 0 {
-					var v asn1.RawValue
-					rest, _ = asn1.Unmarshal(rest, &v)
-					glog.V(10).Infof("Class %d", v.Class)
-					glog.V(10).Infof("Tag %d", v.Tag)
-					glog.V(10).Infof("IsCompound %v", v.IsCompound)
-					glog.V(10).Infof("Bytes %s", string(v.Bytes))
-					glog.V(10).Infof("FullBytes %s", string(v.FullBytes))
-
-					var toto asn1.RawValue
-					asn1.Unmarshal(v.Bytes, &toto)
-					titi := toto.Bytes
-					for len(titi) > 0 {
-						var tutu asn1.RawValue
-						titi, _ = asn1.Unmarshal(titi, &tutu)
-						glog.V(10).Infof("class %d", tutu.Class)
-						glog.V(10).Infof("tag %d", tutu.Tag)
-						glog.V(10).Infof("isCompound %v", tutu.IsCompound)
-						glog.V(10).Infof("bytes %s", string(tutu.Bytes))
-						glog.V(10).Infof("fullBytes %s", string(tutu.FullBytes))
-
-						var ante asn1.RawValue
-						asn1.Unmarshal(toto.Bytes, &ante)
-						rest2 := ante.Bytes
-						for len(rest2) > 0 {
-							var leaf asn1.RawValue
-							rest2, _ = asn1.Unmarshal(rest2, &leaf)
-							glog.V(10).Infof("class %d", leaf.Class)
-							glog.V(10).Infof("tag %d", leaf.Tag)
-							glog.V(10).Infof("isCompound %v", leaf.IsCompound)
-							glog.V(10).Infof("bytes %s", string(leaf.Bytes))
-							glog.V(10).Infof("fullBytes %s", string(leaf.FullBytes))
-						}
-
-					}
-				}
-
-			}
-		}
-	} else {
-		glog.V(10).Infof("Block has type %s", block.Type)
-	}
-	return
+//				return
+//				glog.V(10).Infof("Critical %s", ext.Critical)
+//				glog.V(10).Infof("Value %s", base64.StdEncoding.EncodeToString(ext.Value))
+//				//var oid asn1.ObjectIdentifier
+//				//asn1.Unmarshal(ext.Value, &oid)
+//				//glog.V(10).Infof("Oid %v", oid)
+//				//for _, tmp := range oid {
+//				//	glog.V(10).Infof("Oid %d", tmp)
+//				//}
+//				var seq asn1.RawValue
+//				asn1.Unmarshal(ext.Value, &seq)
+//				rest := seq.Bytes
+//				for len(rest) > 0 {
+//					var v asn1.RawValue
+//					rest, _ = asn1.Unmarshal(rest, &v)
+//					glog.V(10).Infof("Class %d", v.Class)
+//					glog.V(10).Infof("Tag %d", v.Tag)
+//					glog.V(10).Infof("IsCompound %v", v.IsCompound)
+//					glog.V(10).Infof("Bytes %s", string(v.Bytes))
+//					glog.V(10).Infof("FullBytes %s", string(v.FullBytes))
+//
+//					var toto asn1.RawValue
+//					asn1.Unmarshal(v.Bytes, &toto)
+//					titi := toto.Bytes
+//					for len(titi) > 0 {
+//						var tutu asn1.RawValue
+//						titi, _ = asn1.Unmarshal(titi, &tutu)
+//						glog.V(10).Infof("class %d", tutu.Class)
+//						glog.V(10).Infof("tag %d", tutu.Tag)
+//						glog.V(10).Infof("isCompound %v", tutu.IsCompound)
+//						glog.V(10).Infof("bytes %s", string(tutu.Bytes))
+//						glog.V(10).Infof("fullBytes %s", string(tutu.FullBytes))
+//
+//						var ante asn1.RawValue
+//						asn1.Unmarshal(toto.Bytes, &ante)
+//						rest2 := ante.Bytes
+//						for len(rest2) > 0 {
+//							var leaf asn1.RawValue
+//							rest2, _ = asn1.Unmarshal(rest2, &leaf)
+//							glog.V(10).Infof("class %d", leaf.Class)
+//							glog.V(10).Infof("tag %d", leaf.Tag)
+//							glog.V(10).Infof("isCompound %v", leaf.IsCompound)
+//							glog.V(10).Infof("bytes %s", string(leaf.Bytes))
+//							glog.V(10).Infof("fullBytes %s", string(leaf.FullBytes))
+//						}
+//
+//					}
+//				}
+//
+//			}
+//		}
+//	} else {
+//		glog.V(10).Infof("Block has type %s", block.Type)
+//	}
+//	return
 
 	// === Create certificate for TPM CA =======================================
 
@@ -322,6 +322,16 @@ func main() {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
 	values, _ = base64.StdEncoding.DecodeString("MGOkYTBfMV0wFwYFZ4EFAgIMDmlkOiVUUE1fTU9ERUwlMB4GBWeBBQIBDBVpZDolVFBNX01BTlVGQUNUVVJFUiUwIgYFZ4EFAgMMGWlkOiVUUE1fRklSTVdBUkVfVkVSU0lPTiU=")
+
+	var buf []byte
+	tpmFirmwareVersion := asn1.RawValue{Class: asn1.ClassUniversal, Tag: asn1.TagUTF8String, IsCompound: false}
+
+	buf, err = asn1.Marshal("id:%TPM_FIRMWARE_VERSION%")
+	if err != nil {
+		glog.Fatalf("asn1.Marshal() failed: %v", err)
+	}
+	tpmFirmwareVersion.Bytes = buf
+	values, err = asn1.Marshal(tpmFirmwareVersion)
 
 	tpmTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
