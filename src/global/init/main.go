@@ -8,6 +8,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"encoding/base64"
 	"encoding/pem"
 	"flag"
 	"io/ioutil"
@@ -54,7 +55,7 @@ func main() {
 			glog.V(10).Infof("extension %s", ext.Id.String())
 			if ext.Id.String() == "2.5.29.17" {
 				glog.V(10).Infof("Critical %s", ext.Critical)
-				glog.V(10).Infof("Value %s", string(ext.Value))
+				glog.V(10).Infof("Value %s", base64.StdEncoding.EncodeToString(ext.Value))
 			}
 		}
 	} else {
