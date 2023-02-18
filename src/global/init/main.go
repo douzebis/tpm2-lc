@@ -7,6 +7,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/asn1"
 	"encoding/pem"
 	"flag"
 	"io/ioutil"
@@ -62,11 +63,13 @@ func main() {
 
 	// --- Create Certificate for TPM CA ---------------------------------------
 
+	// From https://gist.github.com/op-ct/e202fc911de22c018effdb3371e8335f
 	tpmCaTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
-			Organization: []string{"TPM Inc"},
-			CommonName:   "TPM CA",
+			Organization:       []string{"TPM Manufacturer"},
+			OrganizationalUnit: []string{"TPM Manufacturer Root CA"},
+			CommonName:         "TPM Manufacturer Root CA",
 		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(10, 0, 0),
@@ -105,7 +108,7 @@ func main() {
 	// Note: to check everything went OK on the target
 	// openssl verify -CAfile TPM-CA/tpm-ca.crt TPM-CA/tpm-ca.crt
 	// openssl rsa -in TPM-CA/tpm-ca.key -pubout
-	// 	openssl x509 -in TPM-CA/tpm-ca.crt -pubkey -noout
+	// openssl x509 -in TPM-CA/tpm-ca.crt -pubkey -noout
 
 	// === Create certificate for TPM ==========================================
 
@@ -173,39 +176,48 @@ func main() {
 
 	glog.V(10).Infof("Wrote TPM-CA/ek.pem")
 
-	// Use the PEM decoder and parse the private key
-	//pemBlock, _ := pem.Decode(ekPubPEM)
-	//priv, e := x509.ParsePKCS1PrivateKey(pemBlock.Bytes)
-	//ekPemBlock, _ := pem.Decode(ekPubPEM)
-	//ekPublicKey, err := x509.ParsePKIXPublicKey(ekPemBlock.Bytes)
-	//if err != nil {
-	//	glog.Fatalf("x509.ParsePKCS1PublicKey() failed: %v", err)
-	//}
 	switch ekPubKey.(type) {
 	case *rsa.PublicKey:
 		glog.V(10).Infof("ekPublicKey is of type RSA")
 	}
+	// From https://stackoverflow.com/a/44317246
 	ekPublicKey, _ := ekPubKey.(*rsa.PublicKey)
 
 	// --- Create TPM EK certificate -------------------------------------------
 
+	// From https://gist.github.com/op-ct/e202fc911de22c018effdb3371e8335f
+	//X509v3 extensions:
+	//	X509v3 Subject Alternative Name: critical
+	//		DirName:/2.23.133.2.2=id:%TPM_MODEL%+2.23.133.2.1=id:%TPM_MANUFACTURER%+2.23.133.2.3=id:%TPM_FIRMWARE_VERSION%
+	//	X509v3 Basic Constraints: critical
+	//		CA:FALSE
+	//	X509v3 Key Usage:
+	//		Key Encipherment
+	//	X509v3 Subject Key Identifier:
+	//		50:33:69:BA:1D:4A:D5:A1:AA:E9:E8:24:79:EB:78:0C:85:43:C0:96
+	//	X509v3 Authority Key Identifier:
+	//		59:46:B7:9A:1A:F8:8F:AE:53:01:22:1C:95:C5:9D:53:39:E8:11:EA
+	//Signature Algorithm: sha256WithRSAEncryption
+	extSubjectAltName := pkix.Extension{}
+	extSubjectAltName.Id = asn1.ObjectIdentifier{2, 5, 29, 17}
+	extSubjectAltName.Critical = true
+	extSubjectAltName.Value = []byte(`DirName:/2.23.133.2.2=id:TPM_MODEL+2.23.133.2.1=id:TPM_MANUFACTURER+2.23.133.2.3=id:TPM_FIRMWARE_VERSION`)
+
 	tpmTemplate := &x509.Certificate{
 		SerialNumber: big.NewInt(1),
-		Subject: pkix.Name{
-			Organization: []string{"TPM Inc"},
-			CommonName:   "TPM",
-		},
-		NotBefore:    time.Now(),
-		NotAfter:     time.Now().AddDate(10, 0, 0),
-		SubjectKeyId: []byte{1, 2, 3, 4, 6},
-		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:     x509.KeyUsageDigitalSignature,
+		//Subject: pkix.Name{
+		//	Organization: []string{"TPM Inc"},
+		//	CommonName:   "TPM",
+		//},
+		NotBefore: time.Now(),
+		NotAfter:  time.Now().AddDate(10, 0, 0),
+		KeyUsage:  x509.KeyUsageKeyEncipherment,
+		// Add subjectAltName
+		ExtraExtensions: []pkix.Extension{extSubjectAltName},
+		//ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		BasicConstraintsValid: true,
+		IsCA:                  false,
 	}
-
-	//dummyPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
-	//if err != nil {
-	//	glog.Fatalf("rsa.GenerateKey() failed: %v", err)
-	//}
 
 	tpmBytes, err := x509.CreateCertificate(
 		rand.Reader,
@@ -232,9 +244,7 @@ func main() {
 
 	glog.V(10).Infof("Wrote TPM-CA/tpm.crt")
 
-	//certPEM := new(bytes.Buffer)
-	//pem.Encode(certPEM, &pem.Block{
-	//	Type:  "CERTIFICATE",
-	//	Bytes: certBytes,
-	//})
+	// Note: to check everything went OK on the target
+	// openssl verify -CAfile TPM-CA/tpm-ca.crt TPM-CA/tpm.crt
+
 }
