@@ -39,7 +39,9 @@ func parse(values []byte, indent string) {
 	rest := seq.Bytes
 	for len(rest) > 0 {
 		var v asn1.RawValue
+		glog.V(10).Infof("%sLen1 %d", indent, len(rest))
 		rest, _ = asn1.Unmarshal(rest, &v)
+		glog.V(10).Infof("%sLen2 %d", indent, len(rest))
 		glog.V(10).Infof("%sClass %d", indent, v.Class)
 		glog.V(10).Infof("%sTag %d", indent, v.Tag)
 		glog.V(10).Infof("%sIsCompound %v", indent, v.IsCompound)
