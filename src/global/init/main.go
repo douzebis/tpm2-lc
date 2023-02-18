@@ -48,7 +48,9 @@ func parse(values []byte, indent string) {
 		glog.V(10).Infof("%sTag %d", indent, v.Tag)
 		glog.V(10).Infof("%sIsCompound %v", indent, v.IsCompound)
 		if v.IsCompound {
-			parse(v.Bytes, indent+"  ")
+			nextv := make([]byte, len(v.Bytes))
+			copy(nextv, v.Bytes)
+			parse(nextv, indent+"  ")
 		} else {
 			glog.V(10).Infof("%sBytes %s", indent, string(v.Bytes))
 			//glog.V(10).Infof("%sFullBytes %s", indent, string(v.FullBytes))
