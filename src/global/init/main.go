@@ -322,14 +322,22 @@ func main() {
 	}
 	values, _ = base64.StdEncoding.DecodeString("MGOkYTBfMV0wFwYFZ4EFAgIMDmlkOiVUUE1fTU9ERUwlMB4GBWeBBQIBDBVpZDolVFBNX01BTlVGQUNUVVJFUiUwIgYFZ4EFAgMMGWlkOiVUUE1fRklSTVdBUkVfVkVSU0lPTiU=")
 
-	var buf []byte
-	tpmFirmwareVersion := asn1.RawValue{Class: asn1.ClassUniversal, Tag: asn1.TagUTF8String, IsCompound: false}
-	buf, err = asn1.Marshal("id:%TPM_FIRMWARE_VERSION%")
+	//var buf []byte
+	tpmFirmwareVersion := asn1.RawValue{
+		Class:      asn1.ClassUniversal,
+		Tag:        asn1.TagUTF8String,
+		IsCompound: false,
+		Bytes:      []byte("id:%TPM_FIRMWARE_VERSION%"),
+	}
+	//buf, err = asn1.Marshal("id:%TPM_FIRMWARE_VERSION%")
+	//if err != nil {
+	//	glog.Fatalf("asn1.Marshal() failed: %v", err)
+	//}
+	//tpmFirmwareVersion.Bytes = buf
+	values, err = asn1.Marshal(tpmFirmwareVersion)
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	tpmFirmwareVersion.Bytes = buf
-	values, err = asn1.Marshal(tpmFirmwareVersion)
 
 	tpmTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
