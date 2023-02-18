@@ -45,6 +45,9 @@ func parse(values []byte, indent string) {
 		glog.V(10).Infof("%sIsCompound %v", indent, v.IsCompound)
 		glog.V(10).Infof("%sBytes %s", indent, string(v.Bytes))
 		glog.V(10).Infof("%sFullBytes %s", indent, string(v.FullBytes))
+		if v.IsCompound {
+			parse(v.Bytes, indent+"  ")
+		}
 	}
 }
 
@@ -71,6 +74,7 @@ func main() {
 			glog.V(10).Infof("extension %s", ext.Id.String())
 			if ext.Id.String() == "2.5.29.17" {
 				parse(ext.Value, "")
+				return
 				glog.V(10).Infof("Critical %s", ext.Critical)
 				glog.V(10).Infof("Value %s", base64.StdEncoding.EncodeToString(ext.Value))
 				//var oid asn1.ObjectIdentifier
