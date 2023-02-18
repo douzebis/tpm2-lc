@@ -58,6 +58,7 @@ func main() {
 				glog.V(10).Infof("Value %s", base64.StdEncoding.EncodeToString(ext.Value))
 				var oid asn1.ObjectIdentifier
 				asn1.Unmarshal(ext.Value, &oid)
+				glog.V(10).Infof("Oid %v", oid)
 				for _, tmp := range oid {
 					glog.V(10).Infof("Oid %d", tmp)
 				}
