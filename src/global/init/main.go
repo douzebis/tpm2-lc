@@ -44,6 +44,7 @@ func main() {
 	}
 
 	if block.Type == "CERTIFICATE" {
+		glog.V(10).Infof("Block has type CERTIFICATE")
 		certificate, err := x509.ParseCertificate(block.Bytes)
 		if err != nil {
 			glog.Fatalf("x509.ParseCertificate() failed: %v", err)
@@ -52,6 +53,8 @@ func main() {
 			// filter the custom extensions by customOID
 			glog.V(10).Infof("extension %s", ext.Id.String())
 		}
+	} else {
+		glog.V(10).Infof("Block has type %s", block.Type)
 	}
 	return
 
