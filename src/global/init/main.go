@@ -208,7 +208,9 @@ func main() {
 
 	subjectAltName := asn1.ObjectIdentifier{2, 5, 29, 17}
 	rawValues := []asn1.RawValue{
-		{Class: 2, Tag: 6, Bytes: []byte("URI: toto")},
+		{Class: 2, Tag: 6, Bytes: []byte("toto")},
+		{Class: 2, Tag: 6, Bytes: []byte("titi")},
+		{Class: 2, Tag: 6, Bytes: []byte("tutu")},
 	}
 	values, err := asn1.Marshal(rawValues)
 	if err != nil {
