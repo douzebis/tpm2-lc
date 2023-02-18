@@ -49,7 +49,7 @@ func main() {
 		if err != nil {
 			glog.Fatalf("x509.ParseCertificate() failed: %v", err)
 		}
-		for _, ext := range certificate.ExtraExtensions {
+		for _, ext := range certificate.Extensions {
 			// filter the custom extensions by customOID
 			glog.V(10).Infof("extension %s", ext.Id.String())
 		}
