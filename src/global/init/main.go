@@ -177,7 +177,7 @@ func main() {
 	//pemBlock, _ := pem.Decode(ekPubPEM)
 	//priv, e := x509.ParsePKCS1PrivateKey(pemBlock.Bytes)
 	ekPemBlock, _ := pem.Decode(ekPubPEM)
-	ekPublicKey, err := x509.ParsePKCS1PublicKey(ekPemBlock.Bytes)
+	ekPublicKey, err := x509.ParsePKIXPublicKey(ekPemBlock.Bytes)
 	if err != nil {
 		glog.Fatalf("x509.ParsePKCS1PublicKey() failed: %v", err)
 	}
