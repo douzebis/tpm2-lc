@@ -62,6 +62,16 @@ func main() {
 				for _, tmp := range oid {
 					glog.V(10).Infof("Oid %d", tmp)
 				}
+				var seq asn1.RawValue
+				asn1.Unmarshal(ext.Value, &seq)
+				rest := seq.Bytes
+				for len(rest) > 0 {
+					var v asn1.RawValue
+					rest, _ = asn1.Unmarshal(rest, &v)
+					glog.V(10).Infof("Class %d", v.Class)
+					glog.V(10).Infof("Tag %d", v.Tag)
+				}
+
 			}
 		}
 	} else {
