@@ -110,6 +110,20 @@ func main() {
 		glog.Fatalf("rsa.GenerateKey() failed: %v", err)
 	}
 
+	caPrivKeyPEM := []byte(pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "RSA PRIVATE KEY",
+			Bytes: x509.MarshalPKCS1PrivateKey(caPrivKey),
+		},
+	))
+
+	err = ioutil.WriteFile("ca.key", caPrivKeyPEM, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	}
+
+	glog.V(10).Infof("Wrote ca.key")
+
 	caBytes, err := x509.CreateCertificate(rand.Reader, &rootTemplate, &rootTemplate, &caPrivKey.PublicKey, caPrivKey)
 	if err != nil {
 		glog.Fatalf("x509.CreateCertificate() failed: %v", err)
