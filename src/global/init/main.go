@@ -79,7 +79,7 @@ func main() {
 					titi := toto.Bytes
 					for len(titi) > 0 {
 						var tutu asn1.RawValue
-						rest, _ = asn1.Unmarshal(rest, &tutu)
+						titi, _ = asn1.Unmarshal(titi, &tutu)
 						glog.V(10).Infof("class %d", tutu.Class)
 						glog.V(10).Infof("tag %d", tutu.Tag)
 						glog.V(10).Infof("isCompound %v", tutu.IsCompound)
