@@ -211,7 +211,7 @@ func main() {
 		rand.Reader,
 		tpmTemplate,
 		&tpmCaTemplate,
-		&ekPublicKey,
+		ekPublicKey,
 		tpmCaPrivKey)
 	if err != nil {
 		glog.Fatalf("x509.CreateCertificate() failed: %v", err)
