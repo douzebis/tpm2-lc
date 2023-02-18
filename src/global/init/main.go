@@ -95,14 +95,21 @@ func main() {
 		},
 	))
 
-	err = ioutil.WriteFile("TPM-CA/ca.crt", caPEM, 0644)
+	err = ioutil.WriteFile("TPM-CA/tpm-ca.crt", caPEM, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
 
-	glog.V(10).Infof("Wrote TPM-CA/ca.crt")
+	glog.V(10).Infof("Wrote TPM-CA/tpm-ca.crt")
 
-	// --- Create certificate for TPM ------------------------------------------
+	// Note: to check everything went OK on the target
+	// openssl verify -CAfile TPM-CA/tpm-ca.crt TPM-CA/tpm-ca.crt
+	// openssl rsa -in TPM-CA/tpm-ca.key -pubout
+	// 	openssl x509 -in TPM-CA/tpm-ca.crt -pubkey -noout
+
+	// === Create certificate for TPM ==========================================
+
+	// --- Open TPM device -----------------------------------------------------
 
 	rwc, err := tpm2.OpenTPM(*tpmPath)
 	if err != nil {
@@ -113,6 +120,8 @@ func main() {
 			glog.Fatalf("\ncan't close TPM %q: %v", tpmPath, err)
 		}
 	}()
+
+	// --- Flush key handles ---------------------------------------------------
 
 	totalHandles := 0
 	for _, handleType := range handleNames[*flush] {
@@ -129,21 +138,23 @@ func main() {
 		}
 	}
 
-	ek, err := client.EndorsementKeyRSA(rwc)
+	// --- Retrieve TPM EK Pub -------------------------------------------------
+
+	ekTpmKey, err := client.EndorsementKeyRSA(rwc)
 	if err != nil {
 		glog.Fatalf("Unable to load SRK from TPM: %v", err)
 	}
 
-	ekPublicKey, _, _, err := tpm2.ReadPublic(rwc, ek.Handle())
+	ekTpmPubKey, _, _, err := tpm2.ReadPublic(rwc, ekTpmKey.Handle())
 	if err != nil {
 		glog.Fatalf("tpm2.ReadPublic() failed: %s", err)
 	}
 
-	ekp, err := ekPublicKey.Key()
+	ekPubKey, err := ekTpmPubKey.Key()
 	if err != nil {
 		glog.Fatalf("ekPublicKey.Key() failed: %s", err)
 	}
-	ekBytes, err := x509.MarshalPKIXPublicKey(ekp)
+	ekPubBytes, err := x509.MarshalPKIXPublicKey(ekPubKey)
 	if err != nil {
 		glog.Fatalf("x509.MarshalPKIXPublicKey() failed: %v", err)
 	}
@@ -151,7 +162,7 @@ func main() {
 	ekPubPEM := pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "PUBLIC KEY",
-			Bytes: ekBytes,
+			Bytes: ekPubBytes,
 		},
 	)
 
