@@ -34,25 +34,25 @@ var (
 
 func parse(rest []byte, indent string) {
 	//glog.V(10).Infof("%s", string(values))
-	glog.V(10).Infof("%sValueslen %d", indent, len(rest))
+	//glog.V(10).Infof("%sValueslen %d", indent, len(rest))
 	//var seq asn1.RawValue
 	//rest, _ := asn1.Unmarshal(values, &seq)
 	//rest := seq.Bytes
 	for len(rest) > 0 {
 		var v asn1.RawValue
-		glog.V(10).Infof("%sLen1 %d", indent, len(rest))
-		glog.V(10).Infof("%sRest1 %s", indent, string(rest))
+		//glog.V(10).Infof("%sLen1 %d", indent, len(rest))
+		//glog.V(10).Infof("%sRest1 %s", indent, string(rest))
 		rest, _ = asn1.Unmarshal(rest, &v)
-		glog.V(10).Infof("%sLen2 %d", indent, len(rest))
-		glog.V(10).Infof("%sv.Bytes %d", indent, len(v.Bytes))
-		glog.V(10).Infof("%sRest2 %s", indent, string(rest))
+		//glog.V(10).Infof("%sLen2 %d", indent, len(rest))
+		//glog.V(10).Infof("%sv.Bytes %d", indent, len(v.Bytes))
+		//glog.V(10).Infof("%sRest2 %s", indent, string(rest))
 		glog.V(10).Infof("%sClass %d", indent, v.Class)
 		glog.V(10).Infof("%sTag %d", indent, v.Tag)
 		glog.V(10).Infof("%sIsCompound %v", indent, v.IsCompound)
 		if v.IsCompound {
-			nextv := make([]byte, len(v.Bytes))
-			copy(nextv, v.Bytes)
-			parse(nextv, indent+"  ")
+			//nextv := make([]byte, len(v.Bytes))
+			//copy(nextv, v.Bytes)
+			parse(v.Bytes, indent+"  ")
 		} else {
 			glog.V(10).Infof("%sBytes %s", indent, string(v.Bytes))
 			//glog.V(10).Infof("%sFullBytes %s", indent, string(v.FullBytes))
