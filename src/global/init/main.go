@@ -181,14 +181,11 @@ func main() {
 	//if err != nil {
 	//	glog.Fatalf("x509.ParsePKCS1PublicKey() failed: %v", err)
 	//}
-	switch typ := ekPubKey.(type) {
+	switch ekPubKey.(type) {
 	case *rsa.PublicKey:
 		glog.V(10).Infof("ekPublicKey is of type RSA")
 	}
-	ekPublicKey, err := ekPubKey.(*rsa.PublicKey)
-	if err != nil {
-		glog.Fatalf(".(*rsa.PublicKey) failed: %v", err)
-	}
+	ekPublicKey, _ := ekPubKey.(*rsa.PublicKey)
 
 	// --- Create TPM EK certificate -------------------------------------------
 
