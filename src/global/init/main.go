@@ -351,7 +351,23 @@ func main() {
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	values = c
+	d, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 17, IsCompound: true, Bytes: c})
+	if err != nil {
+		glog.Fatalf("asn1.Marshal() failed: %v", err)
+	}
+	e, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 16, IsCompound: true, Bytes: d})
+	if err != nil {
+		glog.Fatalf("asn1.Marshal() failed: %v", err)
+	}
+	f, err := asn1.Marshal(asn1.RawValue{Class: 2, Tag: 4, IsCompound: true, Bytes: e})
+	if err != nil {
+		glog.Fatalf("asn1.Marshal() failed: %v", err)
+	}
+	g, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 16, IsCompound: true, Bytes: f})
+	if err != nil {
+		glog.Fatalf("asn1.Marshal() failed: %v", err)
+	}
+	values = g
 
 	tpmTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
