@@ -70,6 +70,9 @@ func main() {
 					rest, _ = asn1.Unmarshal(rest, &v)
 					glog.V(10).Infof("Class %d", v.Class)
 					glog.V(10).Infof("Tag %d", v.Tag)
+					glog.V(10).Infof("IsCompound %v", v.IsCompound)
+					glog.V(10).Infof("FullBytes %s", string(v.Bytes))
+					glog.V(10).Infof("FullBytes %s", string(v.FullBytes))
 				}
 
 			}
