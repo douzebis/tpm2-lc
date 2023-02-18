@@ -177,9 +177,9 @@ func main() {
 	//pemBlock, _ := pem.Decode(ekPubPEM)
 	//priv, e := x509.ParsePKCS1PrivateKey(pemBlock.Bytes)
 	ekPemBlock, _ := pem.Decode(ekPubPEM)
-	ekPrivKey, err := x509.ParsePKCS1PrivateKey(ekPemBlock.Bytes)
+	ekPublicKey, err := x509.ParsePKCS1PublicKey(ekPemBlock.Bytes)
 	if err != nil {
-		glog.Fatalf("x509.ParsePKCS1PrivateKey() failed: %v", err)
+		glog.Fatalf("x509.ParsePKCS1PublicKey() failed: %v", err)
 	}
 
 	// --- Create TPM EK certificate -------------------------------------------
@@ -206,7 +206,7 @@ func main() {
 		rand.Reader,
 		tpmTemplate,
 		&tpmCaTemplate,
-		&ekPrivKey.PublicKey,
+		&ekPublicKey,
 		tpmCaPrivKey)
 	if err != nil {
 		glog.Fatalf("x509.CreateCertificate() failed: %v", err)
