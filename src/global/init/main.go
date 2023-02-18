@@ -32,6 +32,22 @@ var (
 	flush   = flag.String("flush", "all", "Flush contexts, must be oneof transient|saved|loaded|all")
 )
 
+func parse(values []byte, indent string) {
+	//glog.V(10).Infof("%s", string(values))
+	var seq asn1.RawValue
+	asn1.Unmarshal(values, &seq)
+	rest := seq.Bytes
+	for len(rest) > 0 {
+		var v asn1.RawValue
+		rest, _ = asn1.Unmarshal(rest, &v)
+		glog.V(10).Infof("%sClass %d", indent, v.Class)
+		glog.V(10).Infof("%sTag %d", indent, v.Tag)
+		glog.V(10).Infof("%sIsCompound %v", indent, v.IsCompound)
+		glog.V(10).Infof("%sBytes %s", indent, string(v.Bytes))
+		glog.V(10).Infof("%sFullBytes %s", indent, string(v.FullBytes))
+	}
+}
+
 func main() {
 	flag.Parse()
 
@@ -54,14 +70,15 @@ func main() {
 			// filter the custom extensions by customOID
 			glog.V(10).Infof("extension %s", ext.Id.String())
 			if ext.Id.String() == "2.5.29.17" {
+				parse(ext.Value, "")
 				glog.V(10).Infof("Critical %s", ext.Critical)
 				glog.V(10).Infof("Value %s", base64.StdEncoding.EncodeToString(ext.Value))
-				var oid asn1.ObjectIdentifier
-				asn1.Unmarshal(ext.Value, &oid)
-				glog.V(10).Infof("Oid %v", oid)
-				for _, tmp := range oid {
-					glog.V(10).Infof("Oid %d", tmp)
-				}
+				//var oid asn1.ObjectIdentifier
+				//asn1.Unmarshal(ext.Value, &oid)
+				//glog.V(10).Infof("Oid %v", oid)
+				//for _, tmp := range oid {
+				//	glog.V(10).Infof("Oid %d", tmp)
+				//}
 				var seq asn1.RawValue
 				asn1.Unmarshal(ext.Value, &seq)
 				rest := seq.Bytes
