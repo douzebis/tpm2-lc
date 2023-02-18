@@ -3,10 +3,15 @@
 package main
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/pem"
 	"flag"
 	"io/ioutil"
+	"math/big"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/google/go-tpm-tools/client"
@@ -14,10 +19,10 @@ import (
 )
 
 var handleNames = map[string][]tpm2.HandleType{
-	"all":       []tpm2.HandleType{tpm2.HandleTypeLoadedSession, tpm2.HandleTypeSavedSession, tpm2.HandleTypeTransient},
-	"loaded":    []tpm2.HandleType{tpm2.HandleTypeLoadedSession},
-	"saved":     []tpm2.HandleType{tpm2.HandleTypeSavedSession},
-	"transient": []tpm2.HandleType{tpm2.HandleTypeTransient},
+	"all":       {tpm2.HandleTypeLoadedSession, tpm2.HandleTypeSavedSession, tpm2.HandleTypeTransient},
+	"loaded":    {tpm2.HandleTypeLoadedSession},
+	"saved":     {tpm2.HandleTypeSavedSession},
+	"transient": {tpm2.HandleTypeTransient},
 }
 
 var (
@@ -85,4 +90,58 @@ func main() {
 	}
 
 	glog.V(10).Infof("Wrote TPM-CA/ek.pem")
+
+	rootTemplate := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization: []string{"TPM CA"},
+			CommonName:   "TPM CA",
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().AddDate(10, 0, 0),
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+		MaxPathLen:            2,
+	}
+	caPrivKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		glog.Fatalf("rsa.GenerateKey() failed: %v", err)
+	}
+
+	caBytes, err := x509.CreateCertificate(rand.Reader, &rootTemplate, &rootTemplate, &caPrivKey.PublicKey, caPrivKey)
+	if err != nil {
+		glog.Fatalf("x509.CreateCertificate() failed: %v", err)
+	}
+
+	// cert, err := x509.ParseCertificate(certBytes)
+	// if err != nil {
+	// 	glog.Fatalf("x509.ParseCertificate() failed: %v", err)
+	// }
+
+	// b := pem.Block{Type: "CERTIFICATE", Bytes: certBytes}
+	// certPEM := pem.EncodeToMemory(&b)
+
+	// pem encode
+	caPEM := []byte(pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: caBytes,
+		},
+	))
+
+	err = ioutil.WriteFile("ca.crt", caPEM, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	}
+
+	glog.V(10).Infof("Wrote ca.crt")
+
+	//caPrivKeyPEM := new(bytes.Buffer)
+	//pem.Encode(caPrivKeyPEM, &pem.Block{
+	//	Type:  "RSA PRIVATE KEY",
+	//	Bytes: x509.MarshalPKCS1PrivateKey(caPrivKey),
+	//})
+
 }
