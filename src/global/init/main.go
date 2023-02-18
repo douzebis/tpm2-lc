@@ -204,7 +204,7 @@ func main() {
 	extSubjectAltName.Id = asn1.ObjectIdentifier{2, 5, 29, 17}
 	extSubjectAltName.Critical = true
 	//extSubjectAltName.Value = []byte("DirName:/2.23.133.2.2=id:TPM_MODEL+2.23.133.2.1=id:TPM_MANUFACTURER+2.23.133.2.3=id:TPM_FIRMWARE_VERSION")
-	extSubjectAltName.Value = []byte("DNS Name=example.com")
+	extSubjectAltName.Value = []byte("")
 
 	tpmTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
