@@ -339,6 +339,13 @@ func main() {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
 
+	var rawWalues []asn1.RawValue
+	rawWalues = append(rawWalues, asn1.RawValue{Tag: 2, Class: 2, Bytes: []byte("example.com")})
+	values, err = asn1.Marshal(rawWalues)
+	if err != nil {
+		glog.Fatalf("asn1.Marshal() failed: %v", err)
+	}
+
 	tpmTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
