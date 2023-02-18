@@ -352,7 +352,19 @@ func main() {
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	d, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 17, IsCompound: true, Bytes: c})
+	a2, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 6, Bytes: []byte("g")})
+	if err != nil {
+		glog.Fatalf("asn1.Marshal() failed: %v", err)
+	}
+	b2, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 12, Bytes: []byte("id:%TPM_FIRMWARE_VERSION%")})
+	if err != nil {
+		glog.Fatalf("asn1.Marshal() failed: %v", err)
+	}
+	c2, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 16, IsCompound: true, Bytes: append(a2[:], b2[:]...)})
+	if err != nil {
+		glog.Fatalf("asn1.Marshal() failed: %v", err)
+	}
+	d, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 17, IsCompound: true, Bytes: append(c[:], c2[:]...)})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
