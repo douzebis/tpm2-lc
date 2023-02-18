@@ -34,6 +34,28 @@ var (
 func main() {
 	flag.Parse()
 
+	testPem, err := ioutil.ReadFile("../tpm2/manufacturer/ek.crt")
+	if err != nil {
+		glog.Fatalf("ioutil.ReadFile() failed: %v", err)
+	}
+	block, _ := pem.Decode([]byte(testPem))
+	if block == nil {
+		glog.Fatalf("pem.Decode() failed: %v", err)
+	}
+
+	if block.Type == "CERTIFICATE" {
+		certificate, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			glog.Fatalf("x509.ParseCertificate() failed: %v", err)
+		}
+		var extensions []pkix.Extension
+		for _, ext := range certificate.ExtraExtensions {
+			// filter the custom extensions by customOID
+			glog.V(10).Infof("extension %s", ext.Id.String())
+		}
+	}
+	return
+
 	// === Create certificate for TPM CA =======================================
 
 	// Inspired by:
