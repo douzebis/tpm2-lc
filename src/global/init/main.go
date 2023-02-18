@@ -96,7 +96,7 @@ func main() {
 							glog.V(10).Infof("tag %d", leaf.Tag)
 							glog.V(10).Infof("isCompound %v", leaf.IsCompound)
 							glog.V(10).Infof("bytes %s", string(leaf.Bytes))
-							glog.V(10).Infof("fullBytes %s", string(tleafutu.FullBytes))
+							glog.V(10).Infof("fullBytes %s", string(leaf.FullBytes))
 						}
 
 					}
