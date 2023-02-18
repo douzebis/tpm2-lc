@@ -339,9 +339,10 @@ func main() {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
 
-	var rawWalues []asn1.RawValue
-	rawWalues = append(rawWalues, asn1.RawValue{Tag: 12, Class: 0, Bytes: []byte("id:%TPM_FIRMWARE_VERSION%")})
-	values, err = asn1.Marshal(rawWalues)
+	var a []asn1.RawValue
+	a = append(a, asn1.RawValue{Tag: 6, Class: 0, Bytes: []byte("g")})
+	a = append(a, asn1.RawValue{Tag: 12, Class: 0, Bytes: []byte("id:%TPM_FIRMWARE_VERSION%")})
+	values, err = asn1.Marshal(a)
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
