@@ -198,10 +198,12 @@ func main() {
 	//	X509v3 Authority Key Identifier:
 	//		59:46:B7:9A:1A:F8:8F:AE:53:01:22:1C:95:C5:9D:53:39:E8:11:EA
 	//Signature Algorithm: sha256WithRSAEncryption
+	//
+	// See also https://upgrades.intel.com/content/CRL/ekcert/EKcertPolicyStatement.pdf
 	extSubjectAltName := pkix.Extension{}
 	extSubjectAltName.Id = asn1.ObjectIdentifier{2, 5, 29, 17}
 	extSubjectAltName.Critical = true
-	extSubjectAltName.Value = []byte(`DirName:/2.23.133.2.2=id:TPM_MODEL+2.23.133.2.1=id:TPM_MANUFACTURER+2.23.133.2.3=id:TPM_FIRMWARE_VERSION`)
+	extSubjectAltName.Value = []byte('DirName:/2.23.133.2.2=id:TPM_MODEL+2.23.133.2.1=id:TPM_MANUFACTURER+2.23.133.2.3=id:TPM_FIRMWARE_VERSION')
 
 	tpmTemplate := &x509.Certificate{
 		SerialNumber: big.NewInt(1),
