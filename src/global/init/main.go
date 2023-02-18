@@ -340,6 +340,7 @@ func main() {
 	}
 
 	var a []asn1.RawValue
+	a = append(a, asn1.RawValue{Class: 0, Tag: 16, IsCompound: true})
 	a = append(a, asn1.RawValue{Tag: 6, Class: 0, Bytes: []byte("g")})
 	a = append(a, asn1.RawValue{Tag: 12, Class: 0, Bytes: []byte("id:%TPM_FIRMWARE_VERSION%")})
 	values, err = asn1.Marshal(a)
