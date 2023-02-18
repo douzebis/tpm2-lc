@@ -56,11 +56,17 @@ func main() {
 			if ext.Id.String() == "2.5.29.17" {
 				glog.V(10).Infof("Critical %s", ext.Critical)
 				glog.V(10).Infof("Value %s", base64.StdEncoding.EncodeToString(ext.Value))
+				var oid asn1.ObjectIdentifier
+				asn1.Unmarshal(ext.Value, &oid)
+				for _, tmp := range oid {
+					glog.V(10).Infof("Oid %d", tmp)
+				}
 			}
 		}
 	} else {
 		glog.V(10).Infof("Block has type %s", block.Type)
 	}
+	return
 
 	// === Create certificate for TPM CA =======================================
 
