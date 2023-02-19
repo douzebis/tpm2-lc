@@ -8,6 +8,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"encoding/hex"
 	"encoding/pem"
 	"flag"
 	"io/ioutil"
@@ -34,6 +35,45 @@ var (
 
 func main() {
 	flag.Parse()
+
+	// === Open TPM device and flush key handles ===============================
+
+	rwc, err := tpm2.OpenTPM(*tpmPath)
+	if err != nil {
+		glog.Fatalf("can't open TPM %q: %v", tpmPath, err)
+	}
+	defer func() {
+		if err := rwc.Close(); err != nil {
+			glog.Fatalf("\ncan't close TPM %q: %v", tpmPath, err)
+		}
+	}()
+
+	totalHandles := 0
+	for _, handleType := range handleNames[*flush] {
+		handles, err := client.Handles(rwc, handleType)
+		if err != nil {
+			glog.Fatalf("getting handles: %v", err)
+		}
+		for _, handle := range handles {
+			if err = tpm2.FlushContext(rwc, handle); err != nil {
+				glog.Fatalf("flushing handle 0x%x: %v", handle, err)
+			}
+			glog.V(2).Infof("Handle 0x%x flushed\n", handle)
+			totalHandles++
+		}
+	}
+
+	// === Retrieve PCRs values ================================================
+
+	for _, i := range []int{0, 1, 2} {
+		pcrval, err := tpm2.ReadPCR(rwc, i, tpm2.AlgSHA256)
+		if err != nil {
+			glog.Fatalf("ERROR:   Unable to  ReadPCR : %v", err)
+		}
+		glog.V(0).Infof("     PCR [%d] Value %v ", i, hex.EncodeToString(pcrval))
+	}
+
+	return
 
 	// --- Snippet: parse a certificate extensions -----------------------------
 
@@ -71,35 +111,6 @@ func main() {
 	tpmCaCert, tpmCaPrivKey := lib.CreateCA("TPM Manufacturer", "TPM-CA/tpm-ca")
 
 	// === Create certificate for TPM ==========================================
-
-	// --- Open TPM device -----------------------------------------------------
-
-	rwc, err := tpm2.OpenTPM(*tpmPath)
-	if err != nil {
-		glog.Fatalf("can't open TPM %q: %v", tpmPath, err)
-	}
-	defer func() {
-		if err := rwc.Close(); err != nil {
-			glog.Fatalf("\ncan't close TPM %q: %v", tpmPath, err)
-		}
-	}()
-
-	// --- Flush key handles ---------------------------------------------------
-
-	totalHandles := 0
-	for _, handleType := range handleNames[*flush] {
-		handles, err := client.Handles(rwc, handleType)
-		if err != nil {
-			glog.Fatalf("getting handles: %v", err)
-		}
-		for _, handle := range handles {
-			if err = tpm2.FlushContext(rwc, handle); err != nil {
-				glog.Fatalf("flushing handle 0x%x: %v", handle, err)
-			}
-			glog.V(2).Infof("Handle 0x%x flushed\n", handle)
-			totalHandles++
-		}
-	}
 
 	// --- Retrieve TPM EK Pub -------------------------------------------------
 
@@ -217,5 +228,10 @@ func main() {
 	// === Create certificate for Owner CA =====================================
 
 	lib.CreateCA("TPM Owner", "Owner-CA/owner-ca")
+
+	// === Retrieve PCRs =======================================================
+
+	// In this tutorial, we fake boot image PCRs prediction by simply
+	// reading current machine PCRs status
 
 }
