@@ -86,8 +86,6 @@ func main() {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
 
-	return
-
 	// --- Snippet: parse a certificate extensions -----------------------------
 
 	//	testPem, err := ioutil.ReadFile("TPM-CA/tpm.crt")
