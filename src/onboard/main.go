@@ -380,20 +380,62 @@ func main() {
 		glog.Fatalf("tpm2.ContextLoad() failed: %v", err)
 	}
 
-	//akPriv, akPub, creationData, creationHash, creationTicket, err := tpm2.CreateKey(
-	privBlob, pubBlob, _, _, _, err := tpm2.CreateKey(
+	sessCreateHandle, _, err := tpm2.StartAuthSession(
+		rwc,
+		tpm2.HandleNull,
+		tpm2.HandleNull,
+		make([]byte, 16),
+		nil,
+		tpm2.SessionPolicy,
+		tpm2.AlgNull,
+		tpm2.AlgSHA256)
+	if err != nil {
+		glog.Fatalf("ERROR:   Unable to create StartAuthSession: %v", err)
+	}
+	defer tpm2.FlushContext(rwc, sessCreateHandle)
+
+	_, _, err = tpm2.PolicySecret(
+		rwc,
+		tpm2.HandleEndorsement,
+		tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession},
+		sessCreateHandle,
+		nil,
+		nil,
+		nil,
+		0,
+	)
+	if err != nil {
+		glog.Fatalf("tpm2.PolicySecret() failed: %v", err)
+	}
+
+	authCommandCreateAuth := tpm2.AuthCommand{Session: sessCreateHandle, Attributes: tpm2.AttrContinueSession}
+
+	// Creating a key child of EK requires Session
+
+	//akPriv, akPub, creationData, creationHash, creationTicket, err := tpm2.CreateKeyUsingAuth(
+	akPriv, akPub, _, _, _, err := tpm2.CreateKeyUsingAuth(
 		rwc,
 		ek,
 		tpm2.PCRSelection{},
-		"",
+		authCommandCreateAuth,
 		"",
 		client.AKTemplateRSA(),
 	)
+
+	////akPriv, akPub, creationData, creationHash, creationTicket, err := tpm2.CreateKey(
+	//privBlob, pubBlob, _, _, _, err := tpm2.CreateKey(
+	//	rwc,
+	//	ek,
+	//	tpm2.PCRSelection{},
+	//	"",
+	//	"",
+	//	client.AKTemplateRSA(),
+	//)
 	if err != nil {
-		glog.Fatalf("tpm2.CreateKey() failed: %v", err)
+		glog.Fatalf("tpm2.CreateKeyUsingAuth() failed: %v", err)
 	}
 	//ak, akName, err := tpm2.Load(rwc, ek, "", pubBlob, privBlob)
-	ak, _, err := tpm2.Load(rwc, ek, "", pubBlob, privBlob)
+	ak, _, err := tpm2.Load(rwc, ek, "", akPub, akPriv)
 	if err != nil {
 		glog.Fatalf("tpm2.Load() failed: %v", err)
 	}
