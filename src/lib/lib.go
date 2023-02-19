@@ -29,7 +29,7 @@ func Parse(rest []byte, indent string) {
 		glog.V(0).Infof("%sBytes %s", indent, base64.StdEncoding.EncodeToString(v.Bytes))
 		glog.V(0).Infof("%sBytes %v", indent, v.Bytes)
 		if v.IsCompound {
-			parse(v.Bytes, indent+"  ")
+			Parse(v.Bytes, indent+"  ")
 		}
 	}
 }
