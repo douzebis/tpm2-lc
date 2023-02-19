@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"encoding/hex"
 	"encoding/pem"
 	"flag"
 	"io/ioutil"
@@ -410,10 +411,10 @@ func main() {
 
 	authCommandCreateAuth := tpm2.AuthCommand{Session: sessCreateHandle, Attributes: tpm2.AttrContinueSession}
 
-	// Creating a key child of EK requires Session
+	// /!\ Creating a key child of EK requires Session
 
-	//akPriv, akPub, creationData, creationHash, creationTicket, err := tpm2.CreateKeyUsingAuth(
-	akPriv, akPub, _, _, _, err := tpm2.CreateKeyUsingAuth(
+	akPriv, akPub, creationData, creationHash, creationTicket, err := tpm2.CreateKeyUsingAuth(
+		//akPriv, akPub, _, _, _, err := tpm2.CreateKeyUsingAuth(
 		rwc,
 		ek,
 		tpm2.PCRSelection{},
@@ -421,19 +422,29 @@ func main() {
 		"",
 		client.AKTemplateRSA(),
 	)
-
-	////akPriv, akPub, creationData, creationHash, creationTicket, err := tpm2.CreateKey(
-	//privBlob, pubBlob, _, _, _, err := tpm2.CreateKey(
-	//	rwc,
-	//	ek,
-	//	tpm2.PCRSelection{},
-	//	"",
-	//	"",
-	//	client.AKTemplateRSA(),
-	//)
 	if err != nil {
 		glog.Fatalf("tpm2.CreateKeyUsingAuth() failed: %v", err)
 	}
+
+	err = tpm2.FlushContext(rwc, sessCreateHandle)
+	if err != nil {
+		glog.Fatalf("tpm2.FlushContext() failed: %v", err)
+	}
+
+	glog.V(0).Infof("     akPub: %s,", hex.EncodeToString(akPub))
+	glog.V(0).Infof("     akPriv: %s,", hex.EncodeToString(akPriv))
+
+	cr, err := tpm2.DecodeCreationData(creationData)
+	if err != nil {
+		glog.Fatalf("tpm2.DecodeCreationData() failed: %v", err)
+	}
+
+	glog.V(0).Infof("     CredentialData.ParentName.Digest.Value %s", hex.EncodeToString(cr.ParentName.Digest.Value))
+	glog.V(0).Infof("     CredentialTicket %s", hex.EncodeToString(creationTicket.Digest))
+	glog.V(0).Infof("     CredentialHash %s", hex.EncodeToString(creationHash))
+
+	return
+
 	//ak, akName, err := tpm2.Load(rwc, ek, "", pubBlob, privBlob)
 	ak, _, err := tpm2.Load(rwc, ek, "", akPub, akPriv)
 	if err != nil {
