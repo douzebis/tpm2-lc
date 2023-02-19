@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/asn1"
@@ -116,7 +117,6 @@ func main() {
 	if err != nil {
 		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
 	}
-	//pubkey := cert.PublicKey.(*rsa.PublicKey)
 
 	// --- Check TPM Manufacturer CA cert --------------------------------------
 
@@ -129,7 +129,7 @@ func main() {
 	if _, err := tpmCaCert.Verify(opts); err != nil {
 		glog.Fatalf("tpmCaCert.Verify() failed: %v", err)
 	} else {
-		glog.V(0).Infof("Verified %s", "TPM-CA/tpm.crt")
+		glog.V(0).Infof("Verified %s", "TPM-CA/tpm-ca.crt")
 	}
 
 	// --- Read TPM cert -------------------------------------------------------
@@ -145,7 +145,7 @@ func main() {
 	if err != nil {
 		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
 	}
-	//pubkey := cert.PublicKey.(*rsa.PublicKey)
+	//pubkey := tpmCert.PublicKey.(*rsa.PublicKey)
 
 	// --- Check TPM Manufacturer CA cert --------------------------------------
 
@@ -156,5 +156,17 @@ func main() {
 		glog.Fatalf("tpmCert.Verify() failed: %v", err)
 	} else {
 		glog.V(0).Infof("Verified %s", "TPM-CA/tpm.crt")
+	}
+
+	// --- Check TPM EK Pub matches TPM cert -----------------------------------
+
+	toto, err := x509.MarshalPKIXPublicKey(tpmCert.PublicKey)
+	if err != nil {
+		glog.Fatalf("x509.MarshalPKIXPublicKey() failed: %v", err)
+	}
+
+	//a := tpmCert.PublicKey.(*rsa.PublicKey)
+	if !bytes.Equal(ekPubBytes, toto) {
+		glog.Fatalf("EK Pub does not match with TPM certificate")
 	}
 }
