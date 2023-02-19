@@ -70,6 +70,19 @@ func main() {
 		glog.Fatalf("Unable to load SRK from TPM: %v", err)
 	}
 
+	//ek, pub, err := tpm2.CreatePrimary(f, tpm2.HandleEndorsement, tpm2.PCRSelection{}, "", "", tmpl)
+	//if err != nil {
+	//		log.Fatalf("creating ek: %v", err)
+	//}
+	ekCtx, err := tpm2.ContextSave(rwc, ekTpmKey.Handle())
+	if err != nil {
+		glog.Fatalf("tpm2.ContextSave() failed: %v", err)
+	}
+	err = ioutil.WriteFile("Attestor/ek.ctx", ekCtx, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	}
+
 	ekTpmPubKey, _, _, err := tpm2.ReadPublic(rwc, ekTpmKey.Handle())
 	if err != nil {
 		glog.Fatalf("tpm2.ReadPublic() failed: %s", err)
@@ -321,19 +334,6 @@ func main() {
 		PCRs: []int{},
 	}
 	emptyPassword := ""
-
-	//ek, pub, err := tpm2.CreatePrimary(f, tpm2.HandleEndorsement, tpm2.PCRSelection{}, "", "", tmpl)
-	//if err != nil {
-	//		log.Fatalf("creating ek: %v", err)
-	//}
-	ekCtx, err := tpm2.ContextSave(rwc, ekTpmKey.Handle())
-	if err != nil {
-		glog.Fatalf("tpm2.ContextSave() failed: %v", err)
-	}
-	err = ioutil.WriteFile("Attestor/ek.ctx", ekCtx, 0644)
-	if err != nil {
-		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
-	}
 
 	//akPriv, akPub, creationData, creationHash, creationTicket, err := tpm2.CreateKey(
 	_, _, _, _, _, err = tpm2.CreateKey(
