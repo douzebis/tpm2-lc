@@ -226,7 +226,7 @@ func main() {
 	// --- Check Owner CA cert -------------------------------------------------
 
 	ownerRoots := x509.NewCertPool()
-	ownerRoots.AddCert(tpmCaCert)
+	ownerRoots.AddCert(ownerCaCert)
 	ownerOpts := x509.VerifyOptions{
 		Roots: ownerRoots,
 	}
