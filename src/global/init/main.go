@@ -66,17 +66,25 @@ func main() {
 	// === Retrieve PCRs values ================================================
 
 	pcrList := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14}
-	for i, j := range pcrList {
-		glog.V(0).Infof("i %v j %v", i, j)
-	}
-	pcrs := make([][]byte, 24)
-	for i, _ := range pcrs {
-		pcrs[i], err = tpm2.ReadPCR(rwc, i, tpm2.AlgSHA384)
+	pcrsExpected := make([][]byte, len(pcrList))
+	pcrsExpectedDigest := []byte{}
+	for ndx, val := range pcrList {
+		pcrsExpected[ndx], err = tpm2.ReadPCR(rwc, val, tpm2.AlgSHA384)
 		if err != nil {
 			glog.Fatalf("ERROR:   Unable to  ReadPCR : %v", err)
 		}
-		glog.V(0).Infof("     PCR [%d] Value %v ", i, hex.EncodeToString(pcrs[i]))
+		pcrsExpectedDigest = append(pcrsExpectedDigest, pcrsExpected[ndx]...)
+		glog.V(0).Infof("PCR [%d] Value %v ", ndx, hex.EncodeToString(pcrsExpected[ndx]))
+		glog.V(0).Infof("Digest %v ", hex.EncodeToString(pcrsExpectedDigest))
 	}
+	//pcrs := make([][]byte, 24)
+	//for i, _ := range pcrs {
+	//	pcrs[i], err = tpm2.ReadPCR(rwc, i, tpm2.AlgSHA384)
+	//	if err != nil {
+	//		glog.Fatalf("ERROR:   Unable to  ReadPCR : %v", err)
+	//	}
+	//	glog.V(0).Infof("     PCR [%d] Value %v ", i, hex.EncodeToString(pcrs[i]))
+	//}
 
 	return
 
