@@ -12,14 +12,13 @@ import (
 	"encoding/pem"
 	"flag"
 	"io/ioutil"
+	"main/src/lib"
 	"math/big"
 	"time"
 
 	"github.com/golang/glog"
 	"github.com/google/go-tpm-tools/client"
 	"github.com/google/go-tpm/tpm2"
-
-	"../lib"
 )
 
 var handleNames = map[string][]tpm2.HandleType{
