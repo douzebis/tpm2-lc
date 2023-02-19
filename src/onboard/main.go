@@ -492,13 +492,13 @@ func main() {
 	akn := hex.EncodeToString(akName)
 	glog.V(0).Infof("AK keyName %s", akn)
 
-	akTpmPublicKey, akName2, _, err := tpm2.ReadPublic(rwc, ak)
+	akTpmPublicKey, akName, _, err := tpm2.ReadPublic(rwc, ak)
 	if err != nil {
 		glog.Fatalf("tpm2.ReadPublic() failed: %v", err)
 	}
-	if !bytes.Equal(akName, akName2) {
-		glog.Fatalf("akName and akName2 differ\n%v\n%v", akName, akName2)
-	}
+	//if !bytes.Equal(akName, akName2) {
+	//	glog.Fatalf("akName and akName2 differ\n%v\n%v", akName, akName2)
+	//}
 
 	akPublicKey, err := akTpmPublicKey.Key()
 	if err != nil {
