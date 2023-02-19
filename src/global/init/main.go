@@ -5,6 +5,7 @@ package main
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha512"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
@@ -67,24 +68,18 @@ func main() {
 
 	pcrList := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14}
 	pcrsExpected := make([][]byte, len(pcrList))
-	pcrsExpectedDigest := []byte{}
+	pcrsConcat := []byte{}
 	for ndx, val := range pcrList {
-		pcrsExpected[ndx], err = tpm2.ReadPCR(rwc, val, tpm2.AlgSHA384)
+		pcr, err := tpm2.ReadPCR(rwc, val, tpm2.AlgSHA384)
 		if err != nil {
 			glog.Fatalf("ERROR:   Unable to  ReadPCR : %v", err)
 		}
-		pcrsExpectedDigest = append(pcrsExpectedDigest, pcrsExpected[ndx]...)
-		glog.V(0).Infof("PCR [%d] Value %v ", ndx, hex.EncodeToString(pcrsExpected[ndx]))
-		glog.V(0).Infof("Digest %v ", hex.EncodeToString(pcrsExpectedDigest))
+		glog.V(0).Infof("PCR [%d] Value %v ", ndx, hex.EncodeToString(pcr))
+		pcrsExpected[ndx] = pcr
+		pcrsConcat = append(pcrsConcat, pcr...)
 	}
-	//pcrs := make([][]byte, 24)
-	//for i, _ := range pcrs {
-	//	pcrs[i], err = tpm2.ReadPCR(rwc, i, tpm2.AlgSHA384)
-	//	if err != nil {
-	//		glog.Fatalf("ERROR:   Unable to  ReadPCR : %v", err)
-	//	}
-	//	glog.V(0).Infof("     PCR [%d] Value %v ", i, hex.EncodeToString(pcrs[i]))
-	//}
+	digest := sha512.Sum384(pcrsConcat)
+	glog.V(0).Infof("Digest %s ", hex.EncodeToString(digest[:]))
 
 	return
 
