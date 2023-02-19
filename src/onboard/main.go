@@ -5,6 +5,7 @@ package main
 import (
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/asn1"
 	"encoding/pem"
 	"flag"
 	"io/ioutil"
@@ -102,13 +103,13 @@ func main() {
 
 	// === Verify TPM EK Pub with TPM manufacturer =============================
 
-	// --- Read TPM Manufacturer CA --------------------------------------------
+	// --- Read TPM Manufacturer CA cert ---------------------------------------
 
 	tpmCaPem, err := ioutil.ReadFile("TPM-CA/tpm-ca.crt")
 	if err != nil {
 		glog.Fatalf("ioutil.ReadFile() failed: %v", err)
 	}
-	glog.V(0).Infof("TPM-CA/tpm-ca.crt:\n%s", string(tpmCaPem))
+	//glog.V(0).Infof("TPM-CA/tpm-ca.crt:\n%s", string(tpmCaPem))
 
 	tpmCaBlock, _ := pem.Decode(tpmCaPem)
 	tpmCaCert, err := x509.ParseCertificate(tpmCaBlock.Bytes)
@@ -117,9 +118,8 @@ func main() {
 	}
 	//pubkey := cert.PublicKey.(*rsa.PublicKey)
 
-	// --- Check TPM Manufacturer CA -------------------------------------------
+	// --- Check TPM Manufacturer CA cert --------------------------------------
 
-	//tpmCert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
 	roots := x509.NewCertPool()
 	roots.AddCert(tpmCaCert)
 	opts := x509.VerifyOptions{
@@ -128,6 +128,32 @@ func main() {
 
 	if _, err := tpmCaCert.Verify(opts); err != nil {
 		glog.Fatalf("tpmCaCert.Verify() failed: %v", err)
+	} else {
+		glog.V(0).Infof("Verified %s", "TPM-CA/tpm.crt")
+	}
+
+	// --- Read TPM cert -------------------------------------------------------
+
+	tpmPem, err := ioutil.ReadFile("TPM-CA/tpm.crt")
+	if err != nil {
+		glog.Fatalf("ioutil.ReadFile() failed: %v", err)
+	}
+	//glog.V(0).Infof("TPM-CA/tpm.crt:\n%s", string(tpmPem))
+
+	tpmBlock, _ := pem.Decode(tpmPem)
+	tpmCert, err := x509.ParseCertificate(tpmBlock.Bytes)
+	if err != nil {
+		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
+	}
+	//pubkey := cert.PublicKey.(*rsa.PublicKey)
+
+	// --- Check TPM Manufacturer CA cert --------------------------------------
+
+	//unhandledCriticalExtensions := tpmCert.UnhandledCriticalExtensions
+	tpmCert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
+
+	if _, err := tpmCert.Verify(opts); err != nil {
+		glog.Fatalf("tpmCert.Verify() failed: %v", err)
 	} else {
 		glog.V(0).Infof("Verified %s", "TPM-CA/tpm.crt")
 	}
