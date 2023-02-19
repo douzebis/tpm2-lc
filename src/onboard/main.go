@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha512"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
@@ -64,21 +65,6 @@ func main() {
 	}
 
 	// === Retrieve TPM EK Pub =================================================
-
-	//emptyAuth := tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession}
-	//Auth: []byte(tpm2.EmptyAuth)
-	err = tpm2.Clear(
-		rwc,
-		tpm2.HandlePlatform,
-		tpm2.AuthCommand{
-			Session:    tpm2.HandlePasswordSession,
-			Attributes: tpm2.AttrContinueSession,
-			Auth:       make([]byte, 20),
-		},
-	)
-	if err != nil {
-		glog.Fatalf("tpm2.Clear() failed: %v", err)
-	}
 
 	ekTpmKey, err := client.EndorsementKeyRSA(rwc)
 	if err != nil {
@@ -327,6 +313,43 @@ func main() {
 		glog.Fatalf("tpmOwnerCert.Verify() failed: %v", err)
 	} else {
 		glog.V(0).Infof("Verified %s", "Owner-CA/tpm.crt")
+	}
+
+	// === Create TPM AK =======================================================
+
+	pcrSelection0 := tpm2.PCRSelection{
+		Hash: sha512.Sum384,
+		PCRs: []int{},
+	}
+	emptyPassword := ""
+
+	//akPriv, akPub, creationData, creationHash, creationTicket, err := tpm2.CreateKey(
+	_, _, _, _, _, err = tpm2.CreateKey(
+		rwc,
+		ekTpmKey.Handle(),
+		pcrSelection0,
+		emptyPassword,
+		emptyPassword,
+		client.AKTemplateRSA(),
+	)
+	if err != nil {
+		glog.Fatalf("tpm2.CreateKey: %v", err)
+	}
+
+	// === Clear TPM ===========================================================
+
+	err = tpm2.Clear(
+		rwc,
+		tpm2.HandlePlatform,
+		tpm2.AuthCommand{
+			Session:    tpm2.HandlePasswordSession,
+			Attributes: tpm2.AttrContinueSession,
+			// See https://github.com/google/go-tpm/issues/157
+			Auth: make([]byte, 20), // The empty password
+		},
+	)
+	if err != nil {
+		glog.Fatalf("tpm2.Clear() failed: %v", err)
 	}
 
 }
