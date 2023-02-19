@@ -65,12 +65,13 @@ func main() {
 
 	// === Retrieve PCRs values ================================================
 
-	for _, i := range make([]int, 24) {
-		pcrval, err := tpm2.ReadPCR(rwc, i, tpm2.AlgSHA384)
+	pcrs := make([][]byte, 24)
+	for i, _ := range pcrs {
+		pcrs[i], err = tpm2.ReadPCR(rwc, i, tpm2.AlgSHA384)
 		if err != nil {
 			glog.Fatalf("ERROR:   Unable to  ReadPCR : %v", err)
 		}
-		glog.V(0).Infof("     PCR [%d] Value %v ", i, hex.EncodeToString(pcrval))
+		glog.V(0).Infof("     PCR [%d] Value %v ", i, hex.EncodeToString(pcrs[i]))
 	}
 
 	return
