@@ -350,7 +350,7 @@ func main() {
 	//akPriv, akPub, creationData, creationHash, creationTicket, err := tpm2.CreateKey(
 	_, _, _, _, _, err = tpm2.CreateKey(
 		rwc,
-		ekTpmKey.Handle(),
+		ekHandle,
 		pcrSelection0,
 		emptyPassword,
 		emptyPassword,
