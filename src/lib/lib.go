@@ -99,12 +99,12 @@ func CreateCA(name, path string) (*x509.Certificate, *rsa.PrivateKey) {
 		},
 	))
 
-	err = ioutil.WriteFile("TPM-CA/tpm-ca.crt", caPEM, 0644)
+	err = ioutil.WriteFile(path+".crt", caPEM, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
 
-	glog.V(0).Infof("Wrote TPM-CA/tpm-ca.crt")
+	glog.V(0).Infof("Wrote %s.crt", path)
 
 	// --- Verify TPM CA cert --------------------------------------------------
 
@@ -127,7 +127,7 @@ func CreateCA(name, path string) (*x509.Certificate, *rsa.PrivateKey) {
 	if _, err := caCert.Verify(opts); err != nil {
 		glog.Fatalf("caCert.Verify() failed: %v", err)
 	} else {
-		glog.V(0).Infof("Verified %s", "TPM-CA/tpm-ca.crt")
+		glog.V(0).Infof("Verified %s.crt", path)
 	}
 
 	return caCert, caPrivKey
