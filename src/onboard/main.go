@@ -65,6 +65,19 @@ func main() {
 
 	// === Retrieve TPM EK Pub =================================================
 
+	err = tpm2.Clear(
+		rwc,
+		tpm2.HandleOwner,
+		tpm2.AuthCommand{
+			Session:    tpm2.HandlePasswordSession,
+			Attributes: tpm2.AttrContinueSession,
+			Auth:       []byte{},
+		},
+	)
+	if err != nil {
+		glog.Fatalf("tpm2.Clear() failed: %v", err)
+	}
+
 	ekTpmKey, err := client.EndorsementKeyRSA(rwc)
 	if err != nil {
 		glog.Fatalf("Unable to load SRK from TPM: %v", err)
