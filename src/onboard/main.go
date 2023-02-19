@@ -343,12 +343,43 @@ func main() {
 	if err != nil {
 		glog.Fatalf("tpm2.ContextLoad() failed: %v", err)
 	}
-	privBlob, pubBlob, _, _, _, err := tpm2.CreateKey(rwc, ek, tpm2.PCRSelection{}, "", "", client.AKTemplateRSA())
+
+	tmpl := tpm2.Public{
+		Type:    tpm2.AlgRSA,
+		NameAlg: tpm2.AlgSHA256,
+		Attributes: tpm2.FlagFixedTPM | // Key can't leave the TPM.
+			tpm2.FlagFixedParent | // Key can't change parent.
+			tpm2.FlagSensitiveDataOrigin | // Key created by the TPM (not imported).
+			tpm2.FlagUserWithAuth | // Uses (empty) password.
+			tpm2.FlagNoDA | // This flag doesn't do anything, but it's in the spec.
+			tpm2.FlagRestricted | // Key used for TPM challenges, not general decryption.
+			tpm2.FlagDecrypt, // Key can be used to decrypt data.
+		RSAParameters: &tpm2.RSAParams{
+			Symmetric:  &tpm2.SymScheme{Alg: tpm2.AlgAES, KeyBits: 128, Mode: tpm2.AlgCFB},
+			KeyBits:    2048,
+			ModulusRaw: make([]byte, 256),
+		},
+	}
+
+	srk, _, err := tpm2.CreatePrimary(rwc, tpm2.HandleOwner, tpm2.PCRSelection{}, "", "", tmpl)
+	if err != nil {
+		glog.Fatalf("tpm2.CreatePrimary() failed: %v", err)
+	}
+	out, err := tpm2.ContextSave(rwc, srk)
+	if err != nil {
+		glog.Fatalf("tpm2.ContextSave() failed: %v", err)
+	}
+	err = ioutil.WriteFile("Atterstorsrk.ctx", out, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	}
+
+	privBlob, pubBlob, _, _, _, err := tpm2.CreateKey(rwc, srk, tpm2.PCRSelection{}, "", "", client.AKTemplateRSA())
 	if err != nil {
 		glog.Fatalf("tpm2.CreateKey() failed: %v", err)
 	}
 	//ak, akName, err := tpm2.Load(rwc, ek, "", pubBlob, privBlob)
-	ak, _, err := tpm2.Load(rwc, ek, "", pubBlob, privBlob)
+	ak, _, err := tpm2.Load(rwc, srk, "", pubBlob, privBlob)
 	if err != nil {
 		glog.Fatalf("tpm2.Load() failed: %v", err)
 	}
