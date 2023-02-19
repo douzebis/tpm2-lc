@@ -161,13 +161,25 @@ func main() {
 
 	// --- Check SAN in TPM cert -----------------------------------------------
 
+	subjectAltName := asn1.ObjectIdentifier{2, 5, 29, 17}
+
 	if len(unhandledCriticalExtensions) != 1 {
 		glog.Fatalf("Unexpected UnhandledCriticalExtensions: %v",
 			unhandledCriticalExtensions)
 	}
-	if !unhandledCriticalExtensions[0].Equal(asn1.ObjectIdentifier{2, 5, 29, 17}) {
+	if !unhandledCriticalExtensions[0].Equal(subjectAltName) {
 		glog.Fatalf("OID is not SAN: %v", unhandledCriticalExtensions[0])
 	}
+
+	for _, ext := range tpmCert.Extensions {
+		if ext.Id.Equal(subjectAltName) {
+			if !ext.Critical {
+				glog.Fatalf("SAN should be critical")
+			}
+			glog.V(0).Infof("%s", string(ext.Value))
+		}
+	}
+
 	//expectedExtension := []pkix.Extension{
 	//	*lib.CreateSubjectAltName(
 	//		[]byte("id: Google"),
