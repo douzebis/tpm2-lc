@@ -88,13 +88,10 @@ func main() {
 		"",
 		client.DefaultEKTemplateRSA(),
 	)
+	if err != nil {
+		glog.Fatalf("tpm2.CreatePrimary() failed: %v", err)
+	}
 
-	//NewCachedKey(rw, tpm2.HandleEndorsement, DefaultEKTemplateRSA(), EKReservedHandle)
-
-	//ek, pub, err := tpm2.CreatePrimary(f, tpm2.HandleEndorsement, tpm2.PCRSelection{}, "", "", tmpl)
-	//if err != nil {
-	//		log.Fatalf("creating ek: %v", err)
-	//}
 	ekCtx, err := tpm2.ContextSave(rwc, ekHandle)
 	if err != nil {
 		glog.Fatalf("tpm2.ContextSave() failed: %v", err)
@@ -103,6 +100,7 @@ func main() {
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
+	glog.V(0).Infof("Wrote Attestor/ek.ctx")
 
 	ekPubBytes, err := x509.MarshalPKIXPublicKey(ekPubKey)
 	if err != nil {
@@ -341,19 +339,36 @@ func main() {
 
 	// === Create TPM AK =======================================================
 
-	pcrSelection0 := tpm2.PCRSelection{
-		Hash: tpm2.AlgSHA256,
-		PCRs: []int{},
+	ek, err := tpm2.ContextLoad(rwc, ekCtx)
+	if err != nil {
+		glog.Fatalf("tpm2.ContextLoad() failed: %v", err)
 	}
-	emptyPassword := ""
+	privBlob, pubBlob, _, _, _, err := tpm2.CreateKey(rwc, ek, tpm2.PCRSelection{}, "", "", client.AKTemplateRSA())
+	if err != nil {
+		glog.Fatalf("tpm2.CreateKey() failed: %v", err)
+	}
+	//ak, akName, err := tpm2.Load(rwc, ek, "", pubBlob, privBlob)
+	ak, _, err := tpm2.Load(rwc, ek, "", pubBlob, privBlob)
+	if err != nil {
+		glog.Fatalf("tpm2.Load() failed: %v", err)
+	}
+
+	akCtx, err := tpm2.ContextSave(rwc, ak)
+	if err != nil {
+		glog.Fatalf("tpm2.ContextSave() failed: %v", err)
+	}
+	err = ioutil.WriteFile("Attestor/ak.ctx", akCtx, 0644)
+	if err != nil {
+		glog.Fatalf("tpm2.ContextSave() failed: %v", err)
+	}
 
 	//akPriv, akPub, creationData, creationHash, creationTicket, err := tpm2.CreateKey(
 	_, _, _, _, _, err = tpm2.CreateKey(
 		rwc,
 		ekHandle,
-		pcrSelection0,
-		emptyPassword,
-		emptyPassword,
+		tpm2.PCRSelection{},
+		"",
+		"",
 		client.AKTemplateRSA(),
 	)
 	if err != nil {
