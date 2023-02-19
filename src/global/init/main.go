@@ -447,7 +447,9 @@ func main() {
 	if err != nil {
 		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
 	}
+	glog.V(0).Infof("cert before %v", tpmCert)
 	tpmCert.ExtraExtensions = []pkix.Extension{}
+	glog.V(0).Infof("cert after %v", tpmCert)
 
 	if _, err := tpmCert.Verify(opts); err != nil {
 		glog.Fatalf("tpmCert.Verify() failed: %v", err)
