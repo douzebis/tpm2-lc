@@ -8,7 +8,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
-	"encoding/base64"
 	"encoding/pem"
 	"flag"
 	"io/ioutil"
@@ -33,24 +32,7 @@ var (
 	flush   = flag.String("flush", "all", "Flush contexts, must be oneof transient|saved|loaded|all")
 )
 
-func parse(rest []byte, indent string) {
-	for len(rest) > 0 {
-		var v asn1.RawValue
-		rest, _ = asn1.Unmarshal(rest, &v)
-		glog.V(0).Infof("%sClass %d", indent, v.Class)
-		glog.V(0).Infof("%sTag %d", indent, v.Tag)
-		glog.V(0).Infof("%sIsCompound %v", indent, v.IsCompound)
-		glog.V(0).Infof("%sBytes %s", indent, string(v.FullBytes))
-		glog.V(0).Infof("%sBytes %s", indent, base64.StdEncoding.EncodeToString(v.Bytes))
-		glog.V(0).Infof("%sBytes %v", indent, v.Bytes)
-		if v.IsCompound {
-			parse(v.Bytes, indent+"  ")
-		}
-	}
-}
-
 func main() {
-	lib.Demo()
 	flag.Parse()
 
 	// --- Snippet: parse a certificate extensions -----------------------------
@@ -85,6 +67,9 @@ func main() {
 	// certificate, we fake a TPM CA and a fake TPM EK certificate.
 
 	// === Create certificate for TPM CA =======================================
+
+	titi, toto := lib.CreateCA("TPM Manufacturer", "TPM-CA/tpm-ca")
+	return
 
 	// Inspired by:
 	// https://gist.github.com/shaneutt/5e1995295cff6721c89a71d13a71c251
@@ -140,11 +125,6 @@ func main() {
 		glog.Fatalf("x509.CreateCertificate() failed: %v", err)
 	}
 
-	caCert, err := x509.ParseCertificate(caBytes)
-	if err != nil {
-		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
-	}
-
 	// pem encode
 	caPEM := []byte(pem.EncodeToMemory(
 		&pem.Block{
@@ -166,6 +146,11 @@ func main() {
 	// openssl verify -CAfile TPM-CA/tpm-ca.crt TPM-CA/tpm-ca.crt
 	// openssl rsa -in TPM-CA/tpm-ca.key -pubout
 	// openssl x509 -in TPM-CA/tpm-ca.crt -pubkey -noout
+
+	caCert, err := x509.ParseCertificate(caBytes)
+	if err != nil {
+		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
+	}
 
 	roots := x509.NewCertPool()
 	roots.AddCert(caCert)
