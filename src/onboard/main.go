@@ -317,7 +317,7 @@ func main() {
 	// === Create TPM AK =======================================================
 
 	pcrSelection0 := tpm2.PCRSelection{
-		Hash: tpm2.AlgSHA384,
+		Hash: tpm2.AlgSHA256,
 		PCRs: []int{},
 	}
 	emptyPassword := ""
