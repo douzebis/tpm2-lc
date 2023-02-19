@@ -64,15 +64,12 @@ func main() {
 	}
 
 	// === Retrieve TPM EK Pub =================================================
+	emptyAuth := tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession}
 
 	err = tpm2.Clear(
 		rwc,
 		tpm2.HandleOwner,
-		tpm2.AuthCommand{
-			Session:    tpm2.HandleNull,
-			Attributes: tpm2.AttrContinueSession,
-			Auth:       []byte{},
-		},
+		emptyAuth,
 	)
 	if err != nil {
 		glog.Fatalf("tpm2.Clear() failed: %v", err)
