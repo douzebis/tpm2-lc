@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha512"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
@@ -318,7 +317,7 @@ func main() {
 	// === Create TPM AK =======================================================
 
 	pcrSelection0 := tpm2.PCRSelection{
-		Hash: sha512.Sum384,
+		Hash: tpm2.AlgSHA384,
 		PCRs: []int{},
 	}
 	emptyPassword := ""
