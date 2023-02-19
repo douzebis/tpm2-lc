@@ -33,19 +33,9 @@ var (
 )
 
 func parse(rest []byte, indent string) {
-	//glog.V(10).Infof("%s", string(values))
-	//glog.V(10).Infof("%sValueslen %d", indent, len(rest))
-	//var seq asn1.RawValue
-	//rest, _ := asn1.Unmarshal(values, &seq)
-	//rest := seq.Bytes
 	for len(rest) > 0 {
 		var v asn1.RawValue
-		//glog.V(10).Infof("%sLen1 %d", indent, len(rest))
-		//glog.V(10).Infof("%sRest1 %s", indent, string(rest))
 		rest, _ = asn1.Unmarshal(rest, &v)
-		//glog.V(10).Infof("%sLen2 %d", indent, len(rest))
-		//glog.V(10).Infof("%sv.Bytes %d", indent, len(v.Bytes))
-		//glog.V(10).Infof("%sRest2 %s", indent, string(rest))
 		glog.V(10).Infof("%sClass %d", indent, v.Class)
 		glog.V(10).Infof("%sTag %d", indent, v.Tag)
 		glog.V(10).Infof("%sIsCompound %v", indent, v.IsCompound)
@@ -53,11 +43,7 @@ func parse(rest []byte, indent string) {
 		glog.V(10).Infof("%sBytes %s", indent, base64.StdEncoding.EncodeToString(v.Bytes))
 		glog.V(10).Infof("%sBytes %v", indent, v.Bytes)
 		if v.IsCompound {
-			//nextv := make([]byte, len(v.Bytes))
-			//copy(nextv, v.Bytes)
 			parse(v.Bytes, indent+"  ")
-		} else {
-			//glog.V(10).Infof("%sFullBytes %s", indent, string(v.FullBytes))
 		}
 	}
 }
@@ -65,80 +51,34 @@ func parse(rest []byte, indent string) {
 func main() {
 	flag.Parse()
 
-	testPem, err := ioutil.ReadFile("../tpm2/manufacturer/ek.crt")
-	if err != nil {
-		glog.Fatalf("ioutil.ReadFile() failed: %v", err)
-	}
-	block, _ := pem.Decode([]byte(testPem))
-	if block == nil {
-		glog.Fatalf("pem.Decode() failed: %v", err)
-	}
+	//	testPem, err := ioutil.ReadFile("../tpm2/manufacturer/ek.crt")
+	//	if err != nil {
+	//		glog.Fatalf("ioutil.ReadFile() failed: %v", err)
+	//	}
+	//	block, _ := pem.Decode([]byte(testPem))
+	//	if block == nil {
+	//		glog.Fatalf("pem.Decode() failed: %v", err)
+	//	}
+	//
+	//	if block.Type == "CERTIFICATE" {
+	//		glog.V(10).Infof("Block has type CERTIFICATE")
+	//		certificate, err := x509.ParseCertificate(block.Bytes)
+	//		if err != nil {
+	//			glog.Fatalf("x509.ParseCertificate() failed: %v", err)
+	//		}
+	//		for _, ext := range certificate.Extensions {
+	//			// filter the custom extensions by customOID
+	//			glog.V(10).Infof("extension %s", ext.Id.String())
+	//			if ext.Id.String() == "2.5.29.17" {
+	//				parse(ext.Value, "")
+	//			}
+	//		}
+	//	} else {
+	//		glog.V(10).Infof("Block has type %s", block.Type)
+	//	}
 
-	if block.Type == "CERTIFICATE" {
-		glog.V(10).Infof("Block has type CERTIFICATE")
-		certificate, err := x509.ParseCertificate(block.Bytes)
-		if err != nil {
-			glog.Fatalf("x509.ParseCertificate() failed: %v", err)
-		}
-		for _, ext := range certificate.Extensions {
-			// filter the custom extensions by customOID
-			glog.V(10).Infof("extension %s", ext.Id.String())
-			if ext.Id.String() == "2.5.29.17" {
-				parse(ext.Value, "")
-				//				return
-				//				glog.V(10).Infof("Critical %s", ext.Critical)
-				//				glog.V(10).Infof("Value %s", base64.StdEncoding.EncodeToString(ext.Value))
-				//				//var oid asn1.ObjectIdentifier
-				//				//asn1.Unmarshal(ext.Value, &oid)
-				//				//glog.V(10).Infof("Oid %v", oid)
-				//				//for _, tmp := range oid {
-				//				//	glog.V(10).Infof("Oid %d", tmp)
-				//				//}
-				//				var seq asn1.RawValue
-				//				asn1.Unmarshal(ext.Value, &seq)
-				//				rest := seq.Bytes
-				//				for len(rest) > 0 {
-				//					var v asn1.RawValue
-				//					rest, _ = asn1.Unmarshal(rest, &v)
-				//					glog.V(10).Infof("Class %d", v.Class)
-				//					glog.V(10).Infof("Tag %d", v.Tag)
-				//					glog.V(10).Infof("IsCompound %v", v.IsCompound)
-				//					glog.V(10).Infof("Bytes %s", string(v.Bytes))
-				//					glog.V(10).Infof("FullBytes %s", string(v.FullBytes))
-				//
-				//					var toto asn1.RawValue
-				//					asn1.Unmarshal(v.Bytes, &toto)
-				//					titi := toto.Bytes
-				//					for len(titi) > 0 {
-				//						var tutu asn1.RawValue
-				//						titi, _ = asn1.Unmarshal(titi, &tutu)
-				//						glog.V(10).Infof("class %d", tutu.Class)
-				//						glog.V(10).Infof("tag %d", tutu.Tag)
-				//						glog.V(10).Infof("isCompound %v", tutu.IsCompound)
-				//						glog.V(10).Infof("bytes %s", string(tutu.Bytes))
-				//						glog.V(10).Infof("fullBytes %s", string(tutu.FullBytes))
-				//
-				//						var ante asn1.RawValue
-				//						asn1.Unmarshal(toto.Bytes, &ante)
-				//						rest2 := ante.Bytes
-				//						for len(rest2) > 0 {
-				//							var leaf asn1.RawValue
-				//							rest2, _ = asn1.Unmarshal(rest2, &leaf)
-				//							glog.V(10).Infof("class %d", leaf.Class)
-				//							glog.V(10).Infof("tag %d", leaf.Tag)
-				//							glog.V(10).Infof("isCompound %v", leaf.IsCompound)
-				//							glog.V(10).Infof("bytes %s", string(leaf.Bytes))
-				//							glog.V(10).Infof("fullBytes %s", string(leaf.FullBytes))
-				//						}
-				//
-				//					}
-				//				}
-				//
-			}
-		}
-	} else {
-		glog.V(10).Infof("Block has type %s", block.Type)
-	}
+	// Since GCP Shielded VMs TPM Endorsement Keys come without a proper
+	// certificate, we fake a TPM CA and a fake TPM EK certificate.
 
 	// === Create certificate for TPM CA =======================================
 
@@ -295,33 +235,8 @@ func main() {
 	//X509v3 extensions:
 	//	X509v3 Subject Alternative Name: critical
 	//		DirName:/2.23.133.2.2=id:%TPM_MODEL%+2.23.133.2.1=id:%TPM_MANUFACTURER%+2.23.133.2.3=id:%TPM_FIRMWARE_VERSION%
-	//	X509v3 Basic Constraints: critical
-	//		CA:FALSE
-	//	X509v3 Key Usage:
-	//		Key Encipherment
-	//	X509v3 Subject Key Identifier:
-	//		50:33:69:BA:1D:4A:D5:A1:AA:E9:E8:24:79:EB:78:0C:85:43:C0:96
-	//	X509v3 Authority Key Identifier:
-	//		59:46:B7:9A:1A:F8:8F:AE:53:01:22:1C:95:C5:9D:53:39:E8:11:EA
-	//Signature Algorithm: sha256WithRSAEncryption
 	//
 	// See also https://upgrades.intel.com/content/CRL/ekcert/EKcertPolicyStatement.pdf
-
-	//extSubjectAltName := pkix.Extension{}
-	//extSubjectAltName.Id = asn1.ObjectIdentifier{2, 5, 29, 17}
-	//extSubjectAltName.Critical = false
-	//extSubjectAltName.Value = []byte("")
-	subjectAltName := asn1.ObjectIdentifier{2, 5, 29, 17}
-	//rawValues := []asn1.RawValue{
-	//	{Class: 2, Tag: 6, Bytes: []byte("TPM_MODEL/1")},
-	//	{Class: 2, Tag: 6, Bytes: []byte("TPM_MANUFACTURER/2")},
-	//	{Class: 2, Tag: 6, Bytes: []byte("TPM_FIRMWARE_VERSION/3")},
-	//}
-	//values, err := asn1.Marshal(rawValues)
-	//if err != nil {
-	//	glog.Fatalf("asn1.Marshal() failed: %v", err)
-	//}
-	//values, _ = base64.StdEncoding.DecodeString("MGOkYTBfMV0wFwYFZ4EFAgIMDmlkOiVUUE1fTU9ERUwlMB4GBWeBBQIBDBVpZDolVFBNX01BTlVGQUNUVVJFUiUwIgYFZ4EFAgMMGWlkOiVUUE1fRklSTVdBUkVfVkVSU0lPTiU=")
 
 	a1, err := asn1.Marshal(asn1.RawValue{
 		Class: asn1.ClassUniversal,
@@ -369,6 +284,9 @@ func main() {
 		Tag:        asn1.TagSequence,
 		IsCompound: true, Bytes: append(a2[:], b2[:]...),
 	})
+	if err != nil {
+		glog.Fatalf("asn1.Marshal() failed: %v", err)
+	}
 	a3, err := asn1.Marshal(asn1.RawValue{
 		Class: asn1.ClassUniversal,
 		Tag:   asn1.TagOID,
@@ -439,10 +357,11 @@ func main() {
 		NotBefore: time.Now(),
 		NotAfter:  time.Now().AddDate(10, 0, 0),
 		KeyUsage:  x509.KeyUsageKeyEncipherment,
-		// Add subjectAltName
-		//ExtraExtensions: []pkix.Extension{extSubjectAltName},
-		ExtraExtensions: []pkix.Extension{{Id: subjectAltName, Critical: true, Value: values}},
-		//ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		ExtraExtensions: []pkix.Extension{{
+			Id:       asn1.ObjectIdentifier{2, 5, 29, 17},
+			Critical: true,
+			Value:    values,
+		}},
 		BasicConstraintsValid: true,
 		IsCA:                  false,
 	}
@@ -474,5 +393,6 @@ func main() {
 
 	// Note: to check everything went OK on the target
 	// openssl verify -CAfile TPM-CA/tpm-ca.crt TPM-CA/tpm.crt
+	// openssl x509 -noout -ext subjectAltName -in TPM-CA/tpm.crt
 
 }
