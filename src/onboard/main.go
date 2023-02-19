@@ -35,7 +35,7 @@ var (
 	flush   = flag.String("flush", "all", "Flush contexts, must be oneof transient|saved|loaded|all")
 )
 
-// ### GetAK ###################################################################
+// ### GetAK (on attestor) #####################################################
 
 func CreateAK(rwc io.ReadWriter) {
 
@@ -249,6 +249,12 @@ func CreateAK(rwc io.ReadWriter) {
 	)
 	glog.V(0).Infof("akPubPEM: \n%v", string(akPubPEM))
 
+	err = ioutil.WriteFile("Attestor/ak.name", akName, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed for ak.name: %v", err)
+	}
+	glog.V(0).Infof("Wrote Attestor/ak.name")
+
 	err = ioutil.WriteFile("Attestor/ak.pub", akPub, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
@@ -268,6 +274,25 @@ func CreateAK(rwc io.ReadWriter) {
 	glog.V(10).Infof("EkPub %v", ekPubBytes)
 	glog.V(10).Infof("AkName %v", akName)
 	glog.V(10).Infof("AkPub %v", akPubBytes)
+}
+
+// ### GenerateCred (on verifier) ##############################################
+
+func GenerateCred() {
+
+	akName, err := ioutil.ReadFile("Attestor/ak.name")
+	if err != nil {
+		glog.Fatalf("ioutil.ReadFile() failed for ak.name: %v", err)
+	}
+
+	// Verify digest matches the public blob that was provided.
+	name, err := tpm2.DecodeName(bytes.NewBuffer(akName))
+	if err != nil {
+		glog.Fatalf("tpm2.DecodeName(): %v", err)
+	}
+	if name.Digest == nil {
+		glog.Fatalf("ak.name was not a digest")
+	}
 }
 
 // ### Main ####################################################################
@@ -581,7 +606,11 @@ func main() {
 
 	// === Create TPM AK =======================================================
 
-	CreateAK(rwc)
+	CreateAK(rwc) // On the Attestor
+
+	// === Create credential challenge =========================================
+
+	GenerateCred() // On the Verifier
 
 	//	ek, err = tpm2.ContextLoad(rwc, ekCtx)
 	//	if err != nil {
