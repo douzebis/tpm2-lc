@@ -65,6 +65,10 @@ func main() {
 
 	// === Retrieve PCRs values ================================================
 
+	pcrList := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14}
+	for i, j := range pcrList {
+		glog.V(0).Infof("i %v j %v", i, j)
+	}
 	pcrs := make([][]byte, 24)
 	for i, _ := range pcrs {
 		pcrs[i], err = tpm2.ReadPCR(rwc, i, tpm2.AlgSHA384)
