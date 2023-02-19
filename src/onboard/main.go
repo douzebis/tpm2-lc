@@ -249,12 +249,6 @@ func CreateAK(rwc io.ReadWriter) {
 	)
 	glog.V(0).Infof("akPubPEM: \n%v", string(akPubPEM))
 
-	err = ioutil.WriteFile("Attestor/ak.name", akName0, 0644)
-	if err != nil {
-		glog.Fatalf("ioutil.WriteFile() failed for ak.name: %v", err)
-	}
-	glog.V(0).Infof("Wrote Attestor/ak.name")
-
 	err = ioutil.WriteFile("Attestor/ak.pub", akPub, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
@@ -274,6 +268,12 @@ func CreateAK(rwc io.ReadWriter) {
 	glog.V(10).Infof("EkPub %v", ekPubBytes)
 	glog.V(10).Infof("AkName %v", akName)
 	glog.V(10).Infof("AkPub %v", akPubBytes)
+
+	err = ioutil.WriteFile("Attestor/ak.name", akName0, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed for ak.name: %v", err)
+	}
+	glog.V(0).Infof("Wrote Attestor/ak.name")
 }
 
 // ### GenerateCred (on verifier) ##############################################
@@ -285,6 +285,11 @@ func GenerateCred() {
 		glog.Fatalf("ioutil.ReadFile() failed for ak.name: %v", err)
 	}
 
+	akPub, err := ioutil.ReadFile("Attestor/ak.pub")
+	if err != nil {
+		glog.Fatalf("ioutil.ReadFile() failed for ak.pub: %v", err)
+	}
+
 	// Verify digest matches the public blob that was provided.
 	name, err := tpm2.DecodeName(bytes.NewBuffer(akName))
 	if err != nil {
@@ -293,6 +298,40 @@ func GenerateCred() {
 	if name.Digest == nil {
 		glog.Fatalf("ak.name was not a digest")
 	}
+
+	h, err := name.Digest.Alg.Hash()
+	if err != nil {
+		glog.Fatalf("failed to get name hash: %v", err)
+	}
+	pubHash := h.New()
+	pubHash.Write(akPub)
+	pubDigest := pubHash.Sum(nil)
+	if !bytes.Equal(name.Digest.Value, pubDigest) {
+		glog.Fatalf("name was not for public blob")
+	}
+
+	// Inspect key attributes.
+	pub, err := tpm2.DecodePublic(akPub)
+	if err != nil {
+		glog.Fatalf("decode public blob: %v", err)
+	}
+	glog.V(0).Infof("Key attributes: 0x08%x\n", pub.Attributes)
+
+	//		// Retrieves ekPub
+	//		ekPub, err := ioutil.ReadFile("Verifier/ek.pub")
+	//		if err != nil {
+	//			glog.Fatalf("ioutil.ReadFile() failed for ek.pub: %v", err)
+	//		}
+	//	   ekBlock, _ := pem.Decode([]byte(ekPub))
+	//	   key, _ := x509.ParsePKCS1PrivateKey(ekBlock.Bytes)
+	//
+	//		// Generate a challenge for the name.
+	//		secret := []byte("The quick brown fox jumps over the lazy dog")
+	//		symBlockSize := 16
+	//		credBlob, encSecret, err := credactivation.Generate(name.Digest, ekPub, symBlockSize, secret)
+	//		if err != nil {
+	//			glog.Fatalf("generate credential: %v", err)
+	//		}
 }
 
 // ### Main ####################################################################
@@ -497,6 +536,19 @@ func main() {
 		glog.Fatalf("EK Pub does not match TPM certificate")
 	}
 	glog.V(0).Infof("EK Pub matches TPM certificate")
+
+	ekPubPem := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "PUBLIC KEY",
+			Bytes: ekPubBytes,
+		},
+	)
+
+	err = ioutil.WriteFile("Verifier/ek.pub", ekPubPem, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed for EK Pub: %v", err)
+	}
+	glog.V(0).Infof("Wrote Verifier/ek.pub")
 
 	// === Create Owner certificate for EK Pub =================================
 
