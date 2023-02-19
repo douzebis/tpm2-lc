@@ -69,7 +69,7 @@ func main() {
 		rwc,
 		tpm2.HandleOwner,
 		tpm2.AuthCommand{
-			Session:    tpm2.HandlePasswordSession,
+			Session:    tpm2.HandleNull,
 			Attributes: tpm2.AttrContinueSession,
 			Auth:       []byte{},
 		},
