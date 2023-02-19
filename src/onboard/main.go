@@ -21,6 +21,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/google/go-tpm-tools/client"
 	"github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/tpm2/credactivation"
 )
 
 var handleNames = map[string][]tpm2.HandleType{
@@ -317,21 +318,26 @@ func GenerateCred() {
 	}
 	glog.V(0).Infof("Key attributes: 0x08%x\n", pub.Attributes)
 
-	//		// Retrieves ekPub
-	//		ekPub, err := ioutil.ReadFile("Verifier/ek.pub")
-	//		if err != nil {
-	//			glog.Fatalf("ioutil.ReadFile() failed for ek.pub: %v", err)
-	//		}
-	//	   ekBlock, _ := pem.Decode([]byte(ekPub))
-	//	   key, _ := x509.ParsePKCS1PrivateKey(ekBlock.Bytes)
-	//
-	//		// Generate a challenge for the name.
-	//		secret := []byte("The quick brown fox jumps over the lazy dog")
-	//		symBlockSize := 16
-	//		credBlob, encSecret, err := credactivation.Generate(name.Digest, ekPub, symBlockSize, secret)
-	//		if err != nil {
-	//			glog.Fatalf("generate credential: %v", err)
-	//		}
+	// Retrieves ekPub
+	ekPubPem, err := ioutil.ReadFile("Verifier/ek.pub")
+	if err != nil {
+		glog.Fatalf("ioutil.ReadFile() failed for ek.pub: %v", err)
+	}
+	ekBlock, _ := pem.Decode(ekPubPem)
+	ekPub, err := x509.ParsePKIXPublicKey(ekBlock.Bytes)
+	if err != nil {
+		glog.Fatalf("x509.ParsePKCS1PrivateKey() failed: %v", err)
+	}
+
+	// Generate a challenge for the name.
+	secret := []byte("The quick brown fox jumps over the lazy dog")
+	symBlockSize := 16
+	credBlob, encSecret, err := credactivation.Generate(name.Digest, ekPub, symBlockSize, secret)
+	if err != nil {
+		glog.Fatalf("generate credential: %v", err)
+	}
+	glog.V(0).Infof("credBlob: %v\n", credBlob)
+	glog.V(0).Infof("encSecret: %v\n", encSecret)
 }
 
 // ### Main ####################################################################
