@@ -497,7 +497,7 @@ func main() {
 		glog.Fatalf("tpm2.ReadPublic() failed: %v", err)
 	}
 	if !bytes.Equal(akName, akName2) {
-		glog.Fatalf("akName and akName2 differ")
+		glog.Fatalf("akName and akName2 differ\n%v\n%v", akName, akName2)
 	}
 
 	akPublicKey, err := akTpmPublicKey.Key()
