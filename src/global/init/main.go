@@ -306,109 +306,96 @@ func main() {
 	//Signature Algorithm: sha256WithRSAEncryption
 	//
 	// See also https://upgrades.intel.com/content/CRL/ekcert/EKcertPolicyStatement.pdf
-	extSubjectAltName := pkix.Extension{}
-	extSubjectAltName.Id = asn1.ObjectIdentifier{2, 5, 29, 17}
-	extSubjectAltName.Critical = false
-	//extSubjectAltName.Value = []byte("DirName:/2.23.133.2.2=id:TPM_MODEL+2.23.133.2.1=id:TPM_MANUFACTURER+2.23.133.2.3=id:TPM_FIRMWARE_VERSION")
-	extSubjectAltName.Value = []byte("")
 
-	subjectAltName := asn1.ObjectIdentifier{2, 5, 29, 17}
-	rawValues := []asn1.RawValue{
-		{Class: 2, Tag: 6, Bytes: []byte("TPM_MODEL/1")},
-		{Class: 2, Tag: 6, Bytes: []byte("TPM_MANUFACTURER/2")},
-		{Class: 2, Tag: 6, Bytes: []byte("TPM_FIRMWARE_VERSION/3")},
-	}
-	values, err := asn1.Marshal(rawValues)
-	if err != nil {
-		glog.Fatalf("asn1.Marshal() failed: %v", err)
-	}
-	values, _ = base64.StdEncoding.DecodeString("MGOkYTBfMV0wFwYFZ4EFAgIMDmlkOiVUUE1fTU9ERUwlMB4GBWeBBQIBDBVpZDolVFBNX01BTlVGQUNUVVJFUiUwIgYFZ4EFAgMMGWlkOiVUUE1fRklSTVdBUkVfVkVSU0lPTiU=")
-
-	//var buf []byte
-	tpmFirmwareVersion := asn1.RawValue{
-		Class:      asn1.ClassUniversal,
-		Tag:        asn1.TagUTF8String,
-		IsCompound: false,
-		Bytes:      []byte("id:%TPM_FIRMWARE_VERSION%"),
-	}
-	//buf, err = asn1.Marshal("id:%TPM_FIRMWARE_VERSION%")
+	//extSubjectAltName := pkix.Extension{}
+	//extSubjectAltName.Id = asn1.ObjectIdentifier{2, 5, 29, 17}
+	//extSubjectAltName.Critical = false
+	//extSubjectAltName.Value = []byte("")
+	//subjectAltName := asn1.ObjectIdentifier{2, 5, 29, 17}
+	//rawValues := []asn1.RawValue{
+	//	{Class: 2, Tag: 6, Bytes: []byte("TPM_MODEL/1")},
+	//	{Class: 2, Tag: 6, Bytes: []byte("TPM_MANUFACTURER/2")},
+	//	{Class: 2, Tag: 6, Bytes: []byte("TPM_FIRMWARE_VERSION/3")},
+	//}
+	//values, err := asn1.Marshal(rawValues)
 	//if err != nil {
 	//	glog.Fatalf("asn1.Marshal() failed: %v", err)
 	//}
-	//tpmFirmwareVersion.Bytes = buf
-	values, err = asn1.Marshal(tpmFirmwareVersion)
-	if err != nil {
-		glog.Fatalf("asn1.Marshal() failed: %v", err)
-	}
+	//values, _ = base64.StdEncoding.DecodeString("MGOkYTBfMV0wFwYFZ4EFAgIMDmlkOiVUUE1fTU9ERUwlMB4GBWeBBQIBDBVpZDolVFBNX01BTlVGQUNUVVJFUiUwIgYFZ4EFAgMMGWlkOiVUUE1fRklSTVdBUkVfVkVSU0lPTiU=")
 
 	a1, err := asn1.Marshal(asn1.RawValue{
-		Class: 0,
-		Tag:   6,
+		Class: asn1.ClassUniversal,
+		Tag:   asn1.TagOID,
 		Bytes: []byte{103, 129, 5, 2, 1}, // ASN1 encoding for 2.23.133.2.1
 	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
 	b1, err := asn1.Marshal(asn1.RawValue{
-		Class: 0,
-		Tag:   12,
-		Bytes: []byte("id:%TPM_MANUFACTURER%"),
+		Class: asn1.ClassUniversal,
+		Tag:   asn1.TagUTF8String,
+		Bytes: []byte("TPM_MANUFACTURER"),
 	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	c1, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 16, IsCompound: true, Bytes: append(a1[:], b1[:]...)})
+	c1, err := asn1.Marshal(asn1.RawValue{
+		Class:      asn1.ClassUniversal,
+		Tag:        asn1.TagSequence,
+		IsCompound: true,
+		Bytes:      append(a1[:], b1[:]...),
+	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
 	a2, err := asn1.Marshal(asn1.RawValue{
-		Class: 0,
-		Tag:   6,
+		Class: asn1.ClassUniversal,
+		Tag:   asn1.TagOID,
 		Bytes: []byte{103, 129, 5, 2, 2}, // ASN1 encoding for 2.23.133.2.2
 	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
 	b2, err := asn1.Marshal(asn1.RawValue{
-		Class: 0,
-		Tag:   12,
-		Bytes: []byte("id:%TPM_MODEL%"),
+		Class: asn1.ClassUniversal,
+		Tag:   asn1.TagUTF8String,
+		Bytes: []byte("TPM_MODEL"),
 	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
 	c2, err := asn1.Marshal(asn1.RawValue{
-		Class:      0,
-		Tag:        16,
+		Class:      asn1.ClassUniversal,
+		Tag:        asn1.TagSequence,
 		IsCompound: true, Bytes: append(a2[:], b2[:]...),
 	})
 	a3, err := asn1.Marshal(asn1.RawValue{
-		Class: 0,
-		Tag:   6,
+		Class: asn1.ClassUniversal,
+		Tag:   asn1.TagOID,
 		Bytes: []byte{103, 129, 5, 2, 3}, // ASN1 encoding for 2.23.133.2.3
 	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
 	b3, err := asn1.Marshal(asn1.RawValue{
-		Class: 0,
-		Tag:   12,
-		Bytes: []byte("id:%TPM_FIRMWARE_VERSION%"),
+		Class: asn1.ClassUniversal,
+		Tag:   asn1.TagUTF8String,
+		Bytes: []byte("TPM_FIRMWARE_VERSION"),
 	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
 	c3, err := asn1.Marshal(asn1.RawValue{
-		Class:      0,
-		Tag:        16,
+		Class:      asn1.ClassUniversal,
+		Tag:        asn1.TagSequence,
 		IsCompound: true, Bytes: append(a3[:], b3[:]...),
 	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
 	d, err := asn1.Marshal(asn1.RawValue{
-		Class:      0,
-		Tag:        17,
+		Class:      asn1.ClassUniversal,
+		Tag:        asn1.TagSet,
 		IsCompound: true,
 		Bytes:      append(append(c1[:], c2[:]...), c3[:]...),
 	})
@@ -416,8 +403,8 @@ func main() {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
 	e, err := asn1.Marshal(asn1.RawValue{
-		Class:      0,
-		Tag:        16,
+		Class:      asn1.ClassUniversal,
+		Tag:        asn1.TagSequence,
 		IsCompound: true,
 		Bytes:      d,
 	})
@@ -425,24 +412,23 @@ func main() {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
 	f, err := asn1.Marshal(asn1.RawValue{
-		Class:      2,
-		Tag:        4,
+		Class:      asn1.ClassContextSpecific,
+		Tag:        asn1.TagOctetString,
 		IsCompound: true,
 		Bytes:      e,
 	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	g, err := asn1.Marshal(asn1.RawValue{
-		Class:      0,
-		Tag:        16,
+	values, err := asn1.Marshal(asn1.RawValue{
+		Class:      asn1.ClassUniversal,
+		Tag:        asn1.TagSequence,
 		IsCompound: true,
 		Bytes:      f,
 	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
-	values = g
 
 	tpmTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
