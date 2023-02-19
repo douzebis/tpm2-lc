@@ -18,6 +18,8 @@ import (
 	"github.com/golang/glog"
 	"github.com/google/go-tpm-tools/client"
 	"github.com/google/go-tpm/tpm2"
+
+	"../lib"
 )
 
 var handleNames = map[string][]tpm2.HandleType{
@@ -49,6 +51,7 @@ func parse(rest []byte, indent string) {
 }
 
 func main() {
+	lib.Demo()
 	flag.Parse()
 
 	// --- Snippet: parse a certificate extensions -----------------------------
@@ -447,9 +450,7 @@ func main() {
 	if err != nil {
 		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
 	}
-	glog.V(0).Infof("cert before %v", tpmCert)
 	tpmCert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
-	glog.V(0).Infof("cert after %v", tpmCert)
 
 	if _, err := tpmCert.Verify(opts); err != nil {
 		glog.Fatalf("tpmCert.Verify() failed: %v", err)
