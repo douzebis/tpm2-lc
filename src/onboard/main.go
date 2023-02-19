@@ -102,7 +102,7 @@ func main() {
 
 	// === Verify TPM EK Pub with TPM manufacturer =============================
 
-	// --- Read and check TPM Manufacturer CA ----------------------------------
+	// --- Read TPM Manufacturer CA --------------------------------------------
 
 	tpmCaPem, err := ioutil.ReadFile("TPM-CA/tpm-ca.crt")
 	if err != nil {
@@ -110,4 +110,25 @@ func main() {
 	}
 	glog.V(0).Infof("TPM-CA/tpm-ca.crt:\n%s", string(tpmCaPem))
 
+	tpmCaBlock, _ := pem.Decode(tpmCaPem)
+	tpmCaCert, err := x509.ParseCertificate(tpmCaBlock.Bytes)
+	if err != nil {
+		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
+	}
+	//pubkey := cert.PublicKey.(*rsa.PublicKey)
+
+	// --- Check TPM Manufacturer CA -------------------------------------------
+
+	//tpmCert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
+	roots := x509.NewCertPool()
+	roots.AddCert(tpmCaCert)
+	opts := x509.VerifyOptions{
+		Roots: roots,
+	}
+
+	if _, err := tpmCaCert.Verify(opts); err != nil {
+		glog.Fatalf("tpmCaCert.Verify() failed: %v", err)
+	} else {
+		glog.V(0).Infof("Verified %s", "TPM-CA/tpm.crt")
+	}
 }
