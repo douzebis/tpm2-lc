@@ -311,7 +311,7 @@ func main() {
 	if _, err := tpmCert.Verify(ownerOpts); err != nil {
 		glog.Fatalf("tpmCert.Verify() failed: %v", err)
 	} else {
-		glog.V(0).Infof("Verified %s", "TPM-CA/tpm.crt")
+		glog.V(0).Infof("Verified %s", "Owner-CA/tpm.crt")
 	}
 
 }
