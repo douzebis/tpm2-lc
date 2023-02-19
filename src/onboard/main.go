@@ -93,11 +93,21 @@ func main() {
 	// From https://stackoverflow.com/a/44317246
 	switch ekPubTyp := ekPubKey.(type) {
 	case *rsa.PublicKey:
-		glog.V(0).Infof("ekPublicKey is of type RSA: %v", ekPubTyp)
+		glog.V(0).Infof("ekPublicKey is of type RSA")
 	default:
 		glog.Fatalf("ekPublicKey is not of type RSA: %v", ekPubTyp)
 	}
 	ekPublicKey, _ := ekPubKey.(*rsa.PublicKey)
 	glog.V(0).Infof("ekPublicKey %v", ekPublicKey)
+
+	// === Verify TPM EK Pub with TPM manufacturer =============================
+
+	// --- Read and check TPM Manufacturer CA ----------------------------------
+
+	tpmCaPem, err := ioutil.ReadFile("TPM-CA/tpm-ca.crt")
+	if err != nil {
+		glog.Fatalf("ioutil.ReadFile() failed: %v", err)
+	}
+	glog.V(0).Infof("TPM-CA/tpm-ca.crt:\n%s", string(tpmCaPem))
 
 }
