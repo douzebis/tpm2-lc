@@ -3,17 +3,11 @@
 package main
 
 import (
-	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	"crypto/x509/pkix"
-	"encoding/asn1"
 	"encoding/pem"
 	"flag"
 	"io/ioutil"
-	"main/src/lib"
-	"math/big"
-	"time"
 
 	"github.com/golang/glog"
 	"github.com/google/go-tpm-tools/client"
@@ -104,87 +98,6 @@ func main() {
 		glog.Fatalf("ekPublicKey is not of type RSA: %v", ekPubTyp)
 	}
 	ekPublicKey, _ := ekPubKey.(*rsa.PublicKey)
-
-	return
-
-	// --- Create TPM EK certificate -------------------------------------------
-
-	tpmTemplate := x509.Certificate{
-		SerialNumber: big.NewInt(1),
-		Subject: pkix.Name{
-			Organization: []string{"TPM Inc"},
-			CommonName:   "TPM",
-		},
-		NotBefore: time.Now(),
-		NotAfter:  time.Now().AddDate(10, 0, 0),
-		KeyUsage:  x509.KeyUsageKeyEncipherment,
-		ExtraExtensions: []pkix.Extension{
-			*lib.CreateSubjectAltName(
-				[]byte("id: Google"),
-				[]byte("id: Shielded VM vTPM"),
-				[]byte("id: 00010001"),
-			),
-		},
-		BasicConstraintsValid: true,
-		IsCA:                  false,
-	}
-
-	tpmBytes, err := x509.CreateCertificate(
-		rand.Reader,
-		&tpmTemplate,
-		tpmCaCert,
-		ekPublicKey,
-		tpmCaPrivKey)
-	if err != nil {
-		glog.Fatalf("x509.CreateCertificate() failed: %v", err)
-	}
-
-	// pem encode
-	tpmPEM := []byte(pem.EncodeToMemory(
-		&pem.Block{
-			Type:  "CERTIFICATE",
-			Bytes: tpmBytes,
-		},
-	))
-
-	err = ioutil.WriteFile("TPM-CA/tpm.crt", tpmPEM, 0644)
-	if err != nil {
-		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
-	}
-
-	glog.V(0).Infof("Wrote TPM-CA/tpm.crt")
-
-	// --- Verify TPM cert -----------------------------------------------------
-
-	// Note: equivalently with openssl:
-	// openssl verify -CAfile TPM-CA/tpm-ca.crt TPM-CA/tpm.crt
-	// openssl x509 -noout -ext subjectAltName -in TPM-CA/tpm.crt
-
-	tpmCert, err := x509.ParseCertificate(tpmBytes)
-	if err != nil {
-		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
-	}
-	tpmCert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
-
-	roots := x509.NewCertPool()
-	roots.AddCert(tpmCaCert)
-	opts := x509.VerifyOptions{
-		Roots: roots,
-	}
-
-	if _, err := tpmCert.Verify(opts); err != nil {
-		glog.Fatalf("tpmCert.Verify() failed: %v", err)
-	} else {
-		glog.V(0).Infof("Verified %s", "TPM-CA/tpm.crt")
-	}
-
-	// === Create certificate for Owner CA =====================================
-
-	lib.CreateCA("TPM Owner", "Owner-CA/owner-ca")
-
-	// === Retrieve PCRs =======================================================
-
-	// In this tutorial, we fake boot image PCRs prediction by simply
-	// reading current machine PCRs status
+	glog.V(0).Infof("ekPublicKey %v", ekPublicKey)
 
 }
