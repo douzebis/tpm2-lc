@@ -369,6 +369,9 @@ func main() {
 	if err != nil {
 		glog.Fatalf("tpm2.ContextSave() failed: %v", err)
 	}
+	if err = tpm2.FlushContext(rwc, srk); err != nil {
+		glog.Fatalf("tpm2.FlushContext(0x%x) failed: %v", srk, err)
+	}
 	err = ioutil.WriteFile("Atterstorsrk.ctx", srkCtx, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
