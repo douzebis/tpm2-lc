@@ -1,5 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
+// Prior to running this program, manual setup must be performed
+//
+// Create GCP shielded vm with ubuntu 22.10
+//
+// The tutorial should be run as ubuntu user
+//   sudo su - ubuntu
+//   sudo apt-get update
+//   sudo apt-get install -y tpm2-tools
+//   sudo apt-get install -y golang
+//   sudo usermod -a -G tss ubuntu
+//   sudo update-grub
+//   sudo reboot now
+//   sudo su - ubuntu
+//   git clone https://github.com/douzebis/tpm2-lc.git
+//   cd tpm2-lc/
+//   go run src/init/main.go -alsologtostderr
+
 package main
 
 import (
