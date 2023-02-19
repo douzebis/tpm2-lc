@@ -6,10 +6,12 @@ import (
 	"bytes"
 	"crypto/rsa"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/pem"
 	"flag"
 	"io/ioutil"
+	"main/src/lib"
 
 	"github.com/golang/glog"
 	"github.com/google/go-tpm-tools/client"
@@ -171,22 +173,25 @@ func main() {
 		glog.Fatalf("OID is not SAN: %v", unhandledCriticalExtensions[0])
 	}
 
+	expectedSAN := pkix.Extension(
+		*lib.CreateSubjectAltName(
+			[]byte("id: Google"),
+			[]byte("id: Shielded VM vTPM"),
+			[]byte("id: 00010001"),
+		),
+	)
+
 	for _, ext := range tpmCert.Extensions {
 		if ext.Id.Equal(subjectAltName) {
 			if !ext.Critical {
 				glog.Fatalf("SAN should be critical")
 			}
-			glog.V(0).Infof("%s", string(ext.Value))
+			if !ext.Id.Equal(expectedSAN.Id) || !bytes.Equal(ext.Value, expectedSAN.Value) {
+				glog.Fatalf("SAN has unexpected value: %v", ext)
+
+			}
 		}
 	}
-
-	//expectedExtension := []pkix.Extension{
-	//	*lib.CreateSubjectAltName(
-	//		[]byte("id: Google"),
-	//		[]byte("id: Shielded VM vTPM"),
-	//		[]byte("id: 00010001"),
-	//	),
-	//}
 
 	// --- Check TPM EK Pub matches TPM cert -----------------------------------
 
