@@ -296,11 +296,19 @@ func main() {
 		NotBefore: time.Now(),
 		NotAfter:  time.Now().AddDate(10, 0, 0),
 		KeyUsage:  x509.KeyUsageKeyEncipherment,
-		ExtraExtensions: []pkix.Extension{{
-			Id:       asn1.ObjectIdentifier{2, 5, 29, 17},
-			Critical: true,
-			Value:    values,
-		}},
+		//ExtraExtensions: []pkix.Extension{{
+		//	// {joint-iso-itu-t(2) ds(5) certificateExtension(29) subjectAltName(17)}
+		//	Id:       asn1.ObjectIdentifier{2, 5, 29, 17},
+		//	Critical: true,
+		//	Value:    values,
+		//}},
+		ExtraExtensions: []pkix.Extension{
+			*lib.CreateSubjectAltName(
+				[]byte("id: Google"),
+				[]byte("id: Shielded VM vTPM"),
+				[]byte("id: 00010001"),
+			),
+		},
 		BasicConstraintsValid: true,
 		IsCA:                  false,
 	}
