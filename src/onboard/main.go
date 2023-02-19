@@ -355,12 +355,12 @@ func GenerateCredential() {
 
 func ActivateCredential(rwc io.ReadWriter) {
 
-	credBlob, err := ioutil.ReadFile("Attestor/credBlob")
+	credBlob, err := ioutil.ReadFile("Verifier/credBlob")
 	if err != nil {
 		glog.Fatalf("ioutil.ReadFile() failed for credBlob: %v", err)
 	}
 
-	encSecret, err := ioutil.ReadFile("Attestor/encSecret")
+	encSecret, err := ioutil.ReadFile("Verifier/encSecret")
 	if err != nil {
 		glog.Fatalf("ioutil.ReadFile() failed for encSecret: %v", err)
 	}
