@@ -382,6 +382,27 @@ func main() {
 		Tag:        16,
 		IsCompound: true, Bytes: append(a2[:], b2[:]...),
 	})
+	a3, err := asn1.Marshal(asn1.RawValue{
+		Class: 0,
+		Tag:   6,
+		Bytes: []byte{103, 129, 5, 2, 3}, // ASN1 encoding for 2.23.133.2.3
+	})
+	if err != nil {
+		glog.Fatalf("asn1.Marshal() failed: %v", err)
+	}
+	b3, err := asn1.Marshal(asn1.RawValue{
+		Class: 0,
+		Tag:   12,
+		Bytes: []byte("id:%TPM_FIRMWARE_VERSION%"),
+	})
+	if err != nil {
+		glog.Fatalf("asn1.Marshal() failed: %v", err)
+	}
+	c3, err := asn1.Marshal(asn1.RawValue{
+		Class:      0,
+		Tag:        16,
+		IsCompound: true, Bytes: append(a3[:], b3[:]...),
+	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
@@ -389,7 +410,7 @@ func main() {
 		Class:      0,
 		Tag:        17,
 		IsCompound: true,
-		Bytes:      append(c1[:], c2[:]...),
+		Bytes:      append(append(c1[:], c2[:]...), c3[:]...),
 	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
