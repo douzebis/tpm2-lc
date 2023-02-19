@@ -160,13 +160,13 @@ func main() {
 
 	// --- Check TPM EK Pub matches TPM cert -----------------------------------
 
-	toto, err := x509.MarshalPKIXPublicKey(tpmCert.PublicKey)
+	certPubBytes, err := x509.MarshalPKIXPublicKey(tpmCert.PublicKey)
 	if err != nil {
 		glog.Fatalf("x509.MarshalPKIXPublicKey() failed: %v", err)
 	}
 
-	//a := tpmCert.PublicKey.(*rsa.PublicKey)
-	if !bytes.Equal(ekPubBytes, toto) {
-		glog.Fatalf("EK Pub does not match with TPM certificate")
+	if !bytes.Equal(ekPubBytes, certPubBytes) {
+		glog.Fatalf("EK Pub does not match TPM certificate")
 	}
+	glog.V(0).Infof("EK Pub matches TPM certificate")
 }
