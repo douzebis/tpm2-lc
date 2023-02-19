@@ -311,7 +311,7 @@ func main() {
 	//extSubjectAltName.Id = asn1.ObjectIdentifier{2, 5, 29, 17}
 	//extSubjectAltName.Critical = false
 	//extSubjectAltName.Value = []byte("")
-	//subjectAltName := asn1.ObjectIdentifier{2, 5, 29, 17}
+	subjectAltName := asn1.ObjectIdentifier{2, 5, 29, 17}
 	//rawValues := []asn1.RawValue{
 	//	{Class: 2, Tag: 6, Bytes: []byte("TPM_MODEL/1")},
 	//	{Class: 2, Tag: 6, Bytes: []byte("TPM_MANUFACTURER/2")},
