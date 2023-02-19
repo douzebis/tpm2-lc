@@ -376,6 +376,8 @@ func main() {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
 
+	// === Create TPM AK =======================================================
+
 	ek, err = tpm2.ContextLoad(rwc, ekCtx)
 	if err != nil {
 		glog.Fatalf("tpm2.ContextLoad() failed: %v", err)
@@ -411,7 +413,7 @@ func main() {
 
 	authCommandCreateAuth := tpm2.AuthCommand{Session: sessCreateHandle, Attributes: tpm2.AttrContinueSession}
 
-	// /!\ Creating a key child of EK requires Session
+	// /!\ Creating a key child of EK requires Auth Session
 
 	akPriv, akPub, creationData, creationHash, creationTicket, err := tpm2.CreateKeyUsingAuth(
 		//akPriv, akPub, _, _, _, err := tpm2.CreateKeyUsingAuth(
@@ -443,10 +445,101 @@ func main() {
 	glog.V(0).Infof("     CredentialTicket %s", hex.EncodeToString(creationTicket.Digest))
 	glog.V(0).Infof("     CredentialHash %s", hex.EncodeToString(creationHash))
 
+	// === Load TPM AK (requires Auth Session) =================================
+
+	loadSession, _, err := tpm2.StartAuthSession(
+		rwc,
+		tpm2.HandleNull,
+		tpm2.HandleNull,
+		make([]byte, 16),
+		nil,
+		tpm2.SessionPolicy,
+		tpm2.AlgNull,
+		tpm2.AlgSHA256,
+	)
+	if err != nil {
+		glog.Fatalf("tpm2.StartAuthSession() failed : %v", err)
+	}
+	//defer tpm2.FlushContext(rwc, loadSession)
+
+	_, _, err = tpm2.PolicySecret(
+		rwc,
+		tpm2.HandleEndorsement,
+		tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession},
+		loadSession,
+		nil,
+		nil,
+		nil,
+		0,
+	)
+	if err != nil {
+		glog.Fatalf("tpm2.PolicySecret() failed: %v", err)
+	}
+
+	authCommandLoad := tpm2.AuthCommand{Session: loadSession, Attributes: tpm2.AttrContinueSession}
+
+	ak, akName, err := tpm2.LoadUsingAuth(rwc, ek, authCommandLoad, akPub, akPriv)
+	if err != nil {
+		glog.Fatalf("tpm2.LoadUsingAuth() failed: %v", err)
+	}
+	//defer tpm2.FlushContext(rwc, keyHandle)
+
+	err = tpm2.FlushContext(rwc, loadSession)
+	if err != nil {
+		glog.Fatalf("tpm2.FlushContext() failed: %v", err)
+	}
+
+	akn := hex.EncodeToString(akName)
+	glog.V(0).Infof("AK keyName %s", akn)
+
+	akTpmPublicKey, akName2, _, err := tpm2.ReadPublic(rwc, ak)
+	if err != nil {
+		glog.Fatalf("tpm2.ReadPublic() failed: %v", err)
+	}
+	if !bytes.Equal(akName, akName2) {
+		glog.Fatalf("akName and akName2 differ")
+	}
+
+	akPublicKey, err := akTpmPublicKey.Key()
+	if err != nil {
+		glog.Fatalf("akTpmPublicKey.Key() failed: %v", err)
+	}
+	akBytes, err := x509.MarshalPKIXPublicKey(akPublicKey)
+	if err != nil {
+		glog.Fatalf("x509.MarshalPKIXPublicKey() failed: %v", err)
+	}
+
+	akPubPEM := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "PUBLIC KEY",
+			Bytes: akBytes,
+		},
+	)
+	glog.V(0).Infof("akPubPEM: \n%v", string(akPubPEM))
+
+	err = ioutil.WriteFile("Attestor/ak.pub", akPub, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	}
+	glog.V(0).Infof("Wrote Attestor/ak.pub")
+
+	err = ioutil.WriteFile("Attestor/ak.key", akPriv, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	}
+	glog.V(0).Infof("Wrote Attestor/ak.key")
+	akPubBytes, err := akTpmPublicKey.Encode()
+	if err != nil {
+		glog.Fatalf("akTpmPublicKey.Encode() failed: %v", err)
+	}
+	glog.V(0).Infof("EkPub %v", ekPubBytes)
+	glog.V(0).Infof("AkName %v", akName)
+	glog.V(0).Infof("AkPub %v", akPubBytes)
+
 	return
 
 	//ak, akName, err := tpm2.Load(rwc, ek, "", pubBlob, privBlob)
-	ak, _, err := tpm2.Load(rwc, ek, "", akPub, akPriv)
+	ak, _, err = tpm2.Load(rwc, ek, "", akPub, akPriv)
 	if err != nil {
 		glog.Fatalf("tpm2.Load() failed: %v", err)
 	}
