@@ -422,11 +422,6 @@ func main() {
 		glog.Fatalf("x509.CreateCertificate() failed: %v", err)
 	}
 
-	tpmCert, err := x509.ParseCertificate(tpmBytes)
-	if err != nil {
-		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
-	}
-
 	// pem encode
 	tpmPEM := []byte(pem.EncodeToMemory(
 		&pem.Block{
@@ -447,6 +442,12 @@ func main() {
 	// Note: equivalently with openssl:
 	// openssl verify -CAfile TPM-CA/tpm-ca.crt TPM-CA/tpm.crt
 	// openssl x509 -noout -ext subjectAltName -in TPM-CA/tpm.crt
+
+	tpmCert, err := x509.ParseCertificate(tpmBytes)
+	if err != nil {
+		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
+	}
+	tpmCert.ExtraExtensions = []pkix.Extension{}
 
 	if _, err := tpmCert.Verify(opts); err != nil {
 		glog.Fatalf("tpmCert.Verify() failed: %v", err)
