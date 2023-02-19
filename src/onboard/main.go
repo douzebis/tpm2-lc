@@ -342,11 +342,6 @@ func main() {
 
 	// === Create TPM AK =======================================================
 
-	//ek, err := tpm2.ContextLoad(rwc, ekCtx)
-	//if err != nil {
-	//	glog.Fatalf("tpm2.ContextLoad() failed: %v", err)
-	//}
-
 	tmpl := tpm2.Public{
 		Type:    tpm2.AlgRSA,
 		NameAlg: tpm2.AlgSHA256,
@@ -380,7 +375,7 @@ func main() {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
 
-	ek, err = tpm2.ContextLoad(rwc, srkCtx)
+	ek, err = tpm2.ContextLoad(rwc, ekCtx)
 	if err != nil {
 		glog.Fatalf("tpm2.ContextLoad() failed: %v", err)
 	}
