@@ -37,6 +37,10 @@ func Parse(rest []byte, indent string) {
 // This func must be Exported, Capitalized, and comment added.
 func CreateCA(name, path string) (*x509.Certificate, *rsa.PrivateKey) {
 
+	// Inspired by:
+	// https://gist.github.com/shaneutt/5e1995295cff6721c89a71d13a71c251
+	// https://stackoverflow.com/a/70261780
+
 	// --- Create RSA key for TPM CA -------------------------------------------
 
 	caPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
