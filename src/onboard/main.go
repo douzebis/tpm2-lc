@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -12,6 +13,8 @@ import (
 	"flag"
 	"io/ioutil"
 	"main/src/lib"
+	"math/big"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/google/go-tpm-tools/client"
@@ -122,13 +125,13 @@ func main() {
 
 	// --- Check TPM Manufacturer CA cert --------------------------------------
 
-	roots := x509.NewCertPool()
-	roots.AddCert(tpmCaCert)
-	opts := x509.VerifyOptions{
-		Roots: roots,
+	tpmRoots := x509.NewCertPool()
+	tpmRoots.AddCert(tpmCaCert)
+	tpmOpts := x509.VerifyOptions{
+		Roots: tpmRoots,
 	}
 
-	if _, err := tpmCaCert.Verify(opts); err != nil {
+	if _, err := tpmCaCert.Verify(tpmOpts); err != nil {
 		glog.Fatalf("tpmCaCert.Verify() failed: %v", err)
 	} else {
 		glog.V(0).Infof("Verified %s", "TPM-CA/tpm-ca.crt")
@@ -155,7 +158,7 @@ func main() {
 
 	tpmCert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
 
-	if _, err := tpmCert.Verify(opts); err != nil {
+	if _, err := tpmCert.Verify(tpmOpts); err != nil {
 		glog.Fatalf("tpmCert.Verify() failed: %v", err)
 	} else {
 		glog.V(0).Infof("Verified %s", "TPM-CA/tpm.crt")
@@ -206,5 +209,109 @@ func main() {
 	glog.V(0).Infof("EK Pub matches TPM certificate")
 
 	// === Create Owner certificate for EK Pub =================================
+
+	// --- Read Owner CA cert --------------------------------------------------
+
+	ownerCaPem, err := ioutil.ReadFile("Owner-CA/owner-ca.crt")
+	if err != nil {
+		glog.Fatalf("ioutil.ReadFile() failed: %v", err)
+	}
+
+	ownerCaBlock, _ := pem.Decode(ownerCaPem)
+	ownerCaCert, err := x509.ParseCertificate(ownerCaBlock.Bytes)
+	if err != nil {
+		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
+	}
+
+	// --- Check Owner CA cert -------------------------------------------------
+
+	ownerRoots := x509.NewCertPool()
+	ownerRoots.AddCert(tpmCaCert)
+	ownerOpts := x509.VerifyOptions{
+		Roots: ownerRoots,
+	}
+
+	if _, err := ownerCaCert.Verify(ownerOpts); err != nil {
+		glog.Fatalf("ownerCaCert.Verify() failed: %v", err)
+	} else {
+		glog.V(0).Infof("Verified %s", "Owner-CA/owner-ca.crt")
+	}
+
+	// --- Read Owner CA key ---------------------------------------------------
+
+	ownerCaPrivKeyPem, err := ioutil.ReadFile("Owner-CA/owner-ca.key")
+	if err != nil {
+		glog.Fatalf("ioutil.ReadFile() failed: %v", err)
+	}
+
+	ownerCaPrivKeyBlock, _ := pem.Decode(ownerCaPrivKeyPem)
+	ownerCaPrivKey, err := x509.ParsePKCS1PrivateKey(ownerCaPrivKeyBlock.Bytes)
+	if err != nil {
+		glog.Fatalf("x509.ParsePKCS1PrivateKey() failed: %v", err)
+	}
+
+	// --- Create TPM EK certificate -------------------------------------------
+
+	tpmTemplate := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization: []string{"Owner Inc"},
+			CommonName:   "TPM",
+		},
+		NotBefore: time.Now(),
+		NotAfter:  time.Now().AddDate(10, 0, 0),
+		KeyUsage:  x509.KeyUsageKeyEncipherment,
+		ExtraExtensions: []pkix.Extension{
+			*lib.CreateSubjectAltName(
+				[]byte("id: Google"),
+				[]byte("id: Shielded VM vTPM"),
+				[]byte("id: 00010001"),
+			),
+		},
+		BasicConstraintsValid: true,
+		IsCA:                  false,
+	}
+
+	tpmBytes, err := x509.CreateCertificate(
+		rand.Reader,
+		&tpmTemplate,
+		ownerCaCert,
+		ekPublicKey,
+		ownerCaPrivKey)
+	if err != nil {
+		glog.Fatalf("x509.CreateCertificate() failed: %v", err)
+	}
+
+	// pem encode
+	tpmPEM := []byte(pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: tpmBytes,
+		},
+	))
+
+	err = ioutil.WriteFile("Owner-CA/tpm.crt", tpmPEM, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	}
+
+	glog.V(0).Infof("Wrote Owner-CA/tpm.crt")
+
+	// --- Verify TPM cert -----------------------------------------------------
+
+	// Note: equivalently with openssl:
+	// openssl verify -CAfile TPM-CA/tpm-ca.crt TPM-CA/tpm.crt
+	// openssl x509 -noout -ext subjectAltName -in TPM-CA/tpm.crt
+
+	tpmOwnerCert, err := x509.ParseCertificate(tpmBytes)
+	if err != nil {
+		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
+	}
+	tpmOwnerCert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
+	if _, err := tpmCert.Verify(ownerOpts); err != nil {
+		glog.Fatalf("tpmCert.Verify() failed: %v", err)
+	} else {
+		glog.V(0).Infof("Verified %s", "TPM-CA/tpm.crt")
+	}
 
 }
