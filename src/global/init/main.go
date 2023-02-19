@@ -36,12 +36,12 @@ func parse(rest []byte, indent string) {
 	for len(rest) > 0 {
 		var v asn1.RawValue
 		rest, _ = asn1.Unmarshal(rest, &v)
-		glog.V(10).Infof("%sClass %d", indent, v.Class)
-		glog.V(10).Infof("%sTag %d", indent, v.Tag)
-		glog.V(10).Infof("%sIsCompound %v", indent, v.IsCompound)
-		glog.V(10).Infof("%sBytes %s", indent, string(v.FullBytes))
-		glog.V(10).Infof("%sBytes %s", indent, base64.StdEncoding.EncodeToString(v.Bytes))
-		glog.V(10).Infof("%sBytes %v", indent, v.Bytes)
+		glog.V(0).Infof("%sClass %d", indent, v.Class)
+		glog.V(0).Infof("%sTag %d", indent, v.Tag)
+		glog.V(0).Infof("%sIsCompound %v", indent, v.IsCompound)
+		glog.V(0).Infof("%sBytes %s", indent, string(v.FullBytes))
+		glog.V(0).Infof("%sBytes %s", indent, base64.StdEncoding.EncodeToString(v.Bytes))
+		glog.V(0).Infof("%sBytes %v", indent, v.Bytes)
 		if v.IsCompound {
 			parse(v.Bytes, indent+"  ")
 		}
@@ -51,7 +51,9 @@ func parse(rest []byte, indent string) {
 func main() {
 	flag.Parse()
 
-	//	testPem, err := ioutil.ReadFile("../tpm2/manufacturer/ek.crt")
+	// --- Snippet: parse a certificate extensions -----------------------------
+
+	//	testPem, err := ioutil.ReadFile("TPM-CA/tpm.crt")
 	//	if err != nil {
 	//		glog.Fatalf("ioutil.ReadFile() failed: %v", err)
 	//	}
@@ -61,20 +63,20 @@ func main() {
 	//	}
 	//
 	//	if block.Type == "CERTIFICATE" {
-	//		glog.V(10).Infof("Block has type CERTIFICATE")
+	//		glog.V(0).Infof("Block has type CERTIFICATE")
 	//		certificate, err := x509.ParseCertificate(block.Bytes)
 	//		if err != nil {
 	//			glog.Fatalf("x509.ParseCertificate() failed: %v", err)
 	//		}
 	//		for _, ext := range certificate.Extensions {
 	//			// filter the custom extensions by customOID
-	//			glog.V(10).Infof("extension %s", ext.Id.String())
+	//			glog.V(0).Infof("extension %s", ext.Id.String())
 	//			if ext.Id.String() == "2.5.29.17" {
 	//				parse(ext.Value, "")
 	//			}
 	//		}
 	//	} else {
-	//		glog.V(10).Infof("Block has type %s", block.Type)
+	//		glog.V(0).Infof("Block has type %s", block.Type)
 	//	}
 
 	// Since GCP Shielded VMs TPM Endorsement Keys come without a proper
@@ -105,7 +107,7 @@ func main() {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
 
-	glog.V(10).Infof("Wrote TPM-CA/tpm-ca.key")
+	glog.V(0).Infof("Wrote TPM-CA/tpm-ca.key")
 
 	// --- Create Certificate for TPM CA ---------------------------------------
 
@@ -136,6 +138,11 @@ func main() {
 		glog.Fatalf("x509.CreateCertificate() failed: %v", err)
 	}
 
+	caCert, err := x509.ParseCertificate(caBytes)
+	if err != nil {
+		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
+	}
+
 	// pem encode
 	caPEM := []byte(pem.EncodeToMemory(
 		&pem.Block{
@@ -149,12 +156,26 @@ func main() {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
 
-	glog.V(10).Infof("Wrote TPM-CA/tpm-ca.crt")
+	glog.V(0).Infof("Wrote TPM-CA/tpm-ca.crt")
 
-	// Note: to check everything went OK on the target
+	// --- Verify TPM CA cert --------------------------------------------------
+
+	// Note: equivalently with openssl:
 	// openssl verify -CAfile TPM-CA/tpm-ca.crt TPM-CA/tpm-ca.crt
 	// openssl rsa -in TPM-CA/tpm-ca.key -pubout
 	// openssl x509 -in TPM-CA/tpm-ca.crt -pubkey -noout
+
+	roots := x509.NewCertPool()
+	roots.AddCert(caCert)
+	opts := x509.VerifyOptions{
+		Roots: roots,
+	}
+
+	if _, err := caCert.Verify(opts); err != nil {
+		glog.Fatalf("caCert.Verify() failed: %v", err)
+	} else {
+		glog.V(0).Infof("Verified %s", "TPM-CA/tpm-ca.crt")
+	}
 
 	// === Create certificate for TPM ==========================================
 
@@ -220,23 +241,48 @@ func main() {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
 
-	glog.V(10).Infof("Wrote TPM-CA/ek.pem")
+	glog.V(0).Infof("Wrote TPM-CA/ek.pem")
 
 	switch ekPubKey.(type) {
 	case *rsa.PublicKey:
-		glog.V(10).Infof("ekPublicKey is of type RSA")
+		glog.V(0).Infof("ekPublicKey is of type RSA")
 	}
 	// From https://stackoverflow.com/a/44317246
 	ekPublicKey, _ := ekPubKey.(*rsa.PublicKey)
 
 	// --- Create TPM EK certificate -------------------------------------------
 
-	// From https://gist.github.com/op-ct/e202fc911de22c018effdb3371e8335f
-	//X509v3 extensions:
-	//	X509v3 Subject Alternative Name: critical
-	//		DirName:/2.23.133.2.2=id:%TPM_MODEL%+2.23.133.2.1=id:%TPM_MANUFACTURER%+2.23.133.2.3=id:%TPM_FIRMWARE_VERSION%
-	//
+	// See https://marc.info/?l=openssl-users&m=135119943225986&w=2
 	// See also https://upgrades.intel.com/content/CRL/ekcert/EKcertPolicyStatement.pdf
+	//
+	// SEQUENCE {
+	//   SEQUENCE {
+	//     OBJECT IDENTIFIER subjectAltName (2 5 29 17)
+	//        (X.509 extension)
+	//     BOOLEAN TRUE
+	//     OCTET STRING, encapsulates {
+	//       SEQUENCE {
+	//         [4] {
+	//           SEQUENCE {
+	//             SET {
+	//               SEQUENCE {
+	//                 OBJECT IDENTIFIER '2 23 133 2 1'
+	//                 PrintableString 'id:57454300'
+	//                  }
+	//               SEQUENCE {
+	//                 OBJECT IDENTIFIER '2 23 133 2 2'
+	//                 PrintableString 'NPCT42x/NPCT50x'
+	//                  }
+	//               SEQUENCE {
+	//                 OBJECT IDENTIFIER '2 23 133 2 3'
+	//                 PrintableString 'id:0391'
+	//                  }
+	//                }
+	//              }
+	//            }
+	//          }
+	//        }
+	//      }
 
 	a1, err := asn1.Marshal(asn1.RawValue{
 		Class: asn1.ClassUniversal,
@@ -389,10 +435,82 @@ func main() {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
 
-	glog.V(10).Infof("Wrote TPM-CA/tpm.crt")
+	glog.V(0).Infof("Wrote TPM-CA/tpm.crt")
 
 	// Note: to check everything went OK on the target
 	// openssl verify -CAfile TPM-CA/tpm-ca.crt TPM-CA/tpm.crt
 	// openssl x509 -noout -ext subjectAltName -in TPM-CA/tpm.crt
+
+	// === Create certificate for Owner CA =====================================
+
+	// --- Create RSA key for Owner CA -----------------------------------------
+
+	ownerCaPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		glog.Fatalf("rsa.GenerateKey() failed: %v", err)
+	}
+
+	ownerCaPrivKeyPEM := []byte(pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "RSA PRIVATE KEY",
+			Bytes: x509.MarshalPKCS1PrivateKey(ownerCaPrivKey),
+		},
+	))
+
+	err = ioutil.WriteFile("Owner-CA/owner-ca.key", ownerCaPrivKeyPEM, 0600)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	}
+
+	glog.V(0).Infof("Wrote Owner-CA/tpm-ca.key")
+
+	// --- Create Certificate for TPM CA ---------------------------------------
+
+	// From https://gist.github.com/op-ct/e202fc911de22c018effdb3371e8335f
+	ownerCaTemplate := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization:       []string{"TPM Owner"},
+			OrganizationalUnit: []string{"TPM Owner Root CA"},
+			CommonName:         "TPM Owner Root CA",
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().AddDate(10, 0, 0),
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+		MaxPathLen:            2,
+	}
+
+	ownerCaBytes, err := x509.CreateCertificate(
+		rand.Reader,
+		&ownerCaTemplate,
+		&ownerCaTemplate,
+		&ownerCaPrivKey.PublicKey,
+		ownerCaPrivKey)
+	if err != nil {
+		glog.Fatalf("x509.CreateCertificate() failed: %v", err)
+	}
+
+	// pem encode
+	ownerCaPEM := []byte(pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: ownerCaBytes,
+		},
+	))
+
+	err = ioutil.WriteFile("Owner-CA/owner-ca.crt", ownerCaPEM, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	}
+
+	glog.V(0).Infof("Wrote Owner-CA/owner-ca.crt")
+
+	// Note: to check everything went OK on the target
+	// openssl verify -CAfile TPM-CA/tpm-ca.crt TPM-CA/tpm-ca.crt
+	// openssl rsa -in TPM-CA/tpm-ca.key -pubout
+	// openssl x509 -in TPM-CA/tpm-ca.crt -pubkey -noout
 
 }
