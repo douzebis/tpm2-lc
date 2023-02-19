@@ -249,7 +249,7 @@ func main() {
 	b1, err := asn1.Marshal(asn1.RawValue{
 		Class: asn1.ClassUniversal,
 		Tag:   asn1.TagUTF8String,
-		Bytes: []byte("TPM_MANUFACTURER"),
+		Bytes: []byte("id: Google"),
 	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
@@ -274,7 +274,7 @@ func main() {
 	b2, err := asn1.Marshal(asn1.RawValue{
 		Class: asn1.ClassUniversal,
 		Tag:   asn1.TagUTF8String,
-		Bytes: []byte("TPM_MODEL"),
+		Bytes: []byte("id: Shielded VM vTPM"),
 	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
@@ -298,7 +298,7 @@ func main() {
 	b3, err := asn1.Marshal(asn1.RawValue{
 		Class: asn1.ClassUniversal,
 		Tag:   asn1.TagUTF8String,
-		Bytes: []byte("TPM_FIRMWARE_VERSION"),
+		Bytes: []byte("id: 00010001"),
 	})
 	if err != nil {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
