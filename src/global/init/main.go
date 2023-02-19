@@ -287,6 +287,8 @@ func main() {
 		glog.Fatalf("asn1.Marshal() failed: %v", err)
 	}
 
+	glog.V(0).Infof("Values %v", values)
+
 	tpmTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
