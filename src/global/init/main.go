@@ -81,6 +81,11 @@ func main() {
 	digest := sha512.Sum384(pcrsConcat)
 	glog.V(0).Infof("Digest %s ", hex.EncodeToString(digest[:]))
 
+	err = ioutil.WriteFile("CI-CD/tpm-digest.bin", digest[:], 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	}
+
 	return
 
 	// --- Snippet: parse a certificate extensions -----------------------------
