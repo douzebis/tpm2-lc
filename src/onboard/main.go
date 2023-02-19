@@ -65,16 +65,37 @@ func main() {
 
 	// === Retrieve TPM EK Pub =================================================
 
-	ekTpmKey, err := client.EndorsementKeyRSA(rwc)
-	if err != nil {
-		glog.Fatalf("Unable to load SRK from TPM: %v", err)
-	}
+	//ekTpmKey, err := client.EndorsementKeyRSA(rwc)
+	//if err != nil {
+	//	glog.Fatalf("Unable to load SRK from TPM: %v", err)
+	//}
+	//
+	//ekTpmPubKey, _, _, err := tpm2.ReadPublic(rwc, ekTpmKey.Handle())
+	//if err != nil {
+	//	glog.Fatalf("tpm2.ReadPublic() failed: %s", err)
+	//}
+	//
+	//ekPubKey, err := ekTpmPubKey.Key()
+	//if err != nil {
+	//	glog.Fatalf("ekPublicKey.Key() failed: %s", err)
+	//}
+
+	ekHandle, ekPubKey, err := tpm2.CreatePrimary(
+		rwc,
+		tpm2.HandleEndorsement,
+		tpm2.PCRSelection{},
+		"",
+		"",
+		client.DefaultEKTemplateRSA(),
+	)
+
+	//NewCachedKey(rw, tpm2.HandleEndorsement, DefaultEKTemplateRSA(), EKReservedHandle)
 
 	//ek, pub, err := tpm2.CreatePrimary(f, tpm2.HandleEndorsement, tpm2.PCRSelection{}, "", "", tmpl)
 	//if err != nil {
 	//		log.Fatalf("creating ek: %v", err)
 	//}
-	ekCtx, err := tpm2.ContextSave(rwc, ekTpmKey.Handle())
+	ekCtx, err := tpm2.ContextSave(rwc, ekHandle)
 	if err != nil {
 		glog.Fatalf("tpm2.ContextSave() failed: %v", err)
 	}
@@ -83,15 +104,6 @@ func main() {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
 
-	ekTpmPubKey, _, _, err := tpm2.ReadPublic(rwc, ekTpmKey.Handle())
-	if err != nil {
-		glog.Fatalf("tpm2.ReadPublic() failed: %s", err)
-	}
-
-	ekPubKey, err := ekTpmPubKey.Key()
-	if err != nil {
-		glog.Fatalf("ekPublicKey.Key() failed: %s", err)
-	}
 	ekPubBytes, err := x509.MarshalPKIXPublicKey(ekPubKey)
 	if err != nil {
 		glog.Fatalf("x509.MarshalPKIXPublicKey() failed: %v", err)
