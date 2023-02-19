@@ -422,6 +422,11 @@ func main() {
 		glog.Fatalf("x509.CreateCertificate() failed: %v", err)
 	}
 
+	tpmCert, err := x509.ParseCertificate(tpmBytes)
+	if err != nil {
+		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
+	}
+
 	// pem encode
 	tpmPEM := []byte(pem.EncodeToMemory(
 		&pem.Block{
@@ -437,9 +442,17 @@ func main() {
 
 	glog.V(0).Infof("Wrote TPM-CA/tpm.crt")
 
-	// Note: to check everything went OK on the target
+	// --- Verify TPM cert -----------------------------------------------------
+
+	// Note: equivalently with openssl:
 	// openssl verify -CAfile TPM-CA/tpm-ca.crt TPM-CA/tpm.crt
 	// openssl x509 -noout -ext subjectAltName -in TPM-CA/tpm.crt
+
+	if _, err := tpmCert.Verify(opts); err != nil {
+		glog.Fatalf("tpmCert.Verify() failed: %v", err)
+	} else {
+		glog.V(0).Infof("Verified %s", "TPM-CA/tpm.crt")
+	}
 
 	// === Create certificate for Owner CA =====================================
 
