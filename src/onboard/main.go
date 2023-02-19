@@ -80,7 +80,7 @@ func main() {
 	//	glog.Fatalf("ekPublicKey.Key() failed: %s", err)
 	//}
 
-	ekHandle, ekPubKey, err := tpm2.CreatePrimary(
+	ek, ekPubKey, err := tpm2.CreatePrimary(
 		rwc,
 		tpm2.HandleEndorsement,
 		tpm2.PCRSelection{},
@@ -92,9 +92,12 @@ func main() {
 		glog.Fatalf("tpm2.CreatePrimary() failed: %v", err)
 	}
 
-	ekCtx, err := tpm2.ContextSave(rwc, ekHandle)
+	ekCtx, err := tpm2.ContextSave(rwc, ek)
 	if err != nil {
 		glog.Fatalf("tpm2.ContextSave() failed: %v", err)
+	}
+	if err = tpm2.FlushContext(rwc, ek); err != nil {
+		glog.Fatalf("tpm2.FlushContext(0x%x) failed: %v", ek, err)
 	}
 	err = ioutil.WriteFile("Attestor/ek.ctx", ekCtx, 0644)
 	if err != nil {
@@ -377,7 +380,7 @@ func main() {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
 
-	ek, err := tpm2.ContextLoad(rwc, srkCtx)
+	ek, err = tpm2.ContextLoad(rwc, srkCtx)
 	if err != nil {
 		glog.Fatalf("tpm2.ContextLoad() failed: %v", err)
 	}
@@ -403,6 +406,9 @@ func main() {
 	akCtx, err := tpm2.ContextSave(rwc, ak)
 	if err != nil {
 		glog.Fatalf("tpm2.ContextSave() failed: %v", err)
+	}
+	if err = tpm2.FlushContext(rwc, ak); err != nil {
+		glog.Fatalf("tpm2.FlushContext(0x%x) failed: %v", ak, err)
 	}
 	err = ioutil.WriteFile("Attestor/ak.ctx", akCtx, 0644)
 	if err != nil {
