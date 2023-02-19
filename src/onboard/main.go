@@ -145,11 +145,12 @@ func main() {
 	if err != nil {
 		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
 	}
-	//pubkey := tpmCert.PublicKey.(*rsa.PublicKey)
 
-	// --- Check TPM Manufacturer CA cert --------------------------------------
+	// --- Check TPM cert ------------------------------------------------------
 
-	//unhandledCriticalExtensions := tpmCert.UnhandledCriticalExtensions
+	unhandledCriticalExtensions := tpmCert.UnhandledCriticalExtensions
+	glog.V(0).Infof("uce %v", unhandledCriticalExtensions)
+
 	tpmCert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
 
 	if _, err := tpmCert.Verify(opts); err != nil {
@@ -157,6 +158,16 @@ func main() {
 	} else {
 		glog.V(0).Infof("Verified %s", "TPM-CA/tpm.crt")
 	}
+
+	// --- Check SAN in TPM cert -----------------------------------------------
+
+	//expectedExtension := []pkix.Extension{
+	//	*lib.CreateSubjectAltName(
+	//		[]byte("id: Google"),
+	//		[]byte("id: Shielded VM vTPM"),
+	//		[]byte("id: 00010001"),
+	//	),
+	//}
 
 	// --- Check TPM EK Pub matches TPM cert -----------------------------------
 
@@ -169,4 +180,7 @@ func main() {
 		glog.Fatalf("EK Pub does not match TPM certificate")
 	}
 	glog.V(0).Infof("EK Pub matches TPM certificate")
+
+	// === Create Owner certificate for EK Pub =================================
+
 }
