@@ -359,8 +359,9 @@ func main() {
 	}
 	err = ioutil.WriteFile("Attestor/ak.ctx", akCtx, 0644)
 	if err != nil {
-		glog.Fatalf("tpm2.ContextSave() failed: %v", err)
+		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
+	glog.V(0).Infof("Wrote Attestor/ak.ctx")
 
 	//akPriv, akPub, creationData, creationHash, creationTicket, err := tpm2.CreateKey(
 	_, _, _, _, _, err = tpm2.CreateKey(
