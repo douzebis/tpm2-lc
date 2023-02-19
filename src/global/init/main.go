@@ -68,7 +68,7 @@ func main() {
 
 	// === Create certificate for TPM CA =======================================
 
-	titi, toto := lib.CreateCA("TPM Manufacturer", "TPM-CA/tpm-ca")
+	lib.CreateCA("TPM Manufacturer", "TPM-CA/tpm-ca")
 	return
 
 	// Inspired by:
