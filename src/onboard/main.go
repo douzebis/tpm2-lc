@@ -308,8 +308,8 @@ func main() {
 		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
 	}
 	tpmOwnerCert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
-	if _, err := tpmCert.Verify(ownerOpts); err != nil {
-		glog.Fatalf("tpmCert.Verify() failed: %v", err)
+	if _, err := tpmOwnerCert.Verify(ownerOpts); err != nil {
+		glog.Fatalf("tpmOwnerCert.Verify() failed: %v", err)
 	} else {
 		glog.V(0).Infof("Verified %s", "Owner-CA/tpm.crt")
 	}
