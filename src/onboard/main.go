@@ -374,7 +374,15 @@ func main() {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
 
-	privBlob, pubBlob, _, _, _, err := tpm2.CreateKey(rwc, srk, tpm2.PCRSelection{}, "", "", client.AKTemplateRSA())
+	//akPriv, akPub, creationData, creationHash, creationTicket, err := tpm2.CreateKey(
+	privBlob, pubBlob, _, _, _, err := tpm2.CreateKey(
+		rwc,
+		srk,
+		tpm2.PCRSelection{},
+		"",
+		"",
+		client.AKTemplateRSA(),
+	)
 	if err != nil {
 		glog.Fatalf("tpm2.CreateKey() failed: %v", err)
 	}
@@ -393,19 +401,6 @@ func main() {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
 	glog.V(0).Infof("Wrote Attestor/ak.ctx")
-
-	//akPriv, akPub, creationData, creationHash, creationTicket, err := tpm2.CreateKey(
-	_, _, _, _, _, err = tpm2.CreateKey(
-		rwc,
-		ekHandle,
-		tpm2.PCRSelection{},
-		"",
-		"",
-		client.AKTemplateRSA(),
-	)
-	if err != nil {
-		glog.Fatalf("tpm2.CreateKey: %v", err)
-	}
 
 	// === Clear TPM ===========================================================
 
