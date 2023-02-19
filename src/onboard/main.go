@@ -365,19 +365,24 @@ func main() {
 	if err != nil {
 		glog.Fatalf("tpm2.CreatePrimary() failed: %v", err)
 	}
-	out, err := tpm2.ContextSave(rwc, srk)
+	srkCtx, err := tpm2.ContextSave(rwc, srk)
 	if err != nil {
 		glog.Fatalf("tpm2.ContextSave() failed: %v", err)
 	}
-	err = ioutil.WriteFile("Atterstorsrk.ctx", out, 0644)
+	err = ioutil.WriteFile("Atterstorsrk.ctx", srkCtx, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	}
+
+	ek, err := tpm2.ContextLoad(rwc, srkCtx)
+	if err != nil {
+		glog.Fatalf("tpm2.ContextLoad() failed: %v", err)
 	}
 
 	//akPriv, akPub, creationData, creationHash, creationTicket, err := tpm2.CreateKey(
 	privBlob, pubBlob, _, _, _, err := tpm2.CreateKey(
 		rwc,
-		srk,
+		ek,
 		tpm2.PCRSelection{},
 		"",
 		"",
@@ -387,7 +392,7 @@ func main() {
 		glog.Fatalf("tpm2.CreateKey() failed: %v", err)
 	}
 	//ak, akName, err := tpm2.Load(rwc, ek, "", pubBlob, privBlob)
-	ak, _, err := tpm2.Load(rwc, srk, "", pubBlob, privBlob)
+	ak, _, err := tpm2.Load(rwc, ek, "", pubBlob, privBlob)
 	if err != nil {
 		glog.Fatalf("tpm2.Load() failed: %v", err)
 	}
