@@ -249,7 +249,7 @@ func CreateAK(rwc io.ReadWriter) {
 	)
 	glog.V(0).Infof("akPubPEM: \n%v", string(akPubPEM))
 
-	err = ioutil.WriteFile("Attestor/ak.name", akName, 0644)
+	err = ioutil.WriteFile("Attestor/ak.name", akName0, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed for ak.name: %v", err)
 	}
