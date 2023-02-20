@@ -70,6 +70,38 @@ func CreateAK(rwc io.ReadWriter) {
 	glog.V(5).Infof("ek: 0x%08x", ek)
 	glog.V(5).Infof("ekPublicKey : %v", ekPublicKeyCrypto)
 
+	// === Save and reload EK context ==========================================
+
+	ekCtx, err := tpm2.ContextSave(rwc, ek)
+	if err != nil {
+		glog.Fatalf("tpm2.ContextSave() failed for EK: %v", err)
+	}
+	glog.V(5).Infof("ekCtx 0x%s", hex.EncodeToString(ekCtx))
+
+	err = ioutil.WriteFile("Attestor/ek.ctx", ekCtx, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed for EK Ctx: %v", err)
+	}
+	glog.V(0).Infof("Wrote Attestor/ek.ctx")
+
+	err = tpm2.FlushContext(rwc, ek)
+	if err != nil {
+		glog.Fatalf("tpm2.FlushContext() failed: %v", err)
+	}
+
+	ekCtx, err = ioutil.ReadFile("Attestor/ek.ctx")
+	if err != nil {
+		glog.Fatalf("ioutil.ReadFile() failed for Attestor/ek.ctx: %v", err)
+	}
+
+	ek, err = tpm2.ContextLoad(rwc, ekCtx)
+	if err != nil {
+		glog.Fatalf("tpm2.ContextLoad() failed for EK: %v", err)
+	}
+	glog.V(5).Infof("ek: 0x%08x", ek)
+
+	defer tpm2.FlushContext(rwc, ek)
+
 	//	ekPublicKey, ekName, ekQualName, err := tpm2.ReadPublic(rwc, ek)
 	//	if err != nil {
 	//		glog.Fatalf("tpm2.ReadPublic() failed for EK: %v", err)
@@ -185,38 +217,6 @@ func CreateAK(rwc io.ReadWriter) {
 	if err != nil {
 		glog.Fatalf("tpm2.FlushContext() failed: %v", err)
 	}
-
-	// === Save and reload EK context ==========================================
-
-	ekCtx, err := tpm2.ContextSave(rwc, ek)
-	if err != nil {
-		glog.Fatalf("tpm2.ContextSave() failed for EK: %v", err)
-	}
-	glog.V(5).Infof("ekCtx 0x%s", hex.EncodeToString(ekCtx))
-
-	err = ioutil.WriteFile("Attestor/ek.ctx", ekCtx, 0644)
-	if err != nil {
-		glog.Fatalf("ioutil.WriteFile() failed for EK Ctx: %v", err)
-	}
-	glog.V(0).Infof("Wrote Attestor/ek.ctx")
-
-	err = tpm2.FlushContext(rwc, ek)
-	if err != nil {
-		glog.Fatalf("tpm2.FlushContext() failed: %v", err)
-	}
-
-	ekCtx, err = ioutil.ReadFile("Attestor/ek.ctx")
-	if err != nil {
-		glog.Fatalf("ioutil.ReadFile() failed for Attestor/ek.ctx: %v", err)
-	}
-
-	ek, err = tpm2.ContextLoad(rwc, ekCtx)
-	if err != nil {
-		glog.Fatalf("tpm2.ContextLoad() failed for EK: %v", err)
-	}
-	glog.V(5).Infof("ek: 0x%08x", ek)
-
-	defer tpm2.FlushContext(rwc, ek)
 
 	// === Start auth session for loading AK ===================================
 
@@ -407,12 +407,12 @@ func GenerateCredential() {
 		glog.Fatalf("ak.name was not a digest")
 	}
 
-	h, err := name.Digest.Alg.Hash()
+	hash, err := name.Digest.Alg.Hash()
 	if err != nil {
 		glog.Fatalf("failed to get name hash: %v", err)
 	}
 
-	pubHash := h.New()
+	pubHash := hash.New()
 	pubHash.Write(akPublicKeyDER)
 	pubDigest := pubHash.Sum(nil)
 	if !bytes.Equal(name.Digest.Value, pubDigest) {
