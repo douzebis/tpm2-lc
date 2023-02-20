@@ -227,10 +227,14 @@ func CreateAK(rwc io.ReadWriter) {
 		glog.Fatalf("tpm2.FlushContext() failed: %v", err)
 	}
 
-	akTpmPublicKey, akName, _, err := tpm2.ReadPublic(rwc, ak)
+	akTpmPublicKey, akName, akName2, err := tpm2.ReadPublic(rwc, ak)
 	if err != nil {
 		glog.Fatalf("tpm2.ReadPublic() failed: %v", err)
 	}
+
+	glog.V(0).Infof("akName0: \n%v", hex.EncodeToString(akName0))
+	glog.V(0).Infof("akName2: \n%v", hex.EncodeToString(akName2))
+	return
 
 	akPublicKey, err := akTpmPublicKey.Key()
 	if err != nil {
