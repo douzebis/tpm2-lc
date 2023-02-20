@@ -95,7 +95,7 @@ func CreateAK(rwc io.ReadWriter) {
 	ekPubPem := pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "PUBLIC KEY",
-			Bytes: ekPubBytes,
+			Bytes: ekPublicKeyDer,
 		},
 	)
 
@@ -106,7 +106,7 @@ func CreateAK(rwc io.ReadWriter) {
 	glog.V(0).Infof("Wrote Attestor/ek.pub")
 
 	//tpmEkPubBytes, err := tpmEkPub.Encode()
-	_, err = ekPublic.Encode()
+	_, err = ekPublicKeyTpm2.Encode()
 	if err != nil {
 		glog.Fatalf("tpmEkPub.Encode() failed: %v", err)
 	}
