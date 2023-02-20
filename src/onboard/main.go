@@ -9,7 +9,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
 	"flag"
@@ -252,8 +251,8 @@ func CreateAK(rwc io.ReadWriter) {
 	)
 	glog.V(0).Infof("akPubPEM: \n%v", string(akPubPem))
 
-	glog.V(0).Infof("akPub: \n%v", base64.StdEncoding.EncodeToString(akPub))
-	glog.V(0).Infof("akBytes: \n%v", base64.StdEncoding.EncodeToString(akBytes))
+	glog.V(0).Infof("akPub: \n%v", hex.EncodeToString(akPub))
+	glog.V(0).Infof("akBytes: \n%v", hex.EncodeToString(akBytes))
 
 	err = ioutil.WriteFile("Attestor/ak.pub", akPubPem, 0644)
 	if err != nil {
