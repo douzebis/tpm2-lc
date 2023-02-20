@@ -438,7 +438,18 @@ func GenerateCredential() {
 	}
 
 	// Generate a challenge for the name.
-	secret := []byte("The quick brown fox jumps over the lazy dog")
+	secret := make([]byte, 32)
+	_, err = rand.Read(secret)
+	if err != nil {
+		glog.Fatalf("rand.Read() failed: %v", err)
+	}
+
+	err = ioutil.WriteFile("Verifier/secret", secret, 0600)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed for Verifier/secret: %v", err)
+	}
+	glog.V(0).Infof("Wrote Verifier/secret")
+
 	symBlockSize := 16
 	credBlob, encSecret, err := credactivation.Generate(name.Digest, ekPub, symBlockSize, secret)
 	if err != nil {
@@ -560,7 +571,13 @@ func ActivateCredential(rwc io.ReadWriter) {
 	if err != nil {
 		log.Fatalf("activate credential: %v", err)
 	}
-	glog.V(0).Infof("Secret; %s", out)
+
+	err = ioutil.WriteFile("Attestor/secret", out, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed for Attestor/secret: %v", err)
+	}
+	glog.V(0).Infof("Wrote Attestor/secret")
+
 }
 
 // ### Main ####################################################################
