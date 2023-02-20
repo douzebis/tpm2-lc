@@ -497,8 +497,6 @@ func ActivateCredential(rwc io.ReadWriter) {
 	}
 	defer tpm2.FlushContext(rwc, ek)
 
-	glog.V(0).Infof("1")
-
 	loadSession, _, err := tpm2.StartAuthSession(
 		rwc,
 		tpm2.HandleNull,
@@ -509,8 +507,6 @@ func ActivateCredential(rwc io.ReadWriter) {
 		tpm2.AlgNull,
 		tpm2.AlgSHA256,
 	)
-
-	glog.V(0).Infof("2")
 	if err != nil {
 		glog.Fatalf("tpm2.StartAuthSession() failed: %v", err)
 	}
@@ -526,34 +522,23 @@ func ActivateCredential(rwc io.ReadWriter) {
 		nil,
 		0,
 	)
-
-	glog.V(0).Infof("3")
 	if err != nil {
 		glog.Fatalf("tpm2.PolicySecret() failed: %v", err)
 	}
 
 	authCommandLoad := tpm2.AuthCommand{Session: loadSession, Attributes: tpm2.AttrContinueSession}
 
-	glog.V(0).Infof("4")
 	akPub, err := ioutil.ReadFile("Attestor/ak.pub.blob")
 	if err != nil {
 		glog.Fatalf("ioutil.ReadFile() failed for ak.pub.blob: %v", err)
 	}
 
-	//	glog.V(0).Infof("5")
-	//	akBlock, _ := pem.Decode(akPubPem)
-	//
-	//	glog.V(0).Infof("6")
-	//	akPub := akBlock.Bytes
-
 	akPriv, err := ioutil.ReadFile("Attestor/ak.key.blob")
-	glog.V(0).Infof("7")
 	if err != nil {
 		glog.Fatalf("ioutil.ReadFile() failed for ak.key.blob: %v", err)
 	}
 
 	ak, _, err := tpm2.LoadUsingAuth(rwc, ek, authCommandLoad, akPub, akPriv)
-	glog.V(0).Infof("8")
 	if err != nil {
 		glog.Fatalf("tpm2.LoadUsingAuth() failed: %v", err)
 	}
@@ -572,8 +557,6 @@ func ActivateCredential(rwc io.ReadWriter) {
 		tpm2.SessionPolicy,
 		tpm2.AlgNull,
 		tpm2.AlgSHA256)
-
-	glog.V(0).Infof("a1")
 	if err != nil {
 		glog.Fatalf("tpm2.StartAuthSession: %v", err)
 	}
