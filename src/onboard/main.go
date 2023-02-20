@@ -237,7 +237,7 @@ func CreateAK(rwc io.ReadWriter) {
 
 	// === Load AK =============================================================
 
-	ak, akName0, err := tpm2.LoadUsingAuth(rwc, ek, authCommandLoad, akPub, akPriv)
+	ak, akName0, err := tpm2.LoadUsingAuth(rwc, ek, authCommandLoad, akPublicBlob, akPrivateBlob)
 	if err != nil {
 		glog.Fatalf("tpm2.LoadUsingAuth() failed: %v", err)
 	}
@@ -269,7 +269,7 @@ func CreateAK(rwc io.ReadWriter) {
 	akPubPem := pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "PUBLIC KEY",
-			Bytes: akPub,
+			Bytes: akPublicBlob,
 		},
 	)
 
@@ -280,7 +280,7 @@ func CreateAK(rwc io.ReadWriter) {
 		},
 	)
 
-	glog.V(0).Infof("akPub: \n%v", string(akPub))
+	glog.V(0).Infof("akPub: \n%v", string(akPublicBlob))
 	glog.V(0).Infof("akBytes: \n%v", string(akBytes))
 
 	akPubBytes3, err := akTpmPublicKey.Encode()
@@ -334,7 +334,7 @@ func CreateAK(rwc io.ReadWriter) {
 	}
 	glog.V(0).Infof("Wrote Attestor/ak2.pub")
 
-	err = ioutil.WriteFile("Attestor/ak.key", akPriv, 0644)
+	err = ioutil.WriteFile("Attestor/ak.key", akPrivateBlob, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
