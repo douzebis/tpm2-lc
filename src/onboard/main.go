@@ -411,7 +411,7 @@ func GenerateCredential() {
 		glog.Fatalf("tpm2.DecodeName(): %v", err)
 	}
 	glog.V(5).Infof("akName     : 0x%s", hex.EncodeToString(akName))
-	glog.V(5).Infof("name.Digest: 0x%04x%s", int(name.Digest.Alg), hex.EncodeToString(name.Digest.Value))
+	glog.V(5).Infof("name.Digest: 0x%40x%s", int(name.Digest.Alg), hex.EncodeToString(name.Digest.Value))
 
 	if name.Digest == nil {
 		glog.Fatalf("ak.name was not a digest")
