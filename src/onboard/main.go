@@ -79,7 +79,7 @@ func CreateAK(rwc io.ReadWriter) {
 	glog.V(5).Infof("ekQualName: %s", hex.EncodeToString(ekQualName))
 	return
 
-	ekPub, err := tpmEkPub.Key()
+	ekPub, err := ekPublic.Key()
 	if err != nil {
 		glog.Fatalf("tpmEkPub.Key() failed for EK: %v", err)
 	}
