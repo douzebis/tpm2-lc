@@ -252,7 +252,9 @@ func CreateAK(rwc io.ReadWriter) {
 	glog.V(0).Infof("akPubPEM: \n%v", string(akPubPem))
 
 	glog.V(0).Infof("akPub: \n%v", hex.EncodeToString(akPub))
+	glog.V(0).Infof("akPub: \n%v", akPub)
 	glog.V(0).Infof("akBytes: \n%v", hex.EncodeToString(akBytes))
+	glog.V(0).Infof("akBytes: \n%v", akBytes)
 
 	akPubBytes2, err := akTpmPublicKey.Encode()
 	if err != nil {
