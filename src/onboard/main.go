@@ -205,13 +205,13 @@ func CreateAK(rwc io.ReadWriter) {
 	glog.V(5).Infof("CredentialHash 0x%s", hex.EncodeToString(creationHash))
 	glog.V(5).Infof("CredentialTicket 0x%s", hex.EncodeToString(creationTicket.Digest))
 
-	akPublicKeyPEM := pem.EncodeToMemory(
-		&pem.Block{
-			Type:  "PUBLIC KEY",
-			Bytes: akPublicBlob,
-		},
-	)
-	glog.V(5).Infof("akPublicKeyPEM: %v", string(akPublicKeyPEM))
+	//akPublicKeyPEM := pem.EncodeToMemory(
+	//	&pem.Block{
+	//		Type:  "PUBLIC KEY",
+	//		Bytes: akPublicBlob,
+	//	},
+	//)
+	//glog.V(5).Infof("akPublicKeyPEM: %v", string(akPublicKeyPEM))
 
 	err = tpm2.FlushContext(rwc, createSession)
 	if err != nil {
@@ -276,7 +276,7 @@ func CreateAK(rwc io.ReadWriter) {
 		glog.Fatalf("tpm2.FlushContext() failed: %v", err)
 	}
 
-	//	akPublicKey, akName_, akQualName2, err := tpm2.ReadPublic(rwc, ak)
+	//	akPublicKey, akName_, akQualName_, err := tpm2.ReadPublic(rwc, ak)
 	//	if err != nil {
 	//		glog.Fatalf("tpm2.ReadPublic() failed: %v", err)
 	//	}
@@ -352,17 +352,17 @@ func CreateAK(rwc io.ReadWriter) {
 	//
 	//	defer tpm2.FlushContext(rwc, ak2)
 
-	err = ioutil.WriteFile("Attestor/ak.pub", akPublicKeyPEM, 0644)
+	err = ioutil.WriteFile("Attestor/ak.pub.blob", akPublicBlob, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
-	glog.V(0).Infof("Wrote Attestor/ak.pub")
+	glog.V(0).Infof("Wrote Attestor/ak.pub.blob")
 
-	err = ioutil.WriteFile("Attestor/ak.key", akPrivateBlob, 0644)
+	err = ioutil.WriteFile("Attestor/ak.key.blob", akPrivateBlob, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
-	glog.V(0).Infof("Wrote Attestor/ak.key")
+	glog.V(0).Infof("Wrote Attestor/ak.key.blob")
 
 	err = ioutil.WriteFile("Attestor/ak.name", akName, 0644)
 	if err != nil {
@@ -381,19 +381,19 @@ func GenerateCredential() {
 	}
 	glog.V(5).Infof("akName: 0x%s", hex.EncodeToString(akName))
 
-	akPublicKeyPEM, err := ioutil.ReadFile("Attestor/ak.pub")
-	if err != nil {
-		glog.Fatalf("ioutil.ReadFile() failed for Attestor/ak.pub: %v", err)
-	}
-	glog.V(5).Infof("akPubPEM: %s", string(akPublicKeyPEM))
-
-	akBlock, _ := pem.Decode(akPublicKeyPEM)
-	//akPub, err := x509.ParsePKIXPublicKey(akBlock.Bytes)
+	//akPublicBlob, err := ioutil.ReadFile("Attestor/ak.pub.blob")
 	//if err != nil {
-	//	glog.Fatalf("x509.ParsePKCS1PrivateKey() failed: %v", err)
+	//	glog.Fatalf("ioutil.ReadFile() failed for Attestor/ak.pub.blob: %v", err)
 	//}
-	akPublicKeyDER := akBlock.Bytes
-	glog.V(0).Infof("akPub2: \n%v", hex.EncodeToString(akPublicKeyDER))
+	//glog.V(5).Infof("akPublicBlob: %s", string(akPublicBlob))
+
+	//akBlock, _ := pem.Decode(akPublicKeyPEM)
+	////akPub, err := x509.ParsePKIXPublicKey(akBlock.Bytes)
+	////if err != nil {
+	////	glog.Fatalf("x509.ParsePKCS1PrivateKey() failed: %v", err)
+	////}
+	//akPublicKeyDER := akBlock.Bytes
+	//glog.V(0).Infof("akPub2: \n%v", hex.EncodeToString(akPublicKeyDER))
 
 	// Verify digest matches the public blob that was provided.
 	name, err := tpm2.DecodeName(bytes.NewBuffer(akName))
@@ -407,24 +407,24 @@ func GenerateCredential() {
 		glog.Fatalf("ak.name was not a digest")
 	}
 
-	hash, err := name.Digest.Alg.Hash()
-	if err != nil {
-		glog.Fatalf("failed to get name hash: %v", err)
-	}
-
-	pubHash := hash.New()
-	pubHash.Write(akPublicKeyDER)
-	pubDigest := pubHash.Sum(nil)
-	if !bytes.Equal(name.Digest.Value, pubDigest) {
-		glog.Fatalf("name was not for public blob")
-	}
-
-	// Inspect key attributes.
-	pub, err := tpm2.DecodePublic(akPublicKeyDER)
-	if err != nil {
-		glog.Fatalf("decode public blob: %v", err)
-	}
-	glog.V(0).Infof("Key attributes: 0x08%x\n", pub.Attributes)
+	//	hash, err := name.Digest.Alg.Hash()
+	//	if err != nil {
+	//		glog.Fatalf("failed to get name hash: %v", err)
+	//	}
+	//
+	//	pubHash := hash.New()
+	//	pubHash.Write(akPublicBlob)
+	//	pubDigest := pubHash.Sum(nil)
+	//	if !bytes.Equal(name.Digest.Value, pubDigest) {
+	//		glog.Fatalf("name was not for public blob")
+	//	}
+	//
+	//	// Inspect key attributes.
+	//	pub, err := tpm2.DecodePublic(akPublicBlob)
+	//	if err != nil {
+	//		glog.Fatalf("decode public blob: %v", err)
+	//	}
+	//	glog.V(0).Infof("Key attributes: 0x08%x\n", pub.Attributes)
 
 	// Retrieves ekPub
 	ekPubPem, err := ioutil.ReadFile("Verifier/ek.pub")
@@ -525,14 +525,14 @@ func ActivateCredential(rwc io.ReadWriter) {
 
 	authCommandLoad := tpm2.AuthCommand{Session: loadSession, Attributes: tpm2.AttrContinueSession}
 
-	akPubPem, err := ioutil.ReadFile("Attestor/ak.pub")
+	akPubPem, err := ioutil.ReadFile("Attestor/ak.pub.blob")
 	if err != nil {
 		glog.Fatalf("ioutil.ReadFile() failed for ak.pub: %v", err)
 	}
 	akBlock, _ := pem.Decode(akPubPem)
 	akPub := akBlock.Bytes
 
-	akPriv, err := ioutil.ReadFile("Attestor/ak.key")
+	akPriv, err := ioutil.ReadFile("Attestor/ak.key.blob")
 	if err != nil {
 		glog.Fatalf("ioutil.ReadFile() failed for ak.key: %v", err)
 	}
@@ -577,6 +577,27 @@ func ActivateCredential(rwc io.ReadWriter) {
 		glog.Fatalf("ioutil.WriteFile() failed for Attestor/secret: %v", err)
 	}
 	glog.V(0).Infof("Wrote Attestor/secret")
+
+}
+
+// ### CreateAKCert (on Verifier and Owner-CA) #################################
+
+func CreateAKCert() {
+
+	referenceSecret, err := ioutil.ReadFile("Verifier/secret")
+	if err != nil {
+		glog.Fatalf("ioutil.ReadFile() failed: %v", err)
+	}
+
+	returnedSecret, err := ioutil.ReadFile("Attestor/secret")
+	if err != nil {
+		glog.Fatalf("ioutil.ReadFile() failed: %v", err)
+	}
+
+	if !bytes.Equal(referenceSecret, returnedSecret) {
+		glog.Fatalf("Secrets do not match, aborting onboarding")
+	}
+	glog.V(0).Infof("Secrets match, creating AK cert")
 
 }
 
@@ -904,15 +925,19 @@ func main() {
 
 	// === Create TPM AK =======================================================
 
-	CreateAK(rwc) // On the Attestor
+	CreateAK(rwc) // On Attestor
 
 	// === Create credential challenge =========================================
 
-	GenerateCredential() // On the Verifier
+	GenerateCredential() // On Verifier
 
 	// === Activate credential =================================================
 
-	ActivateCredential(rwc)
+	ActivateCredential(rwc) // On Attestor
+
+	// === Create AK cert ======================================================
+
+	CreateAKCert() // On Verifier and Owner-CA
 
 	// === Clear TPM ===========================================================
 
