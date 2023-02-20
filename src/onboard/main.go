@@ -83,6 +83,7 @@ func CreateAK(rwc io.ReadWriter) {
 		glog.Fatalf("ekPublic.Key() failed: %v", err)
 	}
 	glog.V(5).Infof("ekPublicKey2: %d %d", ekPublicKey2.(*rsa.PublicKey).N, ekPublicKey2.(*rsa.PublicKey).E)
+	glog.V(5).Infof("ekPublicKey2: %v", ekPublicKey2)
 
 	return
 
