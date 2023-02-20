@@ -358,11 +358,11 @@ func CreateAK(rwc io.ReadWriter) {
 	}
 	glog.V(0).Infof("Wrote Attestor/ak.pub")
 
-	//err = ioutil.WriteFile("Attestor/ak.key", akPrivateBlob, 0644)
-	//if err != nil {
-	//	glog.Fatalf("ioutil.WriteFile() failed: %v", err)
-	//}
-	//glog.V(0).Infof("Wrote Attestor/ak.key")
+	err = ioutil.WriteFile("Attestor/ak.key", akPrivateBlob, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	}
+	glog.V(0).Infof("Wrote Attestor/ak.key")
 
 	//akPubBytes, err := akPublicKey.Encode()
 	//if err != nil {
@@ -397,8 +397,8 @@ func GenerateCredential() {
 	//if err != nil {
 	//	glog.Fatalf("x509.ParsePKCS1PrivateKey() failed: %v", err)
 	//}
-	akPubDER := akBlock.Bytes
-	glog.V(0).Infof("akPub2: \n%v", hex.EncodeToString(akPubDER))
+	akPublicKeyDER := akBlock.Bytes
+	glog.V(0).Infof("akPub2: \n%v", hex.EncodeToString(akPublicKeyDER))
 
 	// Verify digest matches the public blob that was provided.
 	name, err := tpm2.DecodeName(bytes.NewBuffer(akName))
@@ -416,17 +416,16 @@ func GenerateCredential() {
 	if err != nil {
 		glog.Fatalf("failed to get name hash: %v", err)
 	}
-	glog.V(5).Infof("h: %d %x", h, h)
 
 	pubHash := h.New()
-	pubHash.Write(akPubDER)
+	pubHash.Write(akPublicKeyDER)
 	pubDigest := pubHash.Sum(nil)
 	if !bytes.Equal(name.Digest.Value, pubDigest) {
 		glog.Fatalf("name was not for public blob")
 	}
 
 	// Inspect key attributes.
-	pub, err := tpm2.DecodePublic(akPubDER)
+	pub, err := tpm2.DecodePublic(akPublicKeyDER)
 	if err != nil {
 		glog.Fatalf("decode public blob: %v", err)
 	}
