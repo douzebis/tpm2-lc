@@ -606,129 +606,118 @@ func CreateAKCert() {
 	}
 	glog.V(0).Infof("Secrets match, creating AK cert")
 
-	//	// === Create certificate for TPM CA =======================================
-	//
-	//	tpmCaCert, tpmCaPrivKey := lib.CreateCA("TPM Manufacturer", "TPM-CA/tpm-ca")
-	//
-	//	// === Create certificate for TPM ==========================================
-	//
-	//	// --- Retrieve TPM EK Pub -------------------------------------------------
-	//
-	//	ekTpmKey, err := client.EndorsementKeyRSA(rwc)
-	//	if err != nil {
-	//		glog.Fatalf("Unable to load SRK from TPM: %v", err)
-	//	}
-	//
-	//	ekTpmPubKey, _, _, err := tpm2.ReadPublic(rwc, ekTpmKey.Handle())
-	//	if err != nil {
-	//		glog.Fatalf("tpm2.ReadPublic() failed: %s", err)
-	//	}
-	//
-	//	ekPubKey, err := ekTpmPubKey.Key()
-	//	if err != nil {
-	//		glog.Fatalf("ekPublicKey.Key() failed: %s", err)
-	//	}
-	//	ekPubBytes, err := x509.MarshalPKIXPublicKey(ekPubKey)
-	//	if err != nil {
-	//		glog.Fatalf("x509.MarshalPKIXPublicKey() failed: %v", err)
-	//	}
-	//
-	//	ekPubPEM := pem.EncodeToMemory(
-	//		&pem.Block{
-	//			Type:  "PUBLIC KEY",
-	//			Bytes: ekPubBytes,
-	//		},
-	//	)
-	//
-	//	err = ioutil.WriteFile("TPM-CA/ek.pem", ekPubPEM, 0644)
-	//	if err != nil {
-	//		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
-	//	}
-	//
-	//	glog.V(0).Infof("Wrote TPM-CA/ek.pem")
-	//
-	//	switch ekPubKey.(type) {
-	//	case *rsa.PublicKey:
-	//		glog.V(0).Infof("ekPublicKey is of type RSA")
-	//	}
-	//	// From https://stackoverflow.com/a/44317246
-	//	ekPublicKey, _ := ekPubKey.(*rsa.PublicKey)
-	//
-	//	// --- Create TPM EK certificate -------------------------------------------
-	//
-	//	tpmTemplate := x509.Certificate{
-	//		SerialNumber: big.NewInt(1),
-	//		Subject: pkix.Name{
-	//			Organization: []string{"TPM Inc"},
-	//			CommonName:   "TPM",
-	//		},
-	//		NotBefore: time.Now(),
-	//		NotAfter:  time.Now().AddDate(10, 0, 0),
-	//		KeyUsage:  x509.KeyUsageKeyEncipherment,
-	//		ExtraExtensions: []pkix.Extension{
-	//			*lib.CreateSubjectAltName(
-	//				[]byte("id: Google"),
-	//				[]byte("id: Shielded VM vTPM"),
-	//				[]byte("id: 00010001"),
-	//			),
-	//		},
-	//		BasicConstraintsValid: true,
-	//		IsCA:                  false,
-	//	}
-	//
-	//	tpmBytes, err := x509.CreateCertificate(
-	//		rand.Reader,
-	//		&tpmTemplate,
-	//		tpmCaCert,
-	//		ekPublicKey,
-	//		tpmCaPrivKey)
-	//	if err != nil {
-	//		glog.Fatalf("x509.CreateCertificate() failed: %v", err)
-	//	}
-	//
-	//	// pem encode
-	//	tpmPEM := []byte(pem.EncodeToMemory(
-	//		&pem.Block{
-	//			Type:  "CERTIFICATE",
-	//			Bytes: tpmBytes,
-	//		},
-	//	))
-	//
-	//	err = ioutil.WriteFile("TPM-CA/tpm.crt", tpmPEM, 0644)
-	//	if err != nil {
-	//		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
-	//	}
-	//
-	//	glog.V(0).Infof("Wrote TPM-CA/tpm.crt")
-	//
-	//	// --- Verify TPM cert -----------------------------------------------------
-	//
-	//	// Note: equivalently with openssl:
-	//	// openssl verify -CAfile TPM-CA/tpm-ca.crt TPM-CA/tpm.crt
-	//	// openssl x509 -noout -ext subjectAltName -in TPM-CA/tpm.crt
-	//
-	//	tpmCert, err := x509.ParseCertificate(tpmBytes)
-	//	if err != nil {
-	//		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
-	//	}
-	//	tpmCert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
-	//
-	//	roots := x509.NewCertPool()
-	//	roots.AddCert(tpmCaCert)
-	//	opts := x509.VerifyOptions{
-	//		Roots: roots,
-	//	}
-	//
-	//	if _, err := tpmCert.Verify(opts); err != nil {
-	//		glog.Fatalf("tpmCert.Verify() failed: %v", err)
-	//	} else {
-	//		glog.V(0).Infof("Verified %s", "TPM-CA/tpm.crt")
-	//	}
-	//
-	//	// === Create certificate for Owner CA =====================================
-	//
-	//	lib.CreateCA("TPM Owner", "Owner-CA/owner-ca")
+	// === Retrieve Owner CA key and certificate ===============================
 
+	// --- Read Owner CA cert --------------------------------------------------
+
+	ownerCaPem, err := ioutil.ReadFile("Owner-CA/owner-ca.crt")
+	if err != nil {
+		glog.Fatalf("ioutil.ReadFile() failed: %v", err)
+	}
+
+	ownerCaBlock, _ := pem.Decode(ownerCaPem)
+	ownerCaCert, err := x509.ParseCertificate(ownerCaBlock.Bytes)
+	if err != nil {
+		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
+	}
+
+	// --- Check Owner CA cert -------------------------------------------------
+
+	ownerRoots := x509.NewCertPool()
+	ownerRoots.AddCert(ownerCaCert)
+	ownerOpts := x509.VerifyOptions{
+		Roots: ownerRoots,
+	}
+
+	if _, err := ownerCaCert.Verify(ownerOpts); err != nil {
+		glog.Fatalf("ownerCaCert.Verify() failed: %v", err)
+	} else {
+		glog.V(0).Infof("Verified %s", "Owner-CA/owner-ca.crt")
+	}
+
+	// --- Read Owner CA key ---------------------------------------------------
+
+	ownerCaPrivKeyPem, err := ioutil.ReadFile("Owner-CA/owner-ca.key")
+	if err != nil {
+		glog.Fatalf("ioutil.ReadFile() failed: %v", err)
+	}
+
+	ownerCaPrivKeyBlock, _ := pem.Decode(ownerCaPrivKeyPem)
+	ownerCaPrivKey, err := x509.ParsePKCS1PrivateKey(ownerCaPrivKeyBlock.Bytes)
+	if err != nil {
+		glog.Fatalf("x509.ParsePKCS1PrivateKey() failed: %v", err)
+	}
+
+	// == Create AK certificate ================================================
+
+	// --- Retrieve AK Pub -----------------------------------------------------
+
+	akPublicKeyPEM, err := ioutil.ReadFile("Attestor/ak.pub")
+	if err != nil {
+		glog.Fatalf("ioutil.ReadFile() failed for Attestor/ak.pub: %v", err)
+	}
+
+	akPublicKeyBlock, _ := pem.Decode(akPublicKeyPEM)
+	akPublicKeyDER, err := x509.ParsePKIXPublicKey(akPublicKeyBlock.Bytes)
+	if err != nil {
+		glog.Fatalf("x509.ParsePKCS1PrivateKey() failed: %v", err)
+	}
+
+	// --- Create AK certificate -----------------------------------------------
+
+	akTemplate := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization: []string{"Owner Inc"},
+			CommonName:   "AK",
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().AddDate(10, 0, 0),
+		KeyUsage:              x509.KeyUsageDigitalSignature,
+		BasicConstraintsValid: true,
+		IsCA:                  false,
+	}
+
+	akBytes, err := x509.CreateCertificate(
+		rand.Reader,
+		&akTemplate,
+		ownerCaCert,
+		akPublicKeyDER,
+		ownerCaPrivKey)
+	if err != nil {
+		glog.Fatalf("x509.CreateCertificate() failed: %v", err)
+	}
+
+	// pem encode
+	akPEM := []byte(pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: akBytes,
+		},
+	))
+
+	err = ioutil.WriteFile("Owner-CA/ak.crt", akPEM, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed for Owner-CA/ak.crt: %v", err)
+	}
+	glog.V(0).Infof("Wrote Owner-CA/ak.crt")
+
+	// --- Verify TPM cert -----------------------------------------------------
+
+	// Note: equivalently with openssl:
+	// openssl verify -CAfile TPM-CA/tpm-ca.crt TPM-CA/tpm.crt
+	// openssl x509 -noout -ext subjectAltName -in TPM-CA/tpm.crt
+
+	akOwnerCert, err := x509.ParseCertificate(akBytes)
+	if err != nil {
+		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
+	}
+	//akOwnerCert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
+	if _, err := akOwnerCert.Verify(ownerOpts); err != nil {
+		glog.Fatalf("akOwnerCert.Verify() failed: %v", err)
+	} else {
+		glog.V(0).Infof("Verified %s", "Owner-CA/ak.crt")
+	}
 }
 
 // ### Main ####################################################################
@@ -764,21 +753,6 @@ func main() {
 	}
 
 	// === Retrieve TPM EK Pub =================================================
-
-	//ekTpmKey, err := client.EndorsementKeyRSA(rwc)
-	//if err != nil {
-	//	glog.Fatalf("Unable to load SRK from TPM: %v", err)
-	//}
-	//
-	//ekTpmPubKey, _, _, err := tpm2.ReadPublic(rwc, ekTpmKey.Handle())
-	//if err != nil {
-	//	glog.Fatalf("tpm2.ReadPublic() failed: %s", err)
-	//}
-	//
-	//ekPubKey, err := ekTpmPubKey.Key()
-	//if err != nil {
-	//	glog.Fatalf("ekPublicKey.Key() failed: %s", err)
-	//}
 
 	ek, ekPubKey, err := tpm2.CreatePrimary(
 		rwc,
