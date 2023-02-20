@@ -243,15 +243,18 @@ func CreateAK(rwc io.ReadWriter) {
 		glog.Fatalf("x509.MarshalPKIXPublicKey() failed: %v", err)
 	}
 
-	akPubPEM := pem.EncodeToMemory(
+	akPubPem := pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "PUBLIC KEY",
 			Bytes: akBytes,
 		},
 	)
-	glog.V(0).Infof("akPubPEM: \n%v", string(akPubPEM))
+	glog.V(0).Infof("akPubPEM: \n%v", string(akPubPem))
 
-	err = ioutil.WriteFile("Attestor/ak.pub", akPubPEM, 0644)
+	glog.V(0).Infof("akPub: \n%v", b64.StdEncoding.EncodeToString(akPub))
+	glog.V(0).Infof("akPubPem: \n%v", b64.StdEncoding.EncodeToString(akPubPem))
+
+	err = ioutil.WriteFile("Attestor/ak.pub", akPubPem, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
@@ -287,18 +290,16 @@ func GenerateCredential() {
 		glog.Fatalf("ioutil.ReadFile() failed for ak.name: %v", err)
 	}
 
-	akPubPem, err := ioutil.ReadFile("Attestor/ak.pub")
-	if err != nil {
-		glog.Fatalf("ioutil.ReadFile() failed for ak.pub: %v", err)
-	}
-	if err != nil {
-		glog.Fatalf("ioutil.ReadFile() failed for ak.pub: %v", err)
-	}
-	akBlock, _ := pem.Decode(akPubPem)
-	akPub, err := x509.ParsePKIXPublicKey(akBlock.Bytes)
-	if err != nil {
-		glog.Fatalf("x509.ParsePKCS1PrivateKey() failed: %v", err)
-	}
+	//akPubPem, err := ioutil.ReadFile("Attestor/ak.pub")
+	//if err != nil {
+	//	glog.Fatalf("ioutil.ReadFile() failed for ak.pub: %v", err)
+	//}
+	//akBlock, _ := pem.Decode(akPubPem)
+	//akPub, err := x509.ParsePKIXPublicKey(akBlock.Bytes)
+	//if err != nil {
+	//	glog.Fatalf("x509.ParsePKCS1PrivateKey() failed: %v", err)
+	//}
+	akPub := []byte{}
 
 	// Verify digest matches the public blob that was provided.
 	name, err := tpm2.DecodeName(bytes.NewBuffer(akName))
