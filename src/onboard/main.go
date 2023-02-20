@@ -251,7 +251,7 @@ func CreateAK(rwc io.ReadWriter) {
 	)
 	glog.V(0).Infof("akPubPEM: \n%v", string(akPubPEM))
 
-	err = ioutil.WriteFile("Attestor/ak.pub", akPub, 0644)
+	err = ioutil.WriteFile("Attestor/ak.pub", akPubPEM, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
@@ -287,9 +287,17 @@ func GenerateCredential() {
 		glog.Fatalf("ioutil.ReadFile() failed for ak.name: %v", err)
 	}
 
-	akPub, err := ioutil.ReadFile("Attestor/ak.pub")
+	akPubPEM, err := ioutil.ReadFile("Attestor/ak.pub")
 	if err != nil {
 		glog.Fatalf("ioutil.ReadFile() failed for ak.pub: %v", err)
+	}
+	if err != nil {
+		glog.Fatalf("ioutil.ReadFile() failed for ak.pub: %v", err)
+	}
+	akBlock, _ := pem.Decode(akPubPem)
+	akPub, err := x509.ParsePKIXPublicKey(akBlock.Bytes)
+	if err != nil {
+		glog.Fatalf("x509.ParsePKCS1PrivateKey() failed: %v", err)
 	}
 
 	// Verify digest matches the public blob that was provided.
@@ -342,13 +350,13 @@ func GenerateCredential() {
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed for credBlob: %v", err)
 	}
-	glog.V(0).Infof("Wrote Attestor/credBlob")
+	glog.V(0).Infof("Wrote Verifier/credBlob")
 
 	err = ioutil.WriteFile("Verifier/encSecret", encSecret, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed for encSecret: %v", err)
 	}
-	glog.V(0).Infof("Wrote Attestor/encSecret")
+	glog.V(0).Infof("Wrote Verifier/encSecret")
 }
 
 // ### GetAK (on attestor) #####################################################
