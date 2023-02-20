@@ -126,9 +126,10 @@ func CreateAK(rwc io.ReadWriter) {
 	if err != nil {
 		glog.Fatalf("tpm2.StartAuthSession() failed: %v", err)
 	}
-	defer tpm2.FlushContext(rwc, createSession)
 	glog.V(5).Infof("createSession: 0x%08x", createSession)
 	glog.V(5).Infof("createSessionNonce: 0x%s", hex.EncodeToString(createSessionNonce))
+
+	defer tpm2.FlushContext(rwc, createSession)
 
 	_, _, err = tpm2.PolicySecret(
 		rwc,
@@ -205,15 +206,15 @@ func CreateAK(rwc io.ReadWriter) {
 	if err != nil {
 		glog.Fatalf("tpm2.ContextLoad() failed for EK: %v", err)
 	}
-	defer tpm2.FlushContext(rwc, ek)
 	glog.V(5).Infof("ek: 0x%08x", ek)
-	return
+
+	defer tpm2.FlushContext(rwc, ek)
 
 	// === Start auth session for loading AK ===================================
 
 	// /!\ Loading AK as child of EK requires an auth session
 
-	loadSession, _, err := tpm2.StartAuthSession(
+	loadSession, loadSessionNonce, err := tpm2.StartAuthSession(
 		rwc,
 		tpm2.HandleNull,
 		tpm2.HandleNull,
@@ -226,6 +227,9 @@ func CreateAK(rwc io.ReadWriter) {
 	if err != nil {
 		glog.Fatalf("tpm2.StartAuthSession() failed: %v", err)
 	}
+	glog.V(5).Infof("createSession: 0x%08x", loadSession)
+	glog.V(5).Infof("createSessionNonce: 0x%s", hex.EncodeToString(loadSessionNonce))
+
 	defer tpm2.FlushContext(rwc, loadSession)
 
 	_, _, err = tpm2.PolicySecret(
@@ -246,10 +250,13 @@ func CreateAK(rwc io.ReadWriter) {
 
 	// === Load AK =============================================================
 
-	ak, akName0, err := tpm2.LoadUsingAuth(rwc, ek, authCommandLoad, akPublicBlob, akPrivateBlob)
+	ak, akName, err := tpm2.LoadUsingAuth(rwc, ek, authCommandLoad, akPublicBlob, akPrivateBlob)
 	if err != nil {
 		glog.Fatalf("tpm2.LoadUsingAuth() failed: %v", err)
 	}
+	glog.V(5).Infof("ak: 0x%08x", ak)
+	glog.V(5).Infof("akName: 0x%s", hex.EncodeToString(akName))
+
 	defer tpm2.FlushContext(rwc, ak)
 
 	err = tpm2.FlushContext(rwc, loadSession)
@@ -257,20 +264,20 @@ func CreateAK(rwc io.ReadWriter) {
 		glog.Fatalf("tpm2.FlushContext() failed: %v", err)
 	}
 
-	akTpmPublicKey, akName, akName2, err := tpm2.ReadPublic(rwc, ak)
+	akPublicKey, akName2, akQualName2, err := tpm2.ReadPublic(rwc, ak)
 	if err != nil {
 		glog.Fatalf("tpm2.ReadPublic() failed: %v", err)
 	}
-
-	glog.V(0).Infof("akName0: \n%v", hex.EncodeToString(akName0))
-	glog.V(0).Infof("akName2: \n%v", hex.EncodeToString(akName2))
+	glog.V(5).Infof("akPublicKey: %v", akPublicKey)
+	glog.V(5).Infof("akName2: 0x%s", hex.EncodeToString(akName2))
+	glog.V(5).Infof("akQualName2: 0x%s", hex.EncodeToString(akQualName2))
 	return
 
-	akPublicKey, err := akTpmPublicKey.Key()
+	akPublicKeyCrypto, err := akPublicKey.Key()
 	if err != nil {
 		glog.Fatalf("akTpmPublicKey.Key() failed: %v", err)
 	}
-	akBytes, err := x509.MarshalPKIXPublicKey(akPublicKey)
+	akBytes, err := x509.MarshalPKIXPublicKey(akPublicKeyCrypto)
 	if err != nil {
 		glog.Fatalf("x509.MarshalPKIXPublicKey() failed: %v", err)
 	}
@@ -292,7 +299,7 @@ func CreateAK(rwc io.ReadWriter) {
 	glog.V(0).Infof("akPub: \n%v", string(akPublicBlob))
 	glog.V(0).Infof("akBytes: \n%v", string(akBytes))
 
-	akPubBytes3, err := akTpmPublicKey.Encode()
+	akPubBytes3, err := akPublicKey.Encode()
 	if err != nil {
 		glog.Errorf("ERROR: Encoding failed for akPubBytes: %v", err)
 	}
@@ -328,7 +335,7 @@ func CreateAK(rwc io.ReadWriter) {
 		glog.Fatalf("Error loadingExternal AK %v", err)
 	}
 	defer tpm2.FlushContext(rwc, h)
-	glog.V(0).Infof("AK keyName0 %s", hex.EncodeToString(akName0))
+	glog.V(0).Infof("AK keyName0 %s", hex.EncodeToString(akName))
 	glog.V(0).Infof("AK KeyName  %s", hex.EncodeToString(keyName))
 
 	err = ioutil.WriteFile("Attestor/ak.pub", akPubPem, 0644)
@@ -349,15 +356,15 @@ func CreateAK(rwc io.ReadWriter) {
 	}
 	glog.V(0).Infof("Wrote Attestor/ak.key")
 
-	akPubBytes, err := akTpmPublicKey.Encode()
+	akPubBytes, err := akPublicKey.Encode()
 	if err != nil {
 		glog.Fatalf("akTpmPublicKey.Encode() failed: %v", err)
 	}
 	glog.V(10).Infof("EkPub %v", ekPublicKeyDER)
-	glog.V(10).Infof("AkName %v", akName)
+	glog.V(10).Infof("akName2 %v", akName2)
 	glog.V(10).Infof("AkPub %v", akPubBytes)
 
-	err = ioutil.WriteFile("Attestor/ak.name", akName0, 0644)
+	err = ioutil.WriteFile("Attestor/ak.name", akName, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed for ak.name: %v", err)
 	}
