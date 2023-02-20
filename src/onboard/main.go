@@ -62,60 +62,59 @@ func CreateAK(rwc io.ReadWriter) {
 
 	// === Load EK =============================================================
 
-	ek, ekPublicKey, err := CreateEK(rwc)
+	ek, ekPublicKeyCrypto, err := CreateEK(rwc)
 	if err != nil {
 		glog.Fatalf("tpm2.CreatePrimary() failed for EK: %v", err)
 	}
 	defer tpm2.FlushContext(rwc, ek)
 	glog.V(5).Infof("ek: 0x%x", ek)
-	glog.V(5).Infof("ekPublicKey : %v", ekPublicKey)
+	glog.V(5).Infof("ekPublicKey : %v", ekPublicKeyCrypto)
 
-	ekPublicKeyTpm2, ekName, ekQualName, err := tpm2.ReadPublic(rwc, ek)
+	ekPublicKey, ekName, ekQualName, err := tpm2.ReadPublic(rwc, ek)
 	if err != nil {
 		glog.Fatalf("tpm2.ReadPublic() failed for EK: %v", err)
 	}
-	glog.V(5).Infof("ekPublic: 0x%x", ekPublicKeyTpm2)
-	glog.V(5).Infof("ekName: %s", hex.EncodeToString(ekName))
-	glog.V(5).Infof("ekQNam: %s", hex.EncodeToString(ekQualName))
+	glog.V(5).Infof("ekPublicKeyTpm2: %v", ekPublicKey)
+	glog.V(5).Infof("ekName:     0x%s", hex.EncodeToString(ekName))
+	glog.V(5).Infof("ekQualName: 0x%s", hex.EncodeToString(ekQualName))
 
-	ekPublicKey2, err := ekPublicKeyTpm2.Key()
+	ekPublicKeyCrypto2, err := ekPublicKey.Key()
 	if err != nil {
 		glog.Fatalf("ekPublic.Key() failed: %v", err)
 	}
-	glog.V(5).Infof("ekPublicKey2: %v", ekPublicKey2)
+	glog.V(5).Infof("ekPublicKeyCrypto2: %v", ekPublicKeyCrypto2)
 
-	ekPublicKeyDer, err := x509.MarshalPKIXPublicKey(ekPublicKey)
+	ekPublicKeyDER, err := x509.MarshalPKIXPublicKey(ekPublicKeyCrypto)
 	if err != nil {
 		glog.Fatalf("x509.MarshalPKIXPublicKey() failed for EK Pub: %v", err)
 	}
-	glog.V(5).Infof("ekName: %v", ekPublicKeyDer)
-	glog.V(5).Infof("ekName: %s", hex.EncodeToString(ekPublicKeyDer))
-	return
+	glog.V(5).Infof("ekPublicKeyDER: 0x%s", hex.EncodeToString(ekPublicKeyDER))
 
-	ekPubPem := pem.EncodeToMemory(
+	ekPublicKeyPem := pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "PUBLIC KEY",
-			Bytes: ekPublicKeyDer,
+			Bytes: ekPublicKeyDER,
 		},
 	)
+	glog.V(5).Infof("ekPublicKeyPem: %s", string(ekPublicKeyPem))
 
-	err = ioutil.WriteFile("Attestor/ek.pub", ekPubPem, 0644)
+	err = ioutil.WriteFile("Attestor/ek.pub", ekPublicKeyPem, 0644)
 	if err != nil {
-		glog.Fatalf("ioutil.WriteFile() failed for EK Pub: %v", err)
+		glog.Fatalf("ioutil.WriteFile() failed for ek.pub: %v", err)
 	}
 	glog.V(0).Infof("Wrote Attestor/ek.pub")
 
-	//tpmEkPubBytes, err := tpmEkPub.Encode()
-	_, err = ekPublicKeyTpm2.Encode()
+	ekPublicKeyTPM, err := ekPublicKey.Encode()
 	if err != nil {
 		glog.Fatalf("tpmEkPub.Encode() failed: %v", err)
 	}
+	glog.V(5).Infof("ekPublicKeyTPM: 0x%s", hex.EncodeToString(ekPublicKeyTPM))
 
 	// === Start auth session for AK creation ==================================
 
-	// /!\ Creating AK as child of EK requires an auth session
+	// Auth sessions are required for EK children
 
-	createSession, _, err := tpm2.StartAuthSession(
+	createSession, createSessionNonce, err := tpm2.StartAuthSession(
 		rwc,
 		tpm2.HandleNull,
 		tpm2.HandleNull,
@@ -125,9 +124,11 @@ func CreateAK(rwc io.ReadWriter) {
 		tpm2.AlgNull,
 		tpm2.AlgSHA256)
 	if err != nil {
-		glog.Fatalf("tpm2.StartAuthSession() failed for AK: %v", err)
+		glog.Fatalf("tpm2.StartAuthSession() failed: %v", err)
 	}
 	defer tpm2.FlushContext(rwc, createSession)
+	glog.V(5).Infof("createSession: %v", createSession)
+	glog.V(5).Infof("createSessionNonce: 0x%s", hex.EncodeToString(createSessionNonce))
 
 	_, _, err = tpm2.PolicySecret(
 		rwc,
@@ -147,6 +148,7 @@ func CreateAK(rwc io.ReadWriter) {
 
 	authCommandCreateAuth := tpm2.AuthCommand{Session: createSession,
 		Attributes: tpm2.AttrContinueSession}
+	return
 
 	// === Create AK ===========================================================
 
