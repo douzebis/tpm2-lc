@@ -68,7 +68,7 @@ func CreateAK(rwc io.ReadWriter) {
 	}
 	defer tpm2.FlushContext(rwc, ek)
 	glog.V(5).Infof("ek: 0x%x", ek)
-	glog.V(5).Infof("ekPublicKey: %d %d", ekPublicKey.(*rsa.PublicKey).N, ekPublicKey.(*rsa.PublicKey).E)
+	glog.V(5).Infof("ekPublicKey : %d %d", ekPublicKey.(*rsa.PublicKey).N, ekPublicKey.(*rsa.PublicKey).E)
 
 	ekPublic, ekName, ekQualName, err := tpm2.ReadPublic(rwc, ek)
 	if err != nil {
@@ -76,15 +76,17 @@ func CreateAK(rwc io.ReadWriter) {
 	}
 	glog.V(5).Infof("ekPublic: 0x%x", ekPublic)
 	glog.V(5).Infof("ekName: %s", hex.EncodeToString(ekName))
-	glog.V(5).Infof("ekQualName: %s", hex.EncodeToString(ekQualName))
+	glog.V(5).Infof("ekQNam: %s", hex.EncodeToString(ekQualName))
+
+	ekPublicKey2, err := ekPublic.Key()
+	if err != nil {
+		glog.Fatalf("ekPublic.Key() failed: %v", err)
+	}
+	glog.V(5).Infof("ekPublicKey2: %d %d", ekPublicKey2.(*rsa.PublicKey).N, ekPublicKey2.(*rsa.PublicKey).E)
+
 	return
 
-	ekPub, err := ekPublic.Key()
-	if err != nil {
-		glog.Fatalf("tpmEkPub.Key() failed for EK: %v", err)
-	}
-
-	ekPubBytes, err := x509.MarshalPKIXPublicKey(ekPub)
+	ekPubBytes, err := x509.MarshalPKIXPublicKey(ekPublicKey2)
 	if err != nil {
 		glog.Fatalf("x509.MarshalPKIXPublicKey() failed for EK Pub: %v", err)
 	}
