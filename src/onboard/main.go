@@ -67,7 +67,7 @@ func CreateAK(rwc io.ReadWriter) {
 		glog.Fatalf("tpm2.CreatePrimary() failed for EK: %v", err)
 	}
 	defer tpm2.FlushContext(rwc, ek)
-	glog.V(5).Infof("ek: 0x%x", ek)
+	glog.V(5).Infof("ek: 0x%8x", ek)
 	glog.V(5).Infof("ekPublicKey : %v", ekPublicKeyCrypto)
 
 	ekPublicKey, ekName, ekQualName, err := tpm2.ReadPublic(rwc, ek)
@@ -127,7 +127,7 @@ func CreateAK(rwc io.ReadWriter) {
 		glog.Fatalf("tpm2.StartAuthSession() failed: %v", err)
 	}
 	defer tpm2.FlushContext(rwc, createSession)
-	glog.V(5).Infof("createSession: %v", createSession)
+	glog.V(5).Infof("createSession: 0x%8x", createSession)
 	glog.V(5).Infof("createSessionNonce: 0x%s", hex.EncodeToString(createSessionNonce))
 
 	_, _, err = tpm2.PolicySecret(
