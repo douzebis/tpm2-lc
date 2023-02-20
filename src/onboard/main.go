@@ -477,16 +477,19 @@ func ActivateCredential(rwc io.ReadWriter) {
 	if err != nil {
 		glog.Fatalf("ioutil.ReadFile() failed for credBlob: %v", err)
 	}
+	glog.V(0).Infof("Read Verifier/credBlob")
 
 	encSecret, err := ioutil.ReadFile("Verifier/encSecret")
 	if err != nil {
 		glog.Fatalf("ioutil.ReadFile() failed for encSecret: %v", err)
 	}
+	glog.V(0).Infof("Read Verifier/encSecret")
 
 	ekCtx, err := ioutil.ReadFile("Attestor/ek.ctx")
 	if err != nil {
 		glog.Fatalf("ioutil.ReadFile() failed for EK Ctx: %v", err)
 	}
+	glog.V(0).Infof("Read Attestor/ek.ctx")
 
 	ek, err := tpm2.ContextLoad(rwc, ekCtx)
 	if err != nil {
