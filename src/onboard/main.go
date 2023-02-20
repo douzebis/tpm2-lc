@@ -897,11 +897,11 @@ func main() {
 	// === Create TPM AK =======================================================
 
 	CreateAK(rwc) // On the Attestor
-	return
 
 	// === Create credential challenge =========================================
 
 	GenerateCredential() // On the Verifier
+	return
 
 	// === Activate credential =================================================
 
