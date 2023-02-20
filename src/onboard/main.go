@@ -253,7 +253,7 @@ func CreateAK(rwc io.ReadWriter) {
 	glog.V(0).Infof("akPubPEM: \n%v", string(akPubPem))
 
 	glog.V(0).Infof("akPub: \n%v", base64.StdEncoding.EncodeToString(akPub))
-	glog.V(0).Infof("akPubPem: \n%v", base64.StdEncoding.EncodeToString(akPubPem))
+	glog.V(0).Infof("akBytes: \n%v", base64.StdEncoding.EncodeToString(akBytes))
 
 	err = ioutil.WriteFile("Attestor/ak.pub", akPubPem, 0644)
 	if err != nil {
