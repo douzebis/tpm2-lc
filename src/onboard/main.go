@@ -276,37 +276,43 @@ func CreateAK(rwc io.ReadWriter) {
 		glog.Fatalf("tpm2.FlushContext() failed: %v", err)
 	}
 
-	//	akPublicKey, akName_, akQualName_, err := tpm2.ReadPublic(rwc, ak)
-	//	if err != nil {
-	//		glog.Fatalf("tpm2.ReadPublic() failed: %v", err)
-	//	}
-	//	glog.V(5).Infof("akPublicKey: %v", akPublicKey)
-	//	// akName_ consists of 34 bytes only (size header is missing):
-	//	// 00 0b: Algorighm is SHA256
-	//	// xx...: 32 bytes for key hash
-	//	glog.V(5).Infof("akName_    : 0x%s", hex.EncodeToString(akName_))
-	//	glog.V(5).Infof("akQualName2: 0x%s", hex.EncodeToString(akQualName2))
-	//
-	//	akPublicKeyCrypto, err := akPublicKey.Key()
-	//	if err != nil {
-	//		glog.Fatalf("akTpmPublicKey.Key() failed: %v", err)
-	//	}
-	//	glog.V(5).Infof("akPublicKeyCrypto: %v", akPublicKeyCrypto)
-	//
-	//	akPublicKeyDER, err := x509.MarshalPKIXPublicKey(akPublicKeyCrypto)
-	//	if err != nil {
-	//		glog.Fatalf("x509.MarshalPKIXPublicKey() failed: %v", err)
-	//	}
-	//	glog.V(5).Infof("akPublicKeyDER: 0x%s", hex.EncodeToString(akPublicKeyDER))
-	//
-	//	akPublicKeyPEM_ := pem.EncodeToMemory(
-	//		&pem.Block{
-	//			Type:  "PUBLIC KEY",
-	//			Bytes: akPublicKeyDER,
-	//		},
-	//	)
-	//	glog.V(5).Infof("akPublicKeyPEM_: %v", string(akPublicKeyPEM_))
-	//
+	akPublicKey, akName_, akQualName_, err := tpm2.ReadPublic(rwc, ak)
+	if err != nil {
+		glog.Fatalf("tpm2.ReadPublic() failed: %v", err)
+	}
+	glog.V(5).Infof("akPublicKey: %v", akPublicKey)
+	// akName_ consists of 34 bytes only (size header is missing):
+	// 00 0b: Algorighm is SHA256
+	// xx...: 32 bytes for key hash
+	glog.V(5).Infof("akName_    : 0x%s", hex.EncodeToString(akName_))
+	glog.V(5).Infof("akQualName2: 0x%s", hex.EncodeToString(akQualName_))
+
+	akPublicKeyCrypto, err := akPublicKey.Key()
+	if err != nil {
+		glog.Fatalf("akTpmPublicKey.Key() failed: %v", err)
+	}
+	glog.V(5).Infof("akPublicKeyCrypto: %v", akPublicKeyCrypto)
+
+	akPublicKeyDER, err := x509.MarshalPKIXPublicKey(akPublicKeyCrypto)
+	if err != nil {
+		glog.Fatalf("x509.MarshalPKIXPublicKey() failed: %v", err)
+	}
+	glog.V(5).Infof("akPublicKeyDER: 0x%s", hex.EncodeToString(akPublicKeyDER))
+
+	akPublicKeyPEM := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "PUBLIC KEY",
+			Bytes: akPublicKeyDER,
+		},
+	)
+	glog.V(5).Infof("akPublicKeyPEM_: %v", string(akPublicKeyPEM))
+
+	err = ioutil.WriteFile("Attestor/ak.pub", akPublicKeyPEM, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	}
+	glog.V(0).Infof("Wrote Attestor/ak.pub")
+
 	//	akPublicKeyTPM, err := akPublicKey.Encode()
 	//	if err != nil {
 	//		glog.Errorf("akPublicKey.Encode() faile: %v", err)
@@ -599,6 +605,129 @@ func CreateAKCert() {
 		glog.Fatalf("Secrets do not match, aborting onboarding")
 	}
 	glog.V(0).Infof("Secrets match, creating AK cert")
+
+	//	// === Create certificate for TPM CA =======================================
+	//
+	//	tpmCaCert, tpmCaPrivKey := lib.CreateCA("TPM Manufacturer", "TPM-CA/tpm-ca")
+	//
+	//	// === Create certificate for TPM ==========================================
+	//
+	//	// --- Retrieve TPM EK Pub -------------------------------------------------
+	//
+	//	ekTpmKey, err := client.EndorsementKeyRSA(rwc)
+	//	if err != nil {
+	//		glog.Fatalf("Unable to load SRK from TPM: %v", err)
+	//	}
+	//
+	//	ekTpmPubKey, _, _, err := tpm2.ReadPublic(rwc, ekTpmKey.Handle())
+	//	if err != nil {
+	//		glog.Fatalf("tpm2.ReadPublic() failed: %s", err)
+	//	}
+	//
+	//	ekPubKey, err := ekTpmPubKey.Key()
+	//	if err != nil {
+	//		glog.Fatalf("ekPublicKey.Key() failed: %s", err)
+	//	}
+	//	ekPubBytes, err := x509.MarshalPKIXPublicKey(ekPubKey)
+	//	if err != nil {
+	//		glog.Fatalf("x509.MarshalPKIXPublicKey() failed: %v", err)
+	//	}
+	//
+	//	ekPubPEM := pem.EncodeToMemory(
+	//		&pem.Block{
+	//			Type:  "PUBLIC KEY",
+	//			Bytes: ekPubBytes,
+	//		},
+	//	)
+	//
+	//	err = ioutil.WriteFile("TPM-CA/ek.pem", ekPubPEM, 0644)
+	//	if err != nil {
+	//		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	//	}
+	//
+	//	glog.V(0).Infof("Wrote TPM-CA/ek.pem")
+	//
+	//	switch ekPubKey.(type) {
+	//	case *rsa.PublicKey:
+	//		glog.V(0).Infof("ekPublicKey is of type RSA")
+	//	}
+	//	// From https://stackoverflow.com/a/44317246
+	//	ekPublicKey, _ := ekPubKey.(*rsa.PublicKey)
+	//
+	//	// --- Create TPM EK certificate -------------------------------------------
+	//
+	//	tpmTemplate := x509.Certificate{
+	//		SerialNumber: big.NewInt(1),
+	//		Subject: pkix.Name{
+	//			Organization: []string{"TPM Inc"},
+	//			CommonName:   "TPM",
+	//		},
+	//		NotBefore: time.Now(),
+	//		NotAfter:  time.Now().AddDate(10, 0, 0),
+	//		KeyUsage:  x509.KeyUsageKeyEncipherment,
+	//		ExtraExtensions: []pkix.Extension{
+	//			*lib.CreateSubjectAltName(
+	//				[]byte("id: Google"),
+	//				[]byte("id: Shielded VM vTPM"),
+	//				[]byte("id: 00010001"),
+	//			),
+	//		},
+	//		BasicConstraintsValid: true,
+	//		IsCA:                  false,
+	//	}
+	//
+	//	tpmBytes, err := x509.CreateCertificate(
+	//		rand.Reader,
+	//		&tpmTemplate,
+	//		tpmCaCert,
+	//		ekPublicKey,
+	//		tpmCaPrivKey)
+	//	if err != nil {
+	//		glog.Fatalf("x509.CreateCertificate() failed: %v", err)
+	//	}
+	//
+	//	// pem encode
+	//	tpmPEM := []byte(pem.EncodeToMemory(
+	//		&pem.Block{
+	//			Type:  "CERTIFICATE",
+	//			Bytes: tpmBytes,
+	//		},
+	//	))
+	//
+	//	err = ioutil.WriteFile("TPM-CA/tpm.crt", tpmPEM, 0644)
+	//	if err != nil {
+	//		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	//	}
+	//
+	//	glog.V(0).Infof("Wrote TPM-CA/tpm.crt")
+	//
+	//	// --- Verify TPM cert -----------------------------------------------------
+	//
+	//	// Note: equivalently with openssl:
+	//	// openssl verify -CAfile TPM-CA/tpm-ca.crt TPM-CA/tpm.crt
+	//	// openssl x509 -noout -ext subjectAltName -in TPM-CA/tpm.crt
+	//
+	//	tpmCert, err := x509.ParseCertificate(tpmBytes)
+	//	if err != nil {
+	//		glog.Fatalf("x509.ParseCertificate() failed: %v", err)
+	//	}
+	//	tpmCert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
+	//
+	//	roots := x509.NewCertPool()
+	//	roots.AddCert(tpmCaCert)
+	//	opts := x509.VerifyOptions{
+	//		Roots: roots,
+	//	}
+	//
+	//	if _, err := tpmCert.Verify(opts); err != nil {
+	//		glog.Fatalf("tpmCert.Verify() failed: %v", err)
+	//	} else {
+	//		glog.V(0).Infof("Verified %s", "TPM-CA/tpm.crt")
+	//	}
+	//
+	//	// === Create certificate for Owner CA =====================================
+	//
+	//	lib.CreateCA("TPM Owner", "Owner-CA/owner-ca")
 
 }
 
