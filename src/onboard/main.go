@@ -67,7 +67,7 @@ func CreateAK(rwc io.ReadWriter) {
 		glog.Fatalf("tpm2.CreatePrimary() failed for EK: %v", err)
 	}
 	defer tpm2.FlushContext(rwc, ek)
-	glog.V(5).Infof("ek: 0x%8x", ek)
+	glog.V(5).Infof("ek: 0x%08x", ek)
 	glog.V(5).Infof("ekPublicKey : %v", ekPublicKeyCrypto)
 
 	ekPublicKey, ekName, ekQualName, err := tpm2.ReadPublic(rwc, ek)
@@ -127,7 +127,7 @@ func CreateAK(rwc io.ReadWriter) {
 		glog.Fatalf("tpm2.StartAuthSession() failed: %v", err)
 	}
 	defer tpm2.FlushContext(rwc, createSession)
-	glog.V(5).Infof("createSession: 0x%8x", createSession)
+	glog.V(5).Infof("createSession: 0x%08x", createSession)
 	glog.V(5).Infof("createSessionNonce: 0x%s", hex.EncodeToString(createSessionNonce))
 
 	_, _, err = tpm2.PolicySecret(
@@ -148,11 +148,10 @@ func CreateAK(rwc io.ReadWriter) {
 
 	authCommandCreateAuth := tpm2.AuthCommand{Session: createSession,
 		Attributes: tpm2.AttrContinueSession}
-	return
 
 	// === Create AK ===========================================================
 
-	akPriv, akPub, creationData, creationHash, creationTicket, err := tpm2.CreateKeyUsingAuth(
+	akPrivateBlob, akPublicBlob, creationData, creationHash, creationTicket, err := tpm2.CreateKeyUsingAuth(
 		rwc,
 		ek,
 		tpm2.PCRSelection{},
@@ -161,25 +160,23 @@ func CreateAK(rwc io.ReadWriter) {
 		client.AKTemplateRSA(),
 	)
 	if err != nil {
-		glog.Fatalf("tpm2.CreateKeyUsingAuth() failed for AK: %v", err)
+		glog.Fatalf("tpm2.CreateKeyUsingAuth() failed: %v", err)
 	}
+	glog.V(5).Infof("akPrivateBlob 0x%s", hex.EncodeToString(akPrivateBlob))
+	glog.V(5).Infof("akPublicBlob 0x%s", hex.EncodeToString(akPublicBlob))
+	cr, err := tpm2.DecodeCreationData(creationData)
+	if err != nil {
+		glog.Fatalf("tpm2.DecodeCreationData() failed: %v", err)
+	}
+	glog.V(5).Infof("CredentialData.ParentName.Digest.Value 0x%s", hex.EncodeToString(cr.ParentName.Digest.Value))
+	glog.V(5).Infof("CredentialHash 0x%s", hex.EncodeToString(creationHash))
+	glog.V(5).Infof("CredentialTicket 0x%s", hex.EncodeToString(creationTicket.Digest))
 
 	err = tpm2.FlushContext(rwc, createSession)
 	if err != nil {
 		glog.Fatalf("tpm2.FlushContext() failed: %v", err)
 	}
-
-	glog.V(10).Infof("     akPub: %s,", hex.EncodeToString(akPub))
-	glog.V(10).Infof("     akPriv: %s,", hex.EncodeToString(akPriv))
-
-	cr, err := tpm2.DecodeCreationData(creationData)
-	if err != nil {
-		glog.Fatalf("tpm2.DecodeCreationData() failed: %v", err)
-	}
-
-	glog.V(10).Infof("     CredentialData.ParentName.Digest.Value %s", hex.EncodeToString(cr.ParentName.Digest.Value))
-	glog.V(10).Infof("     CredentialTicket %s", hex.EncodeToString(creationTicket.Digest))
-	glog.V(10).Infof("     CredentialHash %s", hex.EncodeToString(creationHash))
+	return
 
 	// === Flush and reload EK =================================================
 
