@@ -381,11 +381,11 @@ func GenerateCredential() {
 	}
 	glog.V(5).Infof("akName: 0x%s", hex.EncodeToString(akName))
 
-	//akPublicBlob, err := ioutil.ReadFile("Attestor/ak.pub.blob")
-	//if err != nil {
-	//	glog.Fatalf("ioutil.ReadFile() failed for Attestor/ak.pub.blob: %v", err)
-	//}
-	//glog.V(5).Infof("akPublicBlob: %s", string(akPublicBlob))
+	akPublicBlob, err := ioutil.ReadFile("Attestor/ak.pub.blob")
+	if err != nil {
+		glog.Fatalf("ioutil.ReadFile() failed for Attestor/ak.pub.blob: %v", err)
+	}
+	glog.V(5).Infof("akPublicBlob: %s", string(akPublicBlob))
 
 	//akBlock, _ := pem.Decode(akPublicKeyPEM)
 	////akPub, err := x509.ParsePKIXPublicKey(akBlock.Bytes)
@@ -407,24 +407,24 @@ func GenerateCredential() {
 		glog.Fatalf("ak.name was not a digest")
 	}
 
-	//	hash, err := name.Digest.Alg.Hash()
-	//	if err != nil {
-	//		glog.Fatalf("failed to get name hash: %v", err)
-	//	}
-	//
-	//	pubHash := hash.New()
-	//	pubHash.Write(akPublicBlob)
-	//	pubDigest := pubHash.Sum(nil)
-	//	if !bytes.Equal(name.Digest.Value, pubDigest) {
-	//		glog.Fatalf("name was not for public blob")
-	//	}
-	//
-	//	// Inspect key attributes.
-	//	pub, err := tpm2.DecodePublic(akPublicBlob)
-	//	if err != nil {
-	//		glog.Fatalf("decode public blob: %v", err)
-	//	}
-	//	glog.V(0).Infof("Key attributes: 0x08%x\n", pub.Attributes)
+	hash, err := name.Digest.Alg.Hash()
+	if err != nil {
+		glog.Fatalf("failed to get name hash: %v", err)
+	}
+
+	pubHash := hash.New()
+	pubHash.Write(akPublicBlob)
+	pubDigest := pubHash.Sum(nil)
+	if !bytes.Equal(name.Digest.Value, pubDigest) {
+		glog.Fatalf("name was not for public blob")
+	}
+
+	// Inspect key attributes.
+	pub, err := tpm2.DecodePublic(akPublicBlob)
+	if err != nil {
+		glog.Fatalf("decode public blob: %v", err)
+	}
+	glog.V(0).Infof("Key attributes: 0x08%x\n", pub.Attributes)
 
 	// Retrieves ekPub
 	ekPubPem, err := ioutil.ReadFile("Verifier/ek.pub")
