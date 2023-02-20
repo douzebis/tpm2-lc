@@ -254,6 +254,24 @@ func CreateAK(rwc io.ReadWriter) {
 	glog.V(0).Infof("akPub: \n%v", hex.EncodeToString(akPub))
 	glog.V(0).Infof("akBytes: \n%v", hex.EncodeToString(akBytes))
 
+	akPubBytes2, err := akTpmPublicKey.Encode()
+	if err != nil {
+		glog.Errorf("ERROR: Encoding failed for akPubBytes: %v", err)
+	}
+	tPub, err := tpm2.DecodePublic(akPubBytes2)
+	if err != nil {
+		glog.Fatalf("Error DecodePublic AK %v", tPub)
+	}
+	ap, err := tPub.Key()
+	if err != nil {
+		glog.Fatalf("akPub.Key() failed: %s", err)
+	}
+	akBytes2, err := x509.MarshalPKIXPublicKey(ap)
+	if err != nil {
+		glog.Fatalf("Unable to convert akPub: %v", err)
+	}
+	glog.V(0).Infof("akBytes: \n%v", hex.EncodeToString(akBytes2))
+
 	err = ioutil.WriteFile("Attestor/ak.pub", akPubPem, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
