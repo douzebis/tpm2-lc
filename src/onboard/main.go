@@ -384,12 +384,15 @@ func GenerateCredential() {
 	if err != nil {
 		glog.Fatalf("ioutil.ReadFile() failed for ak.name: %v", err)
 	}
+	glog.V(5).Infof("akName: 0x%s", hex.EncodeToString(akName))
 
-	akPubPem, err := ioutil.ReadFile("Attestor/ak.pub")
+	akPubPEM, err := ioutil.ReadFile("Attestor/ak.pub")
 	if err != nil {
 		glog.Fatalf("ioutil.ReadFile() failed for ak.pub: %v", err)
 	}
-	akBlock, _ := pem.Decode(akPubPem)
+	glog.V(5).Infof("akPubPEM: %s", string(akName))
+
+	akBlock, _ := pem.Decode(akPubPEM)
 	//akPub, err := x509.ParsePKIXPublicKey(akBlock.Bytes)
 	//if err != nil {
 	//	glog.Fatalf("x509.ParsePKCS1PrivateKey() failed: %v", err)
