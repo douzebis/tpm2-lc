@@ -352,7 +352,7 @@ func CreateAK(rwc io.ReadWriter) {
 
 	defer tpm2.FlushContext(rwc, ak2)
 
-	err = ioutil.WriteFile("Attestor/ak.pub", akPublicKeyPEM, 0644)
+	err = ioutil.WriteFile("Attestor/ak.pub", akPublicKeyPEM0, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
@@ -386,13 +386,13 @@ func GenerateCredential() {
 	}
 	glog.V(5).Infof("akName: 0x%s", hex.EncodeToString(akName))
 
-	akPubPEM, err := ioutil.ReadFile("Attestor/ak.pub")
+	akPublicKeyPEM, err := ioutil.ReadFile("Attestor/ak.pub")
 	if err != nil {
 		glog.Fatalf("ioutil.ReadFile() failed for Attestor/ak.pub: %v", err)
 	}
-	glog.V(5).Infof("akPubPEM: %s", string(akPubPEM))
+	glog.V(5).Infof("akPubPEM: %s", string(akPublicKeyPEM))
 
-	akBlock, _ := pem.Decode(akPubPEM)
+	akBlock, _ := pem.Decode(akPublicKeyPEM)
 	//akPub, err := x509.ParsePKIXPublicKey(akBlock.Bytes)
 	//if err != nil {
 	//	glog.Fatalf("x509.ParsePKCS1PrivateKey() failed: %v", err)
