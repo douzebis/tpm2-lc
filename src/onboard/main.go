@@ -388,18 +388,17 @@ func GenerateCredential() {
 
 	akPubPEM, err := ioutil.ReadFile("Attestor/ak.pub")
 	if err != nil {
-		glog.Fatalf("ioutil.ReadFile() failed for ak.pub: %v", err)
+		glog.Fatalf("ioutil.ReadFile() failed for Attestor/ak.pub: %v", err)
 	}
-	glog.V(5).Infof("akPubPEM: %s", string(akName))
+	glog.V(5).Infof("akPubPEM: %s", string(akPubPEM))
 
 	akBlock, _ := pem.Decode(akPubPEM)
 	//akPub, err := x509.ParsePKIXPublicKey(akBlock.Bytes)
 	//if err != nil {
 	//	glog.Fatalf("x509.ParsePKCS1PrivateKey() failed: %v", err)
 	//}
-	akPub := akBlock.Bytes
-	glog.V(0).Infof("akPub2: \n%v", hex.EncodeToString(akPub))
-	glog.V(0).Infof("akPub2: \n%v", string(akPub))
+	akPubDER := akBlock.Bytes
+	glog.V(0).Infof("akPub2: \n%v", hex.EncodeToString(akPubDER))
 
 	// Verify digest matches the public blob that was provided.
 	name, err := tpm2.DecodeName(bytes.NewBuffer(akName))
@@ -417,15 +416,17 @@ func GenerateCredential() {
 	if err != nil {
 		glog.Fatalf("failed to get name hash: %v", err)
 	}
+	glog.V(5).Infof("h: %d %x", h, h)
+
 	pubHash := h.New()
-	pubHash.Write(akPub)
+	pubHash.Write(akPubDER)
 	pubDigest := pubHash.Sum(nil)
 	if !bytes.Equal(name.Digest.Value, pubDigest) {
 		glog.Fatalf("name was not for public blob")
 	}
 
 	// Inspect key attributes.
-	pub, err := tpm2.DecodePublic(akPub)
+	pub, err := tpm2.DecodePublic(akPubDER)
 	if err != nil {
 		glog.Fatalf("decode public blob: %v", err)
 	}
