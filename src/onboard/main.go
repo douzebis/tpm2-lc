@@ -287,7 +287,7 @@ func GenerateCredential() {
 		glog.Fatalf("ioutil.ReadFile() failed for ak.name: %v", err)
 	}
 
-	akPubPEM, err := ioutil.ReadFile("Attestor/ak.pub")
+	akPubPem, err := ioutil.ReadFile("Attestor/ak.pub")
 	if err != nil {
 		glog.Fatalf("ioutil.ReadFile() failed for ak.pub: %v", err)
 	}
