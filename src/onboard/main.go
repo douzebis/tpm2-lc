@@ -347,7 +347,7 @@ func CreateAK(rwc io.ReadWriter) {
 	if err != nil {
 		glog.Fatalf("akTpmPublicKey.Encode() failed: %v", err)
 	}
-	glog.V(10).Infof("EkPub %v", ekPublicKeyDer)
+	glog.V(10).Infof("EkPub %v", ekPublicKeyDER)
 	glog.V(10).Infof("AkName %v", akName)
 	glog.V(10).Infof("AkPub %v", akPubBytes)
 
