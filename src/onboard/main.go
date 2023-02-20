@@ -410,6 +410,9 @@ func GenerateCredential() {
 	if err != nil {
 		glog.Fatalf("tpm2.DecodeName(): %v", err)
 	}
+	glog.V(5).Infof("akName           : 0x%s", hex.EncodeToString(akName))
+	glog.V(5).Infof("name.Digest.Value: 0x%s", hex.EncodeToString(name.Digest.Value))
+
 	if name.Digest == nil {
 		glog.Fatalf("ak.name was not a digest")
 	}
@@ -464,7 +467,7 @@ func GenerateCredential() {
 	glog.V(0).Infof("Wrote Verifier/encSecret")
 }
 
-// ### GetAK (on attestor) #####################################################
+// ### ActivateCredential (on attestor) ########################################
 
 func ActivateCredential(rwc io.ReadWriter) {
 
