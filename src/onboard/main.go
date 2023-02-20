@@ -292,6 +292,7 @@ func CreateAK(rwc io.ReadWriter) {
 		glog.Fatalf("akTpmPublicKey.Key() failed: %v", err)
 	}
 	glog.V(5).Infof("akPublicKeyCrypto: %v", akPublicKeyCrypto)
+	glog.V(5).Infof("akPublicKeyCrypto.Modulus: 0x%x", akPublicKeyCrypto.(*rsa.PublicKey).N)
 
 	akPublicKeyDER, err := x509.MarshalPKIXPublicKey(akPublicKeyCrypto)
 	if err != nil {
