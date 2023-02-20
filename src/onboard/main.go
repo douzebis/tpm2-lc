@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -23,6 +24,7 @@ import (
 	"github.com/google/go-tpm-tools/client"
 	"github.com/google/go-tpm/tpm2"
 	"github.com/google/go-tpm/tpm2/credactivation"
+	"github.com/google/go-tpm/tpmutil"
 )
 
 var handleNames = map[string][]tpm2.HandleType{
@@ -37,28 +39,45 @@ var (
 	flush   = flag.String("flush", "all", "Flush contexts, must be oneof transient|saved|loaded|all")
 )
 
-// ### GetAK (on attestor) #####################################################
+// ### CreateEK (on attestor) #####################################################
 
-func CreateAK(rwc io.ReadWriter) {
+func CreateEK(rwc io.ReadWriter) (tpmutil.Handle, crypto.PublicKey, error) {
 
 	// === Load EK =============================================================
 
-	ek, _, err := tpm2.CreatePrimary(
+	ek, pub, err := tpm2.CreatePrimary(
 		rwc,
 		tpm2.HandleEndorsement,
 		tpm2.PCRSelection{},
 		"", "",
 		client.DefaultEKTemplateRSA(),
 	)
+
+	return ek, pub, err
+}
+
+// ### CreateAK (on attestor) #####################################################
+
+func CreateAK(rwc io.ReadWriter) {
+
+	// === Load EK =============================================================
+
+	ek, ekPublicKey, err := CreateEK(rwc)
 	if err != nil {
 		glog.Fatalf("tpm2.CreatePrimary() failed for EK: %v", err)
 	}
 	defer tpm2.FlushContext(rwc, ek)
+	glog.V(5).Infof("ek: 0x%x", ek)
+	glog.V(5).Infof("ekPublicKey: %d %d", ekPublicKey.(*rsa.PublicKey).N, ekPublicKey.(*rsa.PublicKey).E)
 
-	tpmEkPub, _, _, err := tpm2.ReadPublic(rwc, ek)
+	ekPublic, ekName, ekQualName, err := tpm2.ReadPublic(rwc, ek)
 	if err != nil {
 		glog.Fatalf("tpm2.ReadPublic() failed for EK: %v", err)
 	}
+	glog.V(5).Infof("ekPublic: 0x%x", ekPublic)
+	glog.V(5).Infof("ekName: %s", hex.EncodeToString(ekName))
+	glog.V(5).Infof("ekQualName: %s", hex.EncodeToString(ekQualName))
+	return
 
 	ekPub, err := tpmEkPub.Key()
 	if err != nil {
