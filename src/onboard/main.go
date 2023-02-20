@@ -255,7 +255,7 @@ func CreateAK(rwc io.ReadWriter) {
 		glog.Fatalf("tpm2.LoadUsingAuth() failed: %v", err)
 	}
 	glog.V(5).Infof("ak: 0x%08x", ak)
-	glog.V(5).Infof("akName: 0x%s", hex.EncodeToString(akName))
+	glog.V(5).Infof("akName     : 0x%s", hex.EncodeToString(akName))
 
 	defer tpm2.FlushContext(rwc, ak)
 
@@ -269,68 +269,74 @@ func CreateAK(rwc io.ReadWriter) {
 		glog.Fatalf("tpm2.ReadPublic() failed: %v", err)
 	}
 	glog.V(5).Infof("akPublicKey: %v", akPublicKey)
-	glog.V(5).Infof("akName2: 0x%s", hex.EncodeToString(akName2))
+	glog.V(5).Infof("akName2    : 0x%s", hex.EncodeToString(akName2))
 	glog.V(5).Infof("akQualName2: 0x%s", hex.EncodeToString(akQualName2))
-	return
 
 	akPublicKeyCrypto, err := akPublicKey.Key()
 	if err != nil {
 		glog.Fatalf("akTpmPublicKey.Key() failed: %v", err)
 	}
-	akBytes, err := x509.MarshalPKIXPublicKey(akPublicKeyCrypto)
+	glog.V(5).Infof("akPublicKeyCrypto: %v", akPublicKeyCrypto)
+
+	akPublicKeyDER, err := x509.MarshalPKIXPublicKey(akPublicKeyCrypto)
 	if err != nil {
 		glog.Fatalf("x509.MarshalPKIXPublicKey() failed: %v", err)
 	}
+	glog.V(5).Infof("akPublicKeyDER: 0x%s", hex.EncodeToString(akPublicKeyDER))
 
-	akPubPem := pem.EncodeToMemory(
+	akPublicKeyPEM := pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "PUBLIC KEY",
 			Bytes: akPublicBlob,
 		},
 	)
+	glog.V(5).Infof("akPublicKeyPEM: %v", string(akPublicKeyPEM))
 
-	akPubPem2 := pem.EncodeToMemory(
+	akPublicKeyPEM0 := pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "PUBLIC KEY",
-			Bytes: akBytes,
+			Bytes: akPublicKeyDER,
 		},
 	)
+	glog.V(5).Infof("akPublicKeyPEM0: %v", string(akPublicKeyPEM0))
 
-	glog.V(0).Infof("akPub: \n%v", string(akPublicBlob))
-	glog.V(0).Infof("akBytes: \n%v", string(akBytes))
+	akPublicKeyTPM, err := akPublicKey.Encode()
+	if err != nil {
+		glog.Errorf("akPublicKey.Encode() faile: %v", err)
+	}
+	glog.V(5).Infof("akPublicKeyTPM: 0x%s", hex.EncodeToString(akPublicKeyTPM))
 
-	akPubBytes3, err := akPublicKey.Encode()
+	akPublicKey2, err := tpm2.DecodePublic(akPublicKeyTPM)
 	if err != nil {
-		glog.Errorf("ERROR: Encoding failed for akPubBytes: %v", err)
+		glog.Fatalf("tpm2.DecodePublic() failed: %v", err)
 	}
-	tPub, err := tpm2.DecodePublic(akPubBytes3)
-	if err != nil {
-		glog.Fatalf("Error DecodePublic AK %v", tPub)
-	}
-	ap, err := tPub.Key()
+
+	akPublicKeyCrypto2, err := akPublicKey2.Key()
 	if err != nil {
 		glog.Fatalf("akPub.Key() failed: %s", err)
 	}
-	akBytes3, err := x509.MarshalPKIXPublicKey(ap)
-	if err != nil {
-		glog.Fatalf("Unable to convert akPub: %v", err)
-	}
-	glog.V(0).Infof("akBytes: \n%v", hex.EncodeToString(akBytes3))
+	glog.V(5).Infof("akPublicKeyCrypto2: %v", akPublicKeyCrypto2)
 
-	akPubPEM3 := pem.EncodeToMemory(
+	akPublicKeyDER2, err := x509.MarshalPKIXPublicKey(akPublicKeyCrypto2)
+	if err != nil {
+		glog.Fatalf("x509.MarshalPKIXPublicKey() failed: %v", err)
+	}
+	glog.V(0).Infof("akBytes: \n%v", hex.EncodeToString(akPublicKeyDER2))
+
+	akPublicKeyPEM2 := pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "PUBLIC KEY",
-			Bytes: akBytes3,
+			Bytes: akPublicKeyDER2,
 		},
 	)
-	glog.V(10).Infof("     Decoded AkPub: \n%v", string(akPubPEM3))
+	glog.V(5).Infof("akPublicKeyPEM2: %sv", string(akPublicKeyPEM2))
 
-	if tPub.MatchesTemplate(client.AKTemplateRSA()) {
-		glog.V(10).Infof("     AK Default parameter match template")
+	if akPublicKey2.MatchesTemplate(client.AKTemplateRSA()) {
+		glog.V(10).Infof("AK Default parameter match template")
 	} else {
 		glog.Fatalf("AK does not have correct defaultParameters")
 	}
-	h, keyName, err := tpm2.LoadExternal(rwc, tPub, tpm2.Private{}, tpm2.HandleNull)
+	h, keyName, err := tpm2.LoadExternal(rwc, akPublicKey2, tpm2.Private{}, tpm2.HandleNull)
 	if err != nil {
 		glog.Fatalf("Error loadingExternal AK %v", err)
 	}
@@ -338,13 +344,19 @@ func CreateAK(rwc io.ReadWriter) {
 	glog.V(0).Infof("AK keyName0 %s", hex.EncodeToString(akName))
 	glog.V(0).Infof("AK KeyName  %s", hex.EncodeToString(keyName))
 
-	err = ioutil.WriteFile("Attestor/ak.pub", akPubPem, 0644)
+	err = ioutil.WriteFile("Attestor/ak.pub", akPublicKeyPEM, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
 	glog.V(0).Infof("Wrote Attestor/ak.pub")
 
-	err = ioutil.WriteFile("Attestor/ak2.pub", akPubPem2, 0644)
+	err = ioutil.WriteFile("Attestor/ak0.pub", akPublicKeyPEM0, 0644)
+	if err != nil {
+		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
+	}
+	glog.V(0).Infof("Wrote Attestor/ak0.pub")
+
+	err = ioutil.WriteFile("Attestor/ak2.pub", akPublicKeyPEM2, 0644)
 	if err != nil {
 		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
 	}
