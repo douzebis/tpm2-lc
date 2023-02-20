@@ -445,10 +445,12 @@ func ActivateCredential(rwc io.ReadWriter) {
 
 	authCommandLoad := tpm2.AuthCommand{Session: loadSession, Attributes: tpm2.AttrContinueSession}
 
-	akPub, err := ioutil.ReadFile("Attestor/ak.pub")
+	akPubPem, err := ioutil.ReadFile("Attestor/ak.pub")
 	if err != nil {
 		glog.Fatalf("ioutil.ReadFile() failed for ak.pub: %v", err)
 	}
+	akBlock, _ := pem.Decode(akPubPem)
+	akPub := akBlock.Bytes
 
 	akPriv, err := ioutil.ReadFile("Attestor/ak.key")
 	if err != nil {
