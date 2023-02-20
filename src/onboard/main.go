@@ -103,7 +103,7 @@ func CreateAK(rwc io.ReadWriter) {
 	glog.V(0).Infof("Wrote Attestor/ek.pub")
 
 	//tpmEkPubBytes, err := tpmEkPub.Encode()
-	_, err = tpmEkPub.Encode()
+	_, err = ekPublic.Encode()
 	if err != nil {
 		glog.Fatalf("tpmEkPub.Encode() failed: %v", err)
 	}
