@@ -282,9 +282,7 @@ func CreateAK(rwc io.ReadWriter) {
 			Bytes: akBytes3,
 		},
 	)
-	glog.V(0).Infof("AK keyName0 %s", hex.EncodeToString(akName0))
 	glog.V(10).Infof("     Decoded AkPub: \n%v", string(akPubPEM3))
-	return
 
 	if tPub.MatchesTemplate(client.AKTemplateRSA()) {
 		glog.V(10).Infof("     AK Default parameter match template")
@@ -296,7 +294,8 @@ func CreateAK(rwc io.ReadWriter) {
 		glog.Fatalf("Error loadingExternal AK %v", err)
 	}
 	defer tpm2.FlushContext(rwc, h)
-	glog.V(10).Infof("     Loaded AK KeyName %s", hex.EncodeToString(keyName))
+	glog.V(0).Infof("AK keyName0 %s", hex.EncodeToString(akName0))
+	glog.V(0).Infof("AK KeyName  %s", hex.EncodeToString(keyName))
 
 	err = ioutil.WriteFile("Attestor/ak.pub", akPubPem, 0644)
 	if err != nil {
