@@ -28,7 +28,7 @@ func CreateEKCert(
 	certPath string,
 ) {
 	// Retrieve EK public key
-	publicKey := ReadPublicKey(fmt.Sprintf("%s.pub", publicKeyPath))
+	publicKey := ReadPublicKey(fmt.Sprintf("%s", publicKeyPath))
 
 	// Retrieve ca certificate
 	caCert := ReadCert(fmt.Sprintf("%s.crt", caCertPath))
