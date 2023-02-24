@@ -19,14 +19,14 @@ func main() {
 	flag.Parse()
 
 	// Create certificate for Manufacturer CA
-	certs.CreateCA(
+	certs.CreateCACert(
 		"Manufacturer",
 		"Manufacturer/manufacturer-ca",
 	)
 
 	// Create certificate for Owner CA
 	//manufacturerCert, manufacturerPrivKey :=
-	certs.CreateCA(
+	certs.CreateCACert(
 		"Owner",
 		"Owner/owner-ca",
 	)
