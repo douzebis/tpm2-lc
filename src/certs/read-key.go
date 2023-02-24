@@ -7,7 +7,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 
 	"main/src/lib"
 )
@@ -17,10 +16,11 @@ import (
 func ReadKey(
 	pathPrefix string,
 ) rsa.PrivateKey {
-	keyPEM, err := ioutil.ReadFile(fmt.Sprintf("%s.key", pathPrefix))
-	if err != nil {
-		lib.Fatal("ioutil.ReadFile() failed: %v", err)
-	}
+	keyPEM := lib.Read(fmt.Sprintf("%s.key", pathPrefix))
+	//keyPEM, err := ioutil.ReadFile(fmt.Sprintf("%s.key", pathPrefix))
+	//if err != nil {
+	//	lib.Fatal("ioutil.ReadFile() failed: %v", err)
+	//}
 
 	keyBlock, _ := pem.Decode(keyPEM)
 
