@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
 	"math/big"
@@ -84,7 +83,14 @@ func CreateEKCert(
 	if err != nil {
 		lib.Fatal("x509.ParseCertificate() failed: %v", err)
 	}
-	cert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
+	//cert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
+	//		for _, ext := range certificate.Extensions {
+	//			// filter the custom extensions by customOID
+	//			lib.Print("extension %s", ext.Id.String())
+	//			if ext.Id.String() == "2.5.29.17" {
+	//				parse(ext.Value, "")
+	//			}
+	//		}
 
 	roots := x509.NewCertPool()
 	roots.AddCert(&caCert)
@@ -95,7 +101,7 @@ func CreateEKCert(
 	if _, err := cert.Verify(opts); err != nil {
 		lib.Fatal("tpmCert.Verify() failed: %v", err)
 	} else {
-		lib.Print("Verified %s", "TPM-CA/tpm.crt")
+		lib.Print("Verified %s.crt", certPath)
 	}
 
 }
