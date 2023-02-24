@@ -22,7 +22,7 @@ func main() {
 	rwc := tpm.OpenFlush(*tpmPath, *flush)
 	defer rwc.Close()
 
-	ekPublicKey, ekPubBytes := steps.GetEKPub(rwc)
+	ekPublicKey, ekPubBytes := steps.GetEKPub(rwc, "Attestor/ek")
 	steps.VerifyEKPub(ekPublicKey, ekPubBytes)
 	steps.CreateEKCert(ekPublicKey)
 

@@ -1,32 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Prior to running this program, manual setup must be performed
-//
-// Create GCP shielded vm with ubuntu 22.10
-//
-// The tutorial should be run as ubuntu user
-//   sudo su - ubuntu
-//   sudo apt-get update
-//   sudo apt-get install -y tpm2-tools
-//   sudo apt-get install -y golang
-//   sudo usermod -a -G tss ubuntu
-//   sudo update-grub
-//   sudo reboot now
-//   sudo su - ubuntu
-//   git clone https://github.com/douzebis/tpm2-lc.git
-//   cd tpm2-lc/
-//   go run src/init/main.go -alsologtostderr
-
 package main
 
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha512"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
-	"encoding/hex"
 	"encoding/pem"
 	"flag"
 	"io/ioutil"
@@ -38,14 +19,9 @@ import (
 	"github.com/google/go-tpm/tpm2"
 
 	"main/src/certs"
+	"main/src/steps"
+	"main/src/tpm"
 )
-
-var handleNames = map[string][]tpm2.HandleType{
-	"all":       {tpm2.HandleTypeLoadedSession, tpm2.HandleTypeSavedSession, tpm2.HandleTypeTransient},
-	"loaded":    {tpm2.HandleTypeLoadedSession},
-	"saved":     {tpm2.HandleTypeSavedSession},
-	"transient": {tpm2.HandleTypeTransient},
-}
 
 var (
 	tpmPath = flag.String("tpm-path", "/dev/tpmrm0", "Path to the TPM device (character device or a Unix socket).")
@@ -55,89 +31,30 @@ var (
 func main() {
 	flag.Parse()
 
-	// === Open TPM device and flush key handles ===============================
+	// Open TPM
+	rwc := tpm.OpenFlush(*tpmPath, *flush)
+	defer rwc.Close()
 
-	rwc, err := tpm2.OpenTPM(*tpmPath)
-	if err != nil {
-		glog.Fatalf("can't open TPM %q: %v", tpmPath, err)
-	}
-	defer func() {
-		if err := rwc.Close(); err != nil {
-			glog.Fatalf("\ncan't close TPM %q: %v", tpmPath, err)
-		}
-	}()
+	// Read and save TPM PCRs values
+	tpm.ReadPCRs(
+		rwc,
+		[]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14}, // Used for boot measurement
+		"CI-CD/pcrs",
+	)
 
-	totalHandles := 0
-	for _, handleType := range handleNames[*flush] {
-		handles, err := client.Handles(rwc, handleType)
-		if err != nil {
-			glog.Fatalf("getting handles: %v", err)
-		}
-		for _, handle := range handles {
-			if err = tpm2.FlushContext(rwc, handle); err != nil {
-				glog.Fatalf("flushing handle 0x%x: %v", handle, err)
-			}
-			glog.V(2).Infof("Handle 0x%x flushed\n", handle)
-			totalHandles++
-		}
-	}
+	// Read and save TPM EK Pub
+	ekPublicKey, ekPubBytes := steps.GetEKPub(
+		rwc,
+		"TPM-CA/ek",
+	)
 
-	// === Retrieve PCRs values ================================================
+	// Create certificate for TPM CA
+	tpmCaCert, tpmCaPrivKey := certs.CreateCA(
+		"TPM Manufacturer",
+		"TPM-CA/tpm-ca",
+	)
 
-	pcrList := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14}
-	pcrsExpected := make([][]byte, len(pcrList))
-	pcrsConcat := []byte{}
-	for ndx, val := range pcrList {
-		pcr, err := tpm2.ReadPCR(rwc, val, tpm2.AlgSHA384)
-		if err != nil {
-			glog.Fatalf("ERROR:   Unable to  ReadPCR : %v", err)
-		}
-		glog.V(0).Infof("PCR [%d] Value %v ", ndx, hex.EncodeToString(pcr))
-		pcrsExpected[ndx] = pcr
-		pcrsConcat = append(pcrsConcat, pcr...)
-	}
-	digest := sha512.Sum384(pcrsConcat)
-	glog.V(0).Infof("Digest %s ", hex.EncodeToString(digest[:]))
-
-	err = ioutil.WriteFile("CI-CD/tpm-digest.bin", digest[:], 0644)
-	if err != nil {
-		glog.Fatalf("ioutil.WriteFile() failed: %v", err)
-	}
-
-	// --- Snippet: parse a certificate extensions -----------------------------
-
-	//	testPem, err := ioutil.ReadFile("TPM-CA/tpm.crt")
-	//	if err != nil {
-	//		glog.Fatalf("ioutil.ReadFile() failed: %v", err)
-	//	}
-	//	block, _ := pem.Decode([]byte(testPem))
-	//	if block == nil {
-	//		glog.Fatalf("pem.Decode() failed: %v", err)
-	//	}
-	//
-	//	if block.Type == "CERTIFICATE" {
-	//		glog.V(0).Infof("Block has type CERTIFICATE")
-	//		certificate, err := x509.ParseCertificate(block.Bytes)
-	//		if err != nil {
-	//			glog.Fatalf("x509.ParseCertificate() failed: %v", err)
-	//		}
-	//		for _, ext := range certificate.Extensions {
-	//			// filter the custom extensions by customOID
-	//			glog.V(0).Infof("extension %s", ext.Id.String())
-	//			if ext.Id.String() == "2.5.29.17" {
-	//				parse(ext.Value, "")
-	//			}
-	//		}
-	//	} else {
-	//		glog.V(0).Infof("Block has type %s", block.Type)
-	//	}
-
-	// Since GCP Shielded VMs TPM Endorsement Keys come without a proper
-	// certificate, we fake a TPM CA and a fake TPM EK certificate.
-
-	// === Create certificate for TPM CA =======================================
-
-	tpmCaCert, tpmCaPrivKey := certs.CreateCA("TPM Manufacturer", "TPM-CA/tpm-ca")
+	return
 
 	// === Create certificate for TPM ==========================================
 
@@ -157,7 +74,7 @@ func main() {
 	if err != nil {
 		glog.Fatalf("ekPublicKey.Key() failed: %s", err)
 	}
-	ekPubBytes, err := x509.MarshalPKIXPublicKey(ekPubKey)
+	ekPubBytes, err = x509.MarshalPKIXPublicKey(ekPubKey)
 	if err != nil {
 		glog.Fatalf("x509.MarshalPKIXPublicKey() failed: %v", err)
 	}
@@ -264,3 +181,34 @@ func main() {
 	// reading current machine PCRs status
 
 }
+
+// --- Snippet: parse a certificate extensions -----------------------------
+
+//	testPem, err := ioutil.ReadFile("TPM-CA/tpm.crt")
+//	if err != nil {
+//		glog.Fatalf("ioutil.ReadFile() failed: %v", err)
+//	}
+//	block, _ := pem.Decode([]byte(testPem))
+//	if block == nil {
+//		glog.Fatalf("pem.Decode() failed: %v", err)
+//	}
+//
+//	if block.Type == "CERTIFICATE" {
+//		glog.V(0).Infof("Block has type CERTIFICATE")
+//		certificate, err := x509.ParseCertificate(block.Bytes)
+//		if err != nil {
+//			glog.Fatalf("x509.ParseCertificate() failed: %v", err)
+//		}
+//		for _, ext := range certificate.Extensions {
+//			// filter the custom extensions by customOID
+//			glog.V(0).Infof("extension %s", ext.Id.String())
+//			if ext.Id.String() == "2.5.29.17" {
+//				parse(ext.Value, "")
+//			}
+//		}
+//	} else {
+//		glog.V(0).Infof("Block has type %s", block.Type)
+//	}
+
+// Since GCP Shielded VMs TPM Endorsement Keys come without a proper
+// certificate, we fake a TPM CA and a fake TPM EK certificate.
