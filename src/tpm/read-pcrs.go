@@ -26,7 +26,7 @@ func ReadPCRs(
 	pcrsExpected := make([][]byte, len(pcrsList))
 	pcrsConcat := []byte{}
 	for ndx, val := range pcrsList {
-		pcr, err := tpm2.ReadPCR(rwc, val, tpm2.AlgSHA384)
+		pcr, err := tpm2.ReadPCR(rwc, val, tpm2.AlgSHA256)
 		if err != nil {
 			glog.Fatalf("ERROR:   Unable to  ReadPCR : %v", err)
 		}
