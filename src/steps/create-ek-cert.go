@@ -18,9 +18,9 @@ import (
 	"main/src/certs"
 )
 
-func CreateEKCert(ekPublicKey *rsa.PublicKey) {
+// === Create Owner certificate for EK Pub =================================
 
-	// === Create Owner certificate for EK Pub =================================
+func NOTCreateEKCert(ekPublicKey *rsa.PublicKey) {
 
 	// --- Read Owner CA cert --------------------------------------------------
 

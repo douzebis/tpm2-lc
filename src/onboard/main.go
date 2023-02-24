@@ -28,31 +28,47 @@ func main() {
 
 	// Verifier: verify EK Pub with Manufacturer EK Cert
 	steps.VerifyEKPub(
-		"Attestor/ek",                  // In
-		"Manufacturer/ek",              // In
-		"Manufacturer/manufacturer-ca", // In
-		"Verifier/ek",                  // Out
+		"Attestor/ek",                  // IN
+		"Manufacturer/ek",              // IN
+		"Manufacturer/manufacturer-ca", // IN
+		"Verifier/ek",                  // OUT
 	)
 
 	// Verifier/Owner: create Owner EK Cert
 	certs.CreateEKCert(
-		"Verifier/ek",      // In
-		"id: Google",       // In
-		"Shielded VM vTPM", // In
-		"id: 00010001",     // In
-		"Owner/owner-ca",   // In
-		"Verifier/ek",      // Out
+		"Verifier/ek",      // IN
+		"id: Google",       // IN
+		"Shielded VM vTPM", // IN
+		"id: 00010001",     // IN
+		"Owner/owner-ca",   // IN
+		"Verifier/ek",      // OUT
 	)
 
+	// Attestor: create AK
+	steps.CreateAK(
+		rwc,
+		"Attestor/ek", // OUT
+		"Attestor/ak", // OUT
+	)
 	return
+	// Verifier: generate credential challenge
+	steps.GenerateCredential()
 
-	steps.CreateAK(rwc)           // On Attestor
-	steps.GenerateCredential()    // On Verifier
-	steps.ActivateCredential(rwc) // On Attestor
-	steps.RequestQuote()          // On Verifier
-	steps.PerformQuote(rwc)       // On Attestor
-	steps.VerifyQuote()           // On Verifier
-	steps.CreateAKCert()          // On Verifier and Owner-CA
+	// Attestor: activate credential
+	steps.ActivateCredential(rwc)
 
+	// Verifier: request PCR quote
+	steps.RequestQuote()
+
+	// Attestor: perform PCR quote
+	steps.PerformQuote(rwc)
+
+	// Verifier: verify PCR quote
+	steps.VerifyQuote()
+
+	// Verifier/Owner: create Owner AK Cert
+	steps.CreateAKCert()
+
+	// Attestor: clear TPM owner hierarchy
 	tpm.Clear(rwc) // On Attestor
 }
