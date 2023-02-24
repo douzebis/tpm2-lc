@@ -16,7 +16,7 @@ import (
 func ReadPublicKey(
 	publicKeyPath string,
 ) interface{} {
-	publicKeyPEM, err := ioutil.ReadFile(fmt.Sprintf("%s.pub", pathPrefix))
+	publicKeyPEM, err := ioutil.ReadFile(fmt.Sprintf("%s.pub", publicKeyPath))
 	if err != nil {
 		lib.Fatal("ioutil.ReadFile() failed: %v", err)
 	}
