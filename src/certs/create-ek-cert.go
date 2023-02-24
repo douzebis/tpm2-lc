@@ -21,13 +21,20 @@ func CreateEKCert(
 	// See https://upgrades.intel.com/content/CRL/ekcert/EKcertPolicyStatement.pdf
 	// See https://marc.info/?l=openssl-users&m=135119943225986&w=2
 	publicKey interface{},
-	ManufacturerID string,
-	ModelName string,
-	Version string,
-	caCert x509.Certificate,
-	caPrivKey interface{},
+	manufacturerID string,
+	modelName string,
+	version string,
+	ca string,
+	//caCert x509.Certificate,
+	//caKey interface{},
 	filePrefix string,
 ) {
+	// Retrieve ca certificate
+	caCert := ReadCert(fmt.Sprintf("%s.crt", ca))
+
+	// Retrieve ca private key
+	caKey := ReadKey(fmt.Sprintf("%s.key", ca))
+
 	now := time.Now()
 	certTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
@@ -37,9 +44,9 @@ func CreateEKCert(
 		KeyUsage:     x509.KeyUsageKeyEncipherment,
 		ExtraExtensions: []pkix.Extension{
 			*CreateSubjectAltName(
-				[]byte(ManufacturerID), // "id: Google"
-				[]byte(ModelName),      // "id: Shielded VM vTPM"
-				[]byte(Version),        // "id: 00010001"
+				[]byte(manufacturerID), // "id: Google"
+				[]byte(modelName),      // "id: Shielded VM vTPM"
+				[]byte(version),        // "id: 00010001"
 			),
 		},
 		BasicConstraintsValid: true,
@@ -51,7 +58,7 @@ func CreateEKCert(
 		&certTemplate,
 		&caCert,
 		publicKey,
-		caPrivKey)
+		caKey)
 	if err != nil {
 		lib.Fatal("x509.CreateCertificate() failed: %v", err)
 	}
