@@ -14,7 +14,7 @@ import (
 	"main/src/lib"
 )
 
-// === Create TPM EK certificate ===============================================
+// === Verifier: create TPM EK certificate =====================================
 
 func CreateEKCert(
 	// See https://upgrades.intel.com/content/CRL/ekcert/EKcertPolicyStatement.pdf
@@ -26,6 +26,9 @@ func CreateEKCert(
 	caCertPath string,
 	certPath string,
 ) {
+
+	lib.PRINT("=== VERIFIER: CREATE EK CERT ===================================================")
+
 	// Retrieve EK public key
 	publicKey := ReadPublicKey(publicKeyPath)
 

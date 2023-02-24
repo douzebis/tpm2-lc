@@ -25,6 +25,8 @@ func CreateAK(
 	attestorAkPath string, // OUT
 ) {
 
+	lib.PRINT("=== VERIFIER: CREATE AK ========================================================")
+
 	// --- Create EK in TPM ----------------------------------------------------
 	ek, ekPublicKeyCrypto, err := tpm.CreateEK(rwc)
 	if err != nil {
@@ -67,7 +69,7 @@ func CreateAK(
 			Bytes: ekPublicKeyDER,
 		},
 	)
-	lib.Comment("ekPublicKeyPEM: %s", string(ekPublicKeyPEM))
+	lib.Comment("ekPublicKeyPEM:\n%s", string(ekPublicKeyPEM))
 
 	lib.Write(fmt.Sprintf("%s.pub", attestorEkPath), ekPublicKeyPEM, 0644)
 
