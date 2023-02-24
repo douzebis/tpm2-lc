@@ -58,8 +58,8 @@ func CreateEKCert(
 		rand.Reader,
 		&certTemplate,
 		&caCert,
-		publicKey,
-		caKey)
+		&publicKey,
+		&caKey)
 	if err != nil {
 		lib.Fatal("x509.CreateCertificate() failed: %v", err)
 	}
