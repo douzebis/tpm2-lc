@@ -27,11 +27,11 @@ func OpenFlush(tpmPath string, flush string) (rwc io.ReadWriteCloser) {
 	if err != nil {
 		glog.Fatalf("can't open TPM %q: %v", tpmPath, err)
 	}
-	defer func() {
-		if err := rwc.Close(); err != nil {
-			glog.Fatalf("\ncan't close TPM %q: %v", tpmPath, err)
-		}
-	}()
+	//defer func() {
+	//	if err := rwc.Close(); err != nil {
+	//		glog.Fatalf("\ncan't close TPM %q: %v", tpmPath, err)
+	//	}
+	//}()
 
 	totalHandles := 0
 	for _, handleType := range handleNames[flush] {
