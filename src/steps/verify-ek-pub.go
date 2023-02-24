@@ -63,7 +63,7 @@ func VerifyEKPub(
 	}
 
 	// Verify EK Pub matches EK cert
-	ekPublicBytes, err := x509.MarshalPKIXPublicKey(ekPublicKey)
+	ekPublicBytes, err := x509.MarshalPKIXPublicKey(&ekPublicKey)
 	if err != nil {
 		lib.Fatal("x509.MarshalPKIXPublicKey() failed: %v", err)
 	}
