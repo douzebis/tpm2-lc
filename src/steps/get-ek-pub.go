@@ -15,7 +15,7 @@ import (
 	"main/src/lib"
 )
 
-// ### Clear TPM (on Attestor) #################################################
+// ### Attestor: get EK Pub### #################################################
 
 func GetEKPub(
 	rwc io.ReadWriter,
@@ -24,6 +24,8 @@ func GetEKPub(
 	ekPublicKey *rsa.PublicKey,
 	ekPubBytes []byte,
 ) {
+
+	lib.PRINT("=== ATTESTOR: GET EK PUB =======================================================")
 
 	// === Retrieve TPM EK Pub =================================================
 
