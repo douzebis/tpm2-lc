@@ -5,6 +5,7 @@ package main
 import (
 	"flag"
 
+	"main/src/certs"
 	"main/src/steps"
 	"main/src/tpm"
 )
@@ -33,8 +34,15 @@ func main() {
 		"Verifier/ek",                  // Out
 	)
 
-	//	// Verifier: create Owner EK Cert
-	//	steps.CreateEKCert("Attestor/ek", "Owner/ek")
+	// Verifier/Owner: create Owner EK Cert
+	certs.CreateEKCert(
+		"Verifier/ek",      // In
+		"id: Google",       // In
+		"Shielded VM vTPM", // In
+		"id: 00010001",     // In
+		"Owner/owner-ca",   // In
+		"Verifier/ek",      // Out
+	)
 
 	return
 
