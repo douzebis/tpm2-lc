@@ -14,8 +14,9 @@ const (
 	// See https://pkg.go.dev/github.com/ccpaging/nxlog4go@v2.0.3+incompatible/console#section-readme
 	BOLD_WHITE = "\033[1;37m"
 	RED        = "\033[0;31m"
-	GREEN      = "\033[0;32m"
 	ORANGE     = "\033[0;33m"
+	GREEN      = "\033[0;32m"
+	BLUE       = "\033[0;34m"
 	RESET      = "\033[0m" // No Color
 )
 
@@ -37,6 +38,11 @@ func Print(format string, params ...interface{}) {
 func Comment(format string, params ...interface{}) {
 	message := fmt.Sprintf(format, params...)
 	glog.V(5).Infof("%s%s%s", GREEN, message, RESET)
+}
+
+func Verbose(format string, params ...interface{}) {
+	message := fmt.Sprintf(format, params...)
+	glog.V(5).Infof("%s%s%s", BLUE, message, RESET)
 }
 
 func Read(

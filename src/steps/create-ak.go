@@ -33,15 +33,15 @@ func CreateAK(
 		lib.Fatal("tpm2.CreatePrimary() failed for EK: %v", err)
 	}
 	defer tpm2.FlushContext(rwc, ek)
-	lib.Comment("ek: 0x%08x", ek)
-	lib.Comment("ekPublicKey : %v", ekPublicKeyCrypto)
+	lib.Verbose("ek: 0x%08x", ek)
+	lib.Verbose("ekPublicKey : %v", ekPublicKeyCrypto)
 
 	// --- Save then load EK context -------------------------------------------
 	ekCtx, err := tpm2.ContextSave(rwc, ek)
 	if err != nil {
 		lib.Fatal("tpm2.ContextSave() failed for EK: %v", err)
 	}
-	lib.Comment("ekCtx 0x%s", hex.EncodeToString(ekCtx))
+	lib.Verbose("ekCtx 0x%s", hex.EncodeToString(ekCtx))
 
 	lib.Write(fmt.Sprintf("%s.ctx", attestorEkPath), ekCtx, 0644)
 
@@ -61,7 +61,7 @@ func CreateAK(
 	if err != nil {
 		lib.Fatal("x509.MarshalPKIXPublicKey() failed for EK Pub: %v", err)
 	}
-	lib.Comment("ekPublicKeyDER: 0x%s", hex.EncodeToString(ekPublicKeyDER))
+	lib.Verbose("ekPublicKeyDER: 0x%s", hex.EncodeToString(ekPublicKeyDER))
 
 	ekPublicKeyPEM := pem.EncodeToMemory(
 		&pem.Block{
@@ -89,8 +89,8 @@ func CreateAK(
 		lib.Fatal("tpm2.StartAuthSession() failed: %v", err)
 	}
 	defer tpm2.FlushContext(rwc, createSession)
-	lib.Comment("createSession: 0x%08x", createSession)
-	lib.Comment("createSessionNonce: 0x%s", hex.EncodeToString(createSessionNonce))
+	lib.Verbose("createSession: 0x%08x", createSession)
+	lib.Verbose("createSessionNonce: 0x%s", hex.EncodeToString(createSessionNonce))
 
 	_, _, err = tpm2.PolicySecret(
 		rwc,
@@ -126,15 +126,15 @@ func CreateAK(
 	if err != nil {
 		lib.Fatal("tpm2.CreateKeyUsingAuth() failed: %v", err)
 	}
-	lib.Comment("akPrivateBlob 0x%s", hex.EncodeToString(akPrivateBlob))
-	lib.Comment("akPublicBlob 0x%s", hex.EncodeToString(akPublicBlob))
+	lib.Verbose("akPrivateBlob 0x%s", hex.EncodeToString(akPrivateBlob))
+	lib.Verbose("akPublicBlob 0x%s", hex.EncodeToString(akPublicBlob))
 	cr, err := tpm2.DecodeCreationData(creationData)
 	if err != nil {
 		lib.Fatal("tpm2.DecodeCreationData() failed: %v", err)
 	}
-	lib.Comment("CredentialData.ParentName.Digest.Value 0x%s", hex.EncodeToString(cr.ParentName.Digest.Value))
-	lib.Comment("CredentialHash 0x%s", hex.EncodeToString(creationHash))
-	lib.Comment("CredentialTicket 0x%s", hex.EncodeToString(creationTicket.Digest))
+	lib.Verbose("CredentialData.ParentName.Digest.Value 0x%s", hex.EncodeToString(cr.ParentName.Digest.Value))
+	lib.Verbose("CredentialHash 0x%s", hex.EncodeToString(creationHash))
+	lib.Verbose("CredentialTicket 0x%s", hex.EncodeToString(creationTicket.Digest))
 
 	err = tpm2.FlushContext(rwc, createSession)
 	if err != nil {
@@ -157,8 +157,8 @@ func CreateAK(
 		lib.Fatal("tpm2.StartAuthSession() failed: %v", err)
 	}
 	defer tpm2.FlushContext(rwc, loadSession)
-	lib.Comment("createSession: 0x%08x", loadSession)
-	lib.Comment("createSessionNonce: 0x%s", hex.EncodeToString(loadSessionNonce))
+	lib.Verbose("createSession: 0x%08x", loadSession)
+	lib.Verbose("createSessionNonce: 0x%s", hex.EncodeToString(loadSessionNonce))
 
 	_, _, err = tpm2.PolicySecret(
 		rwc,
@@ -193,13 +193,13 @@ func CreateAK(
 		lib.Fatal("tpm2.LoadUsingAuth() failed: %v", err)
 	}
 	defer tpm2.FlushContext(rwc, ak)
-	lib.Comment("ak: 0x%08x", ak)
+	lib.Verbose("ak: 0x%08x", ak)
 	// akName consists of 36 bytes:
 	// 00 22: rest is 34 bytes (0x22)
 	// 00 0b: Algorighm is SHA256
 	// xx...: 32 bytes for key hash
 	// See https://github.com/tpm2-software/tpm2-tools/issues/1872
-	lib.Comment("akName     : 0x%s", hex.EncodeToString(akName))
+	lib.Verbose("akName     : 0x%s", hex.EncodeToString(akName))
 
 	err = tpm2.FlushContext(rwc, loadSession)
 	if err != nil {
@@ -213,25 +213,25 @@ func CreateAK(
 	if err != nil {
 		lib.Fatal("tpm2.ReadPublic() failed: %v", err)
 	}
-	lib.Comment("akPublicKey: %v", akPublicKey)
+	lib.Verbose("akPublicKey: %v", akPublicKey)
 	// akName_ consists of 34 bytes only (size header is missing):
 	// 00 0b: Algorighm is SHA256
 	// xx...: 32 bytes for key hash
-	lib.Comment("akName_    : 0x%s", hex.EncodeToString(akName_))
-	lib.Comment("akQualName2: 0x%s", hex.EncodeToString(akQualName_))
+	lib.Verbose("akName_    : 0x%s", hex.EncodeToString(akName_))
+	lib.Verbose("akQualName2: 0x%s", hex.EncodeToString(akQualName_))
 
 	akPublicKeyCrypto, err := akPublicKey.Key()
 	if err != nil {
 		lib.Fatal("akTpmPublicKey.Key() failed: %v", err)
 	}
-	lib.Comment("akPublicKeyCrypto: %v", akPublicKeyCrypto)
-	lib.Comment("akPublicKeyCrypto.Modulus: 0x%x", akPublicKeyCrypto.(*rsa.PublicKey).N)
+	lib.Verbose("akPublicKeyCrypto: %v", akPublicKeyCrypto)
+	lib.Verbose("akPublicKeyCrypto.Modulus: 0x%x", akPublicKeyCrypto.(*rsa.PublicKey).N)
 
 	akPublicKeyDER, err := x509.MarshalPKIXPublicKey(akPublicKeyCrypto)
 	if err != nil {
 		lib.Fatal("x509.MarshalPKIXPublicKey() failed: %v", err)
 	}
-	lib.Comment("akPublicKeyDER: 0x%s", hex.EncodeToString(akPublicKeyDER))
+	lib.Verbose("akPublicKeyDER: 0x%s", hex.EncodeToString(akPublicKeyDER))
 
 	akPublicKeyPEM := pem.EncodeToMemory(
 		&pem.Block{
