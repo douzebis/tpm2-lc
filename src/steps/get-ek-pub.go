@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"io"
 
 	"github.com/google/go-tpm-tools/client"
@@ -18,7 +19,7 @@ import (
 
 func GetEKPub(
 	rwc io.ReadWriter,
-	filePrefix string,
+	ekPath string,
 ) (
 	ekPublicKey *rsa.PublicKey,
 	ekPubBytes []byte,
@@ -48,7 +49,7 @@ func GetEKPub(
 		lib.Fatal("tpm2.FlushContext(0x%x) failed: %v", ek, err)
 	}
 
-	lib.Write(filePrefix+".ctx", ekCtx, 0644)
+	lib.Write(fmt.Sprintf("%s.ctx", ekPath), ekCtx, 0644)
 
 	// === Write EK Pub to disk ================================================
 
@@ -64,7 +65,7 @@ func GetEKPub(
 		},
 	)
 
-	lib.Write(filePrefix+".pem", ekPubPEM, 0644)
+	lib.Write(fmt.Sprintf("%s.pub", ekPath), ekPubPEM, 0644)
 
 	// Retrieve EK Pub as *rsa.PublicKey
 	// See https://stackoverflow.com/a/44317246

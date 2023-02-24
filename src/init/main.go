@@ -54,16 +54,13 @@ func main() {
 
 	// Create TPM EK Cert
 	certs.CreateEKCert(
-		
-		publicKey interface{},
-		manufacturerID string,
-		modelName string,
-		version string,
-		ca string,
-		//caCert x509.Certificate,
-		//caKey interface{},
-		filePrefix string,
-	) {
+		"Manufacturer/ek",
+		"id: Google",
+		"Shielded VM vTPM",
+		"id: 00010001",
+		"Manufacturer/manufacturer-ca",
+		"Manufacturer/ek",
+	)
 
 	return
 

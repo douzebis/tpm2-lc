@@ -20,20 +20,21 @@ import (
 func CreateEKCert(
 	// See https://upgrades.intel.com/content/CRL/ekcert/EKcertPolicyStatement.pdf
 	// See https://marc.info/?l=openssl-users&m=135119943225986&w=2
-	publicKey interface{},
+	publicKeyPath string,
 	manufacturerID string,
 	modelName string,
 	version string,
-	ca string,
-	//caCert x509.Certificate,
-	//caKey interface{},
-	filePrefix string,
+	caCertPath string,
+	certPath string,
 ) {
+	// Retrieve EK public key
+	publicKey := ReadPublicKey(fmt.Sprintf("%s.pub", publicKeyPath))
+
 	// Retrieve ca certificate
-	caCert := ReadCert(fmt.Sprintf("%s.crt", ca))
+	caCert := ReadCert(fmt.Sprintf("%s.crt", caCertPath))
 
 	// Retrieve ca private key
-	caKey := ReadKey(fmt.Sprintf("%s.key", ca))
+	caKey := ReadKey(fmt.Sprintf("%s.key", caCertPath))
 
 	now := time.Now()
 	certTemplate := x509.Certificate{
@@ -71,7 +72,7 @@ func CreateEKCert(
 		},
 	))
 
-	lib.Write(fmt.Sprintf("%s.crt", filePrefix), certPEM, 0644) // "TPM-CA/tpm"
+	lib.Write(fmt.Sprintf("%s.crt", certPath), certPEM, 0644) // "TPM-CA/tpm"
 
 	// --- Verify TPM cert -----------------------------------------------------
 
