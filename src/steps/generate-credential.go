@@ -58,7 +58,7 @@ func GenerateCredential(
 	symBlockSize := 16
 	idObject, encSecret, err := credactivation.Generate(
 		name.Digest,  // ak hashed
-		ekPublicKey,  // ek public key
+		&ekPublicKey, // ek public key
 		symBlockSize, // sym block size
 		nonce,        // secret
 	)
