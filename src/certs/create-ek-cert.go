@@ -31,7 +31,7 @@ func CreateEKCert(
 	publicKey := ReadPublicKey(publicKeyPath)
 
 	// Retrieve ca certificate
-	caCert := ReadCert(fmt.Sprintf("%s.crt", caCertPath))
+	caCert := ReadCert(caCertPath)
 
 	// Retrieve ca private key
 	caKey := ReadKey(caCertPath)
@@ -45,9 +45,9 @@ func CreateEKCert(
 		KeyUsage:     x509.KeyUsageKeyEncipherment,
 		ExtraExtensions: []pkix.Extension{
 			*CreateSubjectAltName(
-				[]byte(manufacturerID), // "id: Google"
-				[]byte(modelName),      // "id: Shielded VM vTPM"
-				[]byte(version),        // "id: 00010001"
+				[]byte(manufacturerID),
+				[]byte(modelName),
+				[]byte(version),
 			),
 		},
 		BasicConstraintsValid: true,
