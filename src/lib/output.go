@@ -21,6 +21,21 @@ func Comment(format string, params ...interface{}) {
 	glog.V(5).Infof(format, params...)
 }
 
+func Read(
+	path string,
+) (
+	data []byte,
+) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		Fatal("ioutil.ReadFile() failed: %v", err)
+	}
+
+	Comment("Read %s", path)
+
+	return data
+}
+
 func Write(
 	path string,
 	data []byte,

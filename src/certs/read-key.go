@@ -17,10 +17,6 @@ func ReadKey(
 	pathPrefix string,
 ) rsa.PrivateKey {
 	keyPEM := lib.Read(fmt.Sprintf("%s.key", pathPrefix))
-	//keyPEM, err := ioutil.ReadFile(fmt.Sprintf("%s.key", pathPrefix))
-	//if err != nil {
-	//	lib.Fatal("ioutil.ReadFile() failed: %v", err)
-	//}
 
 	keyBlock, _ := pem.Decode(keyPEM)
 
