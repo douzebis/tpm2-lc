@@ -98,7 +98,7 @@ func main() {
 		glog.V(0).Infof("ekPublicKey is of type RSA")
 	}
 	// From https://stackoverflow.com/a/44317246
-	ekPublicKey, _ := ekPubKey.(*rsa.PublicKey)
+	ekPublicKey, _ = ekPubKey.(*rsa.PublicKey)
 
 	// --- Create TPM EK certificate -------------------------------------------
 
