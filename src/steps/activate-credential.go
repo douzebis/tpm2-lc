@@ -155,5 +155,5 @@ func ActivateCredential(
 		lib.Fatal("activate credential: %v", err)
 	}
 
-	lib.Write(fmt.Sprintf("%.bin", attestorAttemptPath), attempt, 0644)
+	lib.Write(fmt.Sprintf("%s.bin", attestorAttemptPath), attempt, 0644)
 }
