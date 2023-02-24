@@ -58,10 +58,15 @@ func main() {
 		"Verifier/nonce",      // OUT
 		"Verifier/credential", // OUT
 	)
-	return
 
 	// Attestor: activate credential
-	steps.ActivateCredential(rwc)
+	steps.ActivateCredential(
+		rwc,                   // IN
+		"Verifier/credential", // IN
+		"Attestor/ek",         // IN
+		"Attestor/ak",         // IN
+		"Attestor/attempt",    // OUT
+	)
 
 	// Verifier: request PCR quote
 	steps.RequestQuote()

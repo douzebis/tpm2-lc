@@ -3,122 +3,157 @@
 package steps
 
 import (
+	"fmt"
 	"io"
-	"io/ioutil"
-	"log"
 
-	"github.com/golang/glog"
 	"github.com/google/go-tpm/tpm2"
+
+	"main/src/lib"
 )
 
-// ### ActivateCredential (on attestor) ########################################
+// ### Attestor: activate credential ###########################################
 
-func ActivateCredential(rwc io.ReadWriter) {
+func ActivateCredential(
+	rwc io.ReadWriter, // IN
+	verifierCredentialPath string, // IN
+	attestorEkPath string, // IN
+	attestorAkPath string, // IN
+	attestorAttemptPath string, // OUT
+) {
 
-	credBlob, err := ioutil.ReadFile("Verifier/credBlob")
-	if err != nil {
-		glog.Fatalf("ioutil.ReadFile() failed for credBlob: %v", err)
-	}
-	glog.V(0).Infof("Read Verifier/credBlob")
+	lib.PRINT("=== ATTESTOR: ACTIVATE CREDENTIAL ==============================================")
 
-	encSecret, err := ioutil.ReadFile("Verifier/encSecret")
-	if err != nil {
-		glog.Fatalf("ioutil.ReadFile() failed for encSecret: %v", err)
-	}
-	glog.V(0).Infof("Read Verifier/encSecret")
+	// Retrieve credential challenge TPM2B_ID_OBJECT
+	idObject := lib.Read(fmt.Sprintf("%s-object.blob", verifierCredentialPath))
 
-	ekCtx, err := ioutil.ReadFile("Attestor/ek.ctx")
-	if err != nil {
-		glog.Fatalf("ioutil.ReadFile() failed for EK Ctx: %v", err)
-	}
-	glog.V(0).Infof("Read Attestor/ek.ctx")
+	// Retrieve credential challenge TPM2B_ENCRYPTED_SECRET
+	encSecret := lib.Read(fmt.Sprintf("%s-secret.blob", verifierCredentialPath))
 
+	// Retrieve EK ctx
+	ekCtx := lib.Read(fmt.Sprintf("%s.ctx", &attestorEkPath))
+
+	// Load EK
 	ek, err := tpm2.ContextLoad(rwc, ekCtx)
 	if err != nil {
-		glog.Fatalf("tpm2.ContextLoad() failed for EK: %v", err)
+		lib.Fatal("tpm2.ContextLoad() failed for EK: %v", err)
 	}
 	defer tpm2.FlushContext(rwc, ek)
 
+	// --- Start auth session for creating AK ----------------------------------
+	// (Auth sessions are required for EK children)
 	loadSession, _, err := tpm2.StartAuthSession(
 		rwc,
-		tpm2.HandleNull,
-		tpm2.HandleNull,
-		make([]byte, 16),
-		nil,
-		tpm2.SessionPolicy,
-		tpm2.AlgNull,
-		tpm2.AlgSHA256,
+		tpm2.HandleNull,    // tpmKey
+		tpm2.HandleNull,    // bindKey
+		make([]byte, 16),   // nonceCaller
+		nil,                // secret
+		tpm2.SessionPolicy, // sessionType
+		tpm2.AlgNull,       // sym algorithm
+		tpm2.AlgSHA256,     // hash algorithm
 	)
 	if err != nil {
-		glog.Fatalf("tpm2.StartAuthSession() failed: %v", err)
+		lib.Fatal("tpm2.StartAuthSession() failed: %v", err)
 	}
 	defer tpm2.FlushContext(rwc, loadSession)
 
 	_, _, err = tpm2.PolicySecret(
 		rwc,
-		tpm2.HandleEndorsement,
-		tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession},
-		loadSession,
-		nil,
-		nil,
-		nil,
-		0,
+		tpm2.HandleEndorsement, // entityHandle
+		tpm2.AuthCommand{
+			Session:    tpm2.HandlePasswordSession,
+			Attributes: tpm2.AttrContinueSession,
+		}, // entityAuth
+		loadSession, // sessionHandle
+		nil,         // policyNonce
+		nil,         // cpHash
+		nil,         // policyRef
+		0,           // expiry
 	)
 	if err != nil {
-		glog.Fatalf("tpm2.PolicySecret() failed: %v", err)
+		lib.Fatal("tpm2.PolicySecret() failed: %v", err)
 	}
 
 	authCommandLoad := tpm2.AuthCommand{Session: loadSession, Attributes: tpm2.AttrContinueSession}
 
-	akPub, err := ioutil.ReadFile("Attestor/ak.pub.blob")
-	if err != nil {
-		glog.Fatalf("ioutil.ReadFile() failed for ak.pub.blob: %v", err)
-	}
+	// Retrieve AK Pub blob
+	akPub := lib.Read(fmt.Sprintf("%s-pub.blob", attestorAkPath))
 
-	akPriv, err := ioutil.ReadFile("Attestor/ak.key.blob")
-	if err != nil {
-		glog.Fatalf("ioutil.ReadFile() failed for ak.key.blob: %v", err)
-	}
+	// Retrieve AK Priv blob
+	akPriv := lib.Read(fmt.Sprintf("%s-priv.blob", attestorAkPath))
 
-	ak, _, err := tpm2.LoadUsingAuth(rwc, ek, authCommandLoad, akPub, akPriv)
+	// Load AK
+	ak, _, err := tpm2.LoadUsingAuth(
+		rwc,
+		ek,              // parentHandle
+		authCommandLoad, // authCommand
+		akPub,           // publicBlob
+		akPriv,          // privateBlob
+	)
 	if err != nil {
-		glog.Fatalf("tpm2.LoadUsingAuth() failed: %v", err)
+		lib.Fatal("tpm2.LoadUsingAuth() failed: %v", err)
 	}
 	defer tpm2.FlushContext(rwc, ak)
 
 	err = tpm2.FlushContext(rwc, loadSession)
 	if err != nil {
-		glog.Fatalf("tpm2.FlushContext() failed: %v", err)
+		lib.Fatal("tpm2.FlushContext() failed: %v", err)
 	}
 
-	session, _, err := tpm2.StartAuthSession(rwc,
-		tpm2.HandleNull,
-		tpm2.HandleNull,
-		make([]byte, 16),
-		nil,
-		tpm2.SessionPolicy,
-		tpm2.AlgNull,
-		tpm2.AlgSHA256)
+	// --- Start auth session for activating credential ------------------------
+	// (Auth sessions are required for EK children)
+	session, _, err := tpm2.StartAuthSession(
+		rwc,
+		tpm2.HandleNull,    // tpmKey
+		tpm2.HandleNull,    // bindKey
+		make([]byte, 16),   // nonceCaller
+		nil,                // secret
+		tpm2.SessionPolicy, // sessionType
+		tpm2.AlgNull,       // symmetric algorithm
+		tpm2.AlgSHA256,     // hash algorithm
+	)
 	if err != nil {
-		glog.Fatalf("tpm2.StartAuthSession: %v", err)
+		lib.Fatal("tpm2.StartAuthSession: %v", err)
 	}
 
-	auth := tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession}
-	_, _, err = tpm2.PolicySecret(rwc, tpm2.HandleEndorsement, auth, session, nil, nil, nil, 0)
+	auth := tpm2.AuthCommand{
+		Session:    tpm2.HandlePasswordSession,
+		Attributes: tpm2.AttrContinueSession,
+	}
+
+	_, _, err = tpm2.PolicySecret(
+		rwc,
+		tpm2.HandleEndorsement, // entityHandle
+		auth,                   // authCommand
+		session,                // policyHandle
+		nil,                    // policyNonce
+		nil,                    // cpHash
+		nil,                    // policyRef
+		0,                      // expiry
+	)
 	if err != nil {
-		glog.Fatalf("tpm2.AuthCommand: %v", err)
+		lib.Fatal("tpm2.AuthCommand: %v", err)
 	}
 
-	auths := []tpm2.AuthCommand{auth, {Session: session, Attributes: tpm2.AttrContinueSession}}
-	out, err := tpm2.ActivateCredentialUsingAuth(rwc, auths, ak, ek, credBlob[2:], encSecret[2:])
+	auths := []tpm2.AuthCommand{
+		auth,
+		{
+			Session:    session,
+			Attributes: tpm2.AttrContinueSession,
+		},
+	}
+
+	// Activate credential
+	attempt, err := tpm2.ActivateCredentialUsingAuth(
+		rwc,
+		auths,         // authCommands
+		ak,            // activeHandle
+		ek,            // keyHandle
+		idObject[2:],  // idObject (skip length header)
+		encSecret[2:], // encSecret (skip lenght header)
+	)
 	if err != nil {
-		log.Fatalf("activate credential: %v", err)
+		lib.Fatal("activate credential: %v", err)
 	}
 
-	err = ioutil.WriteFile("Attestor/secret", out, 0644)
-	if err != nil {
-		glog.Fatalf("ioutil.WriteFile() failed for Attestor/secret: %v", err)
-	}
-	glog.V(0).Infof("Wrote Attestor/secret")
-
+	lib.Write(fmt.Sprintf("%.bin", attestorAttemptPath), attempt, 0644)
 }
