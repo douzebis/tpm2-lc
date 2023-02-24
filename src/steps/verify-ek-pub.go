@@ -14,7 +14,7 @@ import (
 	"main/src/lib"
 )
 
-// ### Clear TPM (on Attestor) #################################################
+// ### Attestor: verify EK Pub #################################################
 
 func VerifyEKPub(
 	ekPublicKeyPath string,
@@ -22,7 +22,8 @@ func VerifyEKPub(
 	manufacturerCertPath string,
 	ekVerifierPath string,
 ) {
-	//rsa.PublicKey, ekPubBytes []byte) {
+
+	lib.PRINT("=== ATTESTOR: VERIFY EK PUB ====================================================")
 
 	// Retrieve EK public key
 	ekPublicKey := certs.ReadPublicKey(ekPublicKeyPath)

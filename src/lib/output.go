@@ -12,10 +12,11 @@ import (
 
 const (
 	// See https://pkg.go.dev/github.com/ccpaging/nxlog4go@v2.0.3+incompatible/console#section-readme
-	RED    = "\033[0;31m"
-	GREEN  = "\033[0;32m"
-	ORANGE = "\033[0;33m"
-	RESET  = "\033[0m" // No Color
+	BOLD_WHITE = "\033[1;37m"
+	RED        = "\033[0;31m"
+	GREEN      = "\033[0;32m"
+	ORANGE     = "\033[0;33m"
+	RESET      = "\033[0m" // No Color
 )
 
 func Fatal(format string, params ...interface{}) {
@@ -25,7 +26,7 @@ func Fatal(format string, params ...interface{}) {
 
 func PRINT(format string, params ...interface{}) {
 	message := fmt.Sprintf(format, params...)
-	glog.V(0).Infof("%s%s%s", RED, message, RESET)
+	glog.V(0).Infof("%s%s%s", BOLD_WHITE, message, RESET)
 }
 
 func Print(format string, params ...interface{}) {
