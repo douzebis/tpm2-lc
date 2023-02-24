@@ -52,6 +52,19 @@ func main() {
 		"Manufacturer/ek",
 	)
 
+	// Create TPM EK Cert
+	certs.CreateEKCert(
+		
+		publicKey interface{},
+		manufacturerID string,
+		modelName string,
+		version string,
+		ca string,
+		//caCert x509.Certificate,
+		//caKey interface{},
+		filePrefix string,
+	) {
+
 	return
 
 	//	// === Create certificate for TPM ==========================================
