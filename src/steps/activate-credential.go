@@ -30,7 +30,7 @@ func ActivateCredential(
 	encSecret := lib.Read(fmt.Sprintf("%s-secret.blob", verifierCredentialPath))
 
 	// Retrieve EK ctx
-	ekCtx := lib.Read(fmt.Sprintf("%s.ctx", &attestorEkPath))
+	ekCtx := lib.Read(fmt.Sprintf("%s.ctx", attestorEkPath))
 
 	// Load EK
 	ek, err := tpm2.ContextLoad(rwc, ekCtx)
