@@ -50,9 +50,15 @@ func main() {
 		"Attestor/ek", // OUT
 		"Attestor/ak", // OUT
 	)
-	return
+
 	// Verifier: generate credential challenge
-	steps.GenerateCredential()
+	steps.GenerateCredential(
+		"Attestor/ak",         // IN
+		"Verifier/ek",         // IN
+		"Verifier/nonce",      // OUT
+		"Verifier/credential", // OUT
+	)
+	return
 
 	// Attestor: activate credential
 	steps.ActivateCredential(rwc)

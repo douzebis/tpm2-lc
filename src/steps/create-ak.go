@@ -244,5 +244,5 @@ func CreateAK(
 	lib.Write(fmt.Sprintf("%s.pub", attestorAkPath), akPublicKeyPEM, 0644)
 	lib.Write(fmt.Sprintf("%s-pub.blob", attestorAkPath), akPublicBlob, 0644)
 	lib.Write(fmt.Sprintf("%s-priv.blob", attestorAkPath), akPrivateBlob, 0644)
-	lib.Write(fmt.Sprintf("%s.name", attestorAkPath), akName, 0644)
+	lib.Write(fmt.Sprintf("%s-name.blob", attestorAkPath), akName, 0644)
 }
