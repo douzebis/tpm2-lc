@@ -3,22 +3,45 @@
 package lib
 
 import (
+	"fmt"
 	"io/fs"
 	"io/ioutil"
 
 	"github.com/golang/glog"
 )
 
+const (
+	// See https://pkg.go.dev/github.com/ccpaging/nxlog4go@v2.0.3+incompatible/console#section-readme
+	RED    = "\033[0;31m"
+	GREEN  = "\033[0;32m"
+	ORANGE = "\033[0;33m"
+	RESET  = "\033[0m" // No Color
+)
+
 func Fatal(format string, params ...interface{}) {
 	glog.Fatalf(format, params...)
+	fmt.Printf("%s", RED)
+	fmt.Printf(format, params...)
+	fmt.Printf("%s\n", RESET)
+}
+
+func PRINT(format string, params ...interface{}) {
+	glog.V(0).Infof(format, params...)
+	fmt.Printf(format, params...)
 }
 
 func Print(format string, params ...interface{}) {
 	glog.V(0).Infof(format, params...)
+	fmt.Printf("%s", GREEN)
+	fmt.Printf(format, params...)
+	fmt.Printf("%s\n", RESET)
 }
 
 func Comment(format string, params ...interface{}) {
 	glog.V(5).Infof(format, params...)
+	fmt.Printf("%s", ORANGE)
+	fmt.Printf(format, params...)
+	fmt.Printf("%s\n", RESET)
 }
 
 func Read(
