@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
 	"math/big"
@@ -84,13 +85,15 @@ func CreateEKCert(
 		lib.Fatal("x509.ParseCertificate() failed: %v", err)
 	}
 	//cert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
-	//		for _, ext := range certificate.Extensions {
-	//			// filter the custom extensions by customOID
-	//			lib.Print("extension %s", ext.Id.String())
-	//			if ext.Id.String() == "2.5.29.17" {
-	//				parse(ext.Value, "")
-	//			}
-	//		}
+	uhce := []asn1.ObjectIdentifier{}
+	for _, ext := range cert.UnhandledCriticalExtensions {
+		// mark "2.5.29.17" as handled
+		lib.Comment("extension %s", ext.String())
+		if !ext.Equal(asn1.ObjectIdentifier{2, 5, 29, 17}) {
+			uhce = append(uhce, ext)
+		}
+	}
+	cert.UnhandledCriticalExtensions = uhce
 
 	roots := x509.NewCertPool()
 	roots.AddCert(&caCert)
