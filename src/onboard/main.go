@@ -4,7 +4,6 @@ package main
 
 import (
 	"bytes"
-	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -24,7 +23,8 @@ import (
 	"github.com/google/go-tpm-tools/client"
 	"github.com/google/go-tpm/tpm2"
 	"github.com/google/go-tpm/tpm2/credactivation"
-	"github.com/google/go-tpm/tpmutil"
+
+	"main/src/tpm"
 )
 
 var handleNames = map[string][]tpm2.HandleType{
@@ -39,30 +39,13 @@ var (
 	flush   = flag.String("flush", "all", "Flush contexts, must be oneof transient|saved|loaded|all")
 )
 
-// ### CreateEK (on attestor) ##################################################
-
-func CreateEK(rwc io.ReadWriter) (tpmutil.Handle, crypto.PublicKey, error) {
-
-	// === Create EK ===========================================================
-
-	ek, pub, err := tpm2.CreatePrimary(
-		rwc,
-		tpm2.HandleEndorsement,
-		tpm2.PCRSelection{},
-		"", "",
-		client.DefaultEKTemplateRSA(),
-	)
-
-	return ek, pub, err
-}
-
 // ### CreateAK (on attestor) ##################################################
 
 func CreateAK(rwc io.ReadWriter) {
 
 	// === Load EK =============================================================
 
-	ek, ekPublicKeyCrypto, err := CreateEK(rwc)
+	ek, ekPublicKeyCrypto, err := tpm.CreateEK(rwc)
 	if err != nil {
 		glog.Fatalf("tpm2.CreatePrimary() failed for EK: %v", err)
 	}
@@ -267,6 +250,7 @@ func CreateAK(rwc io.ReadWriter) {
 	// 00 22: rest is 34 bytes (0x22)
 	// 00 0b: Algorighm is SHA256
 	// xx...: 32 bytes for key hash
+	// See https://github.com/tpm2-software/tpm2-tools/issues/1872
 	glog.V(5).Infof("akName     : 0x%s", hex.EncodeToString(akName))
 
 	defer tpm2.FlushContext(rwc, ak)
@@ -588,6 +572,21 @@ func ActivateCredential(rwc io.ReadWriter) {
 
 }
 
+// ### RequestQuote (on Verifier) ##############################################
+func RequestQuote() {
+
+}
+
+// ### PerformQuote (on Attestor) ##############################################
+func PerformQuote(rwc io.ReadWriter) {
+
+}
+
+// ### VerifyQuote (on Verifier) ###############################################
+func VerifyQuote() {
+
+}
+
 // ### CreateAKCert (on Verifier and Owner-CA) #################################
 
 func CreateAKCert() {
@@ -723,8 +722,13 @@ func CreateAKCert() {
 
 // ### Main ####################################################################
 
+func toto(format string, params ...interface{}) {
+	glog.V(0).Infof(format, params...)
+}
+
 func main() {
 	flag.Parse()
+	toto("hello %s!", "world")
 
 	// === Open TPM device and flush key handles ===============================
 
@@ -1028,21 +1032,13 @@ func main() {
 		glog.V(0).Infof("Verified %s", "Owner-CA/tpm.crt")
 	}
 
-	// === Create TPM AK =======================================================
-
-	CreateAK(rwc) // On Attestor
-
-	// === Create credential challenge =========================================
-
-	GenerateCredential() // On Verifier
-
-	// === Activate credential =================================================
-
+	CreateAK(rwc)           // On Attestor
+	GenerateCredential()    // On Verifier
 	ActivateCredential(rwc) // On Attestor
-
-	// === Create AK cert ======================================================
-
-	CreateAKCert() // On Verifier and Owner-CA
+	RequestQuote()          // On Verifier
+	PerformQuote(rwc)       // On Attestor
+	VerifyQuote()           // On Verifier
+	CreateAKCert()          // On Verifier and Owner-CA
 
 	// === Clear TPM ===========================================================
 
