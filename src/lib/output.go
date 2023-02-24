@@ -19,15 +19,13 @@ const (
 )
 
 func Fatal(format string, params ...interface{}) {
-	glog.Fatalf(format, params...)
-	fmt.Printf("%s", RED)
-	fmt.Printf(format, params...)
-	fmt.Printf("%s\n", RESET)
+	message := fmt.Sprintf(format, params...)
+	glog.Fatalf("%s%s%s", RED, message, RESET)
 }
 
 func PRINT(format string, params ...interface{}) {
-	glog.V(0).Infof(format, params...)
-	fmt.Printf(format, params...)
+	message := fmt.Sprintf(format, params...)
+	glog.V(0).Infof("%s%s%s", RED, message, RESET)
 }
 
 func Print(format string, params ...interface{}) {
@@ -36,10 +34,8 @@ func Print(format string, params ...interface{}) {
 }
 
 func Comment(format string, params ...interface{}) {
-	glog.V(5).Infof(format, params...)
-	fmt.Printf("%s", ORANGE)
-	fmt.Printf(format, params...)
-	fmt.Printf("%s\n", RESET)
+	message := fmt.Sprintf(format, params...)
+	glog.V(5).Infof("%s%s%s", ORANGE, message, RESET)
 }
 
 func Read(
