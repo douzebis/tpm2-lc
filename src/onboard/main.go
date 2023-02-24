@@ -67,7 +67,7 @@ func main() {
 		"Attestor/ak",         // IN
 		"Attestor/attempt",    // OUT
 	)
-
+	return
 	// Verifier: request PCR quote
 	steps.RequestQuote()
 
