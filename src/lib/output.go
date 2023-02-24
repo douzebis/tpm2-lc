@@ -31,12 +31,12 @@ func PRINT(format string, params ...interface{}) {
 
 func Print(format string, params ...interface{}) {
 	message := fmt.Sprintf(format, params...)
-	glog.V(0).Infof("%s%s%s", GREEN, message, RESET)
+	glog.V(0).Infof("%s%s%s", ORANGE, message, RESET)
 }
 
 func Comment(format string, params ...interface{}) {
 	message := fmt.Sprintf(format, params...)
-	glog.V(5).Infof("%s%s%s", ORANGE, message, RESET)
+	glog.V(5).Infof("%s%s%s", GREEN, message, RESET)
 }
 
 func Read(
