@@ -42,7 +42,7 @@ func main() {
 	tpm.ReadPCRs(
 		rwc,
 		[]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14}, // Used for boot measurement
-		"CI-CD/pcrs",
+		"CICD/pcrs",
 	)
 
 	// Read and save TPM EK Pub
