@@ -5,6 +5,7 @@ package tpm
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"io/ioutil"
 
@@ -30,7 +31,7 @@ func ReadPCRs(
 			glog.Fatalf("ERROR:   Unable to  ReadPCR : %v", err)
 		}
 		lib.Comment("PCR [%d] Value %v ", ndx, hex.EncodeToString(pcr))
-		err = ioutil.WriteFile(filePrefix+"-"+string(ndx)+".bin",
+		err = ioutil.WriteFile(fmt.Sprintf("%s-%d.bin", filePrefix, ndx),
 			pcr, 0644)
 		if err != nil {
 			lib.Fatal("ioutil.WriteFile() failed: %v", err)
