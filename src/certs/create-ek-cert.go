@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
 	"math/big"
@@ -76,37 +75,12 @@ func CreateEKCert(
 
 	// --- Verify TPM cert -----------------------------------------------------
 
-	// Note: equivalently with openssl:
-	// openssl verify -CAfile TPM-CA/tpm-ca.crt TPM-CA/tpm.crt
-	// openssl x509 -noout -ext subjectAltName -in TPM-CA/tpm.crt
-
 	cert, err := x509.ParseCertificate(certBytes)
 	if err != nil {
 		lib.Fatal("x509.ParseCertificate() failed: %v", err)
 	}
-	//cert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
-	uhce := []asn1.ObjectIdentifier{}
-	for _, ext := range cert.UnhandledCriticalExtensions {
-		// mark "2.5.29.17" as handled
-		lib.Comment("extension %s", ext.String())
-		if !ext.Equal(asn1.ObjectIdentifier{2, 5, 29, 17}) {
-			uhce = append(uhce, ext)
-		}
-	}
-	cert.UnhandledCriticalExtensions = uhce
 
-	roots := x509.NewCertPool()
-	roots.AddCert(&caCert)
-	opts := x509.VerifyOptions{
-		Roots: roots,
-	}
-
-	if _, err := cert.Verify(opts); err != nil {
-		lib.Fatal("tpmCert.Verify() failed: %v", err)
-	} else {
-		lib.Print("Verified %s.crt", certPath)
-	}
-
+	VerifyCert(*cert, caCert)
 }
 
 // --- Snippet: parse a certificate extensions -----------------------------

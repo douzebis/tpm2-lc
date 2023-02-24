@@ -25,8 +25,13 @@ func main() {
 	// Attestor: retrieve EK Pub from TPM
 	steps.GetEKPub(rwc, "Attestor/ek")
 
-	//	// Verifier: verify EK Pub with Manufacturer EK Cert
-	//	steps.VerifyEKPub("Attestor/ek", "Manufacturer.ek")
+	// Verifier: verify EK Pub with Manufacturer EK Cert
+	steps.VerifyEKPub(
+		"Attestor/ek",                  // In
+		"Manufacturer/ek",              // In
+		"Manufacturer/manufacturer-ca", // In
+		"Verifier/ek",                  // Out
+	)
 
 	//	// Verifier: create Owner EK Cert
 	//	steps.CreateEKCert("Attestor/ek", "Owner/ek")
