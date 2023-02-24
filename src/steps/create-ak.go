@@ -239,7 +239,7 @@ func CreateAK(
 			Bytes: akPublicKeyDER,
 		},
 	)
-	lib.Comment("akPublicKeyPEM_: %v", string(akPublicKeyPEM))
+	lib.Comment("akPublicKeyPEM_:\n%v", string(akPublicKeyPEM))
 
 	lib.Write(fmt.Sprintf("%s.pub", attestorAkPath), akPublicKeyPEM, 0644)
 	lib.Write(fmt.Sprintf("%s-pub.blob", attestorAkPath), akPublicBlob, 0644)
