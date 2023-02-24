@@ -39,6 +39,7 @@ func main() {
 	flag.Parse()
 
 	rwc := tpm.OpenFlush(*tpmPath, *flush)
+	defer rwc.Close()
 	// === Retrieve TPM EK Pub =================================================
 
 	ek, ekPubKey, err := tpm2.CreatePrimary(
