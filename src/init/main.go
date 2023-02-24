@@ -30,13 +30,14 @@ import (
 	"encoding/pem"
 	"flag"
 	"io/ioutil"
-	"main/src/lib"
 	"math/big"
 	"time"
 
 	"github.com/golang/glog"
 	"github.com/google/go-tpm-tools/client"
 	"github.com/google/go-tpm/tpm2"
+
+	"main/src/certs"
 )
 
 var handleNames = map[string][]tpm2.HandleType{
@@ -136,7 +137,7 @@ func main() {
 
 	// === Create certificate for TPM CA =======================================
 
-	tpmCaCert, tpmCaPrivKey := lib.CreateCA("TPM Manufacturer", "TPM-CA/tpm-ca")
+	tpmCaCert, tpmCaPrivKey := certs.CreateCA("TPM Manufacturer", "TPM-CA/tpm-ca")
 
 	// === Create certificate for TPM ==========================================
 
@@ -194,7 +195,7 @@ func main() {
 		NotAfter:  time.Now().AddDate(10, 0, 0),
 		KeyUsage:  x509.KeyUsageKeyEncipherment,
 		ExtraExtensions: []pkix.Extension{
-			*lib.CreateSubjectAltName(
+			*certs.CreateSubjectAltName(
 				[]byte("id: Google"),
 				[]byte("id: Shielded VM vTPM"),
 				[]byte("id: 00010001"),
@@ -255,7 +256,7 @@ func main() {
 
 	// === Create certificate for Owner CA =====================================
 
-	lib.CreateCA("TPM Owner", "Owner-CA/owner-ca")
+	certs.CreateCA("TPM Owner", "Owner-CA/owner-ca")
 
 	// === Retrieve PCRs =======================================================
 

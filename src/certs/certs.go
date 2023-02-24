@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-package lib
+package certs
 
 import (
 	"crypto/rand"

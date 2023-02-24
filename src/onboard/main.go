@@ -15,7 +15,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"main/src/lib"
 	"math/big"
 	"time"
 
@@ -24,6 +23,7 @@ import (
 	"github.com/google/go-tpm/tpm2"
 	"github.com/google/go-tpm/tpm2/credactivation"
 
+	"main/src/certs"
 	"main/src/tpm"
 )
 
@@ -882,7 +882,7 @@ func main() {
 	}
 
 	expectedSAN := pkix.Extension(
-		*lib.CreateSubjectAltName(
+		*certs.CreateSubjectAltName(
 			[]byte("id: Google"),
 			[]byte("id: Shielded VM vTPM"),
 			[]byte("id: 00010001"),
@@ -980,7 +980,7 @@ func main() {
 		NotAfter:  time.Now().AddDate(10, 0, 0),
 		KeyUsage:  x509.KeyUsageKeyEncipherment,
 		ExtraExtensions: []pkix.Extension{
-			*lib.CreateSubjectAltName(
+			*certs.CreateSubjectAltName(
 				[]byte("id: Google"),
 				[]byte("id: Shielded VM vTPM"),
 				[]byte("id: 00010001"),
