@@ -49,7 +49,7 @@ func main() {
 	//ekPublicKey, ekPubBytes :=
 	steps.GetEKPub(
 		rwc,
-		"TPM-CA/ek",
+		"Manufacturer/ek",
 	)
 
 	return
