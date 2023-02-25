@@ -7,7 +7,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 
 	"main/src/lib"
 )
@@ -17,10 +16,8 @@ import (
 func ReadPublicKey(
 	publicKeyPath string,
 ) rsa.PublicKey {
-	publicKeyPEM, err := ioutil.ReadFile(fmt.Sprintf("%s.pub", publicKeyPath))
-	if err != nil {
-		lib.Fatal("ioutil.ReadFile() failed: %v", err)
-	}
+
+	publicKeyPEM := lib.Read(fmt.Sprintf("%s.pub", publicKeyPath))
 
 	publicKeyBlock, _ := pem.Decode(publicKeyPEM)
 
@@ -33,12 +30,12 @@ func ReadPublicKey(
 	// See https://stackoverflow.com/a/44317246
 	switch ekPubTyp := pubKey.(type) {
 	case *rsa.PublicKey:
-		lib.Comment("ekPublicKey is of type RSA")
+		lib.Verbose("ekPublicKey is of type RSA")
 	default:
 		lib.Fatal("ekPublicKey is not of type RSA: %v", ekPubTyp)
 	}
 	publicKey, _ := pubKey.(*rsa.PublicKey)
-	lib.Comment("publicKey %v", publicKey)
+	lib.Verbose("publicKey %v", publicKey)
 
 	return *publicKey
 }

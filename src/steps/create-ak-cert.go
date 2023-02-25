@@ -9,7 +9,7 @@ import (
 
 // === Verifier/Owner: create AK Cert ==========================================
 
-func CreateAKCert(
+func NONCreateAKCert(
 	akCertName string, // IN
 	verifierAkPath string, // IN/OUT
 	ownerCertPath string, //IN
