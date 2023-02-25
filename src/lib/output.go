@@ -42,7 +42,7 @@ func Comment(format string, params ...interface{}) {
 
 func Verbose(format string, params ...interface{}) {
 	message := fmt.Sprintf(format, params...)
-	glog.V(5).Infof("%s%s%s", BLUE, message, RESET)
+	glog.V(10).Infof("%s%s%s", BLUE, message, RESET)
 }
 
 func Read(
