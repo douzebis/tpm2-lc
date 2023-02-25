@@ -14,7 +14,7 @@ import (
 	"main/src/lib"
 )
 
-// ### Attestor: verify EK Pub #################################################
+// ### Verifier: verify EK Pub #################################################
 
 func VerifyEKPub(
 	ekPublicKeyPath string,
@@ -23,7 +23,7 @@ func VerifyEKPub(
 	ekVerifierPath string,
 ) {
 
-	lib.PRINT("=== ATTESTOR: VERIFY EK PUB ====================================================")
+	lib.PRINT("=== VERIFIER: VERIFY EK PUB ====================================================")
 
 	// Retrieve EK public key
 	ekPublicKey := certs.ReadPublicKey(ekPublicKeyPath)
