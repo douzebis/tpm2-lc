@@ -23,8 +23,8 @@ func ReadKey(
 	if keyBlock == nil {
 		lib.Fatal("pem.Decode() failed")
 	}
-	if keyBlock.Type != "KEY" {
-		lib.Fatal("Block is not of type KEY: %v", keyBlock.Type)
+	if keyBlock.Type != "RSA PRIVATE KEY" {
+		lib.Fatal("Block is not of type RSA PRIVATE KEY: %v", keyBlock.Type)
 	}
 
 	key, err := x509.ParsePKCS1PrivateKey(keyBlock.Bytes)

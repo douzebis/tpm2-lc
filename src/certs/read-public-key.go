@@ -20,6 +20,12 @@ func ReadPublicKey(
 	publicKeyPEM := lib.Read(fmt.Sprintf("%s.pub", publicKeyPath))
 
 	publicKeyBlock, _ := pem.Decode(publicKeyPEM)
+	if publicKeyBlock == nil {
+		lib.Fatal("pem.Decode() failed")
+	}
+	if publicKeyBlock.Type != "RSA" {
+		lib.Fatal("Block is not of type RSA: %v", publicKeyBlock.Type)
+	}
 
 	pubKey, err := x509.ParsePKIXPublicKey(publicKeyBlock.Bytes)
 	if err != nil {
@@ -30,7 +36,6 @@ func ReadPublicKey(
 	// See https://stackoverflow.com/a/44317246
 	switch ekPubTyp := pubKey.(type) {
 	case *rsa.PublicKey:
-		lib.Verbose("ekPublicKey is of type RSA")
 	default:
 		lib.Fatal("ekPublicKey is not of type RSA: %v", ekPubTyp)
 	}
