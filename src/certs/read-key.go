@@ -16,9 +16,16 @@ import (
 func ReadKey(
 	pathPrefix string,
 ) rsa.PrivateKey {
+
 	keyPEM := lib.Read(fmt.Sprintf("%s.key", pathPrefix))
 
 	keyBlock, _ := pem.Decode(keyPEM)
+	if keyBlock == nil {
+		lib.Fatal("pem.Decode() failed")
+	}
+	if keyBlock.Type != "KEY" {
+		lib.Fatal("Block is not of type KEY: %v", keyBlock.Type)
+	}
 
 	key, err := x509.ParsePKCS1PrivateKey(keyBlock.Bytes)
 	if err != nil {

@@ -7,7 +7,6 @@ import (
 	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 
 	"main/src/lib"
 )
@@ -18,16 +17,14 @@ func ReadCert(
 	pathPrefix string,
 ) x509.Certificate {
 
-	certPEM, err := ioutil.ReadFile(fmt.Sprintf("%s.crt", pathPrefix))
-	if err != nil {
-		lib.Fatal("ioutil.ReadFile() failed: %v", err)
-	}
+	certPEM := lib.Read(fmt.Sprintf("%s.crt", pathPrefix))
+
 	certBlock, _ := pem.Decode([]byte(certPEM))
 	if certBlock == nil {
-		lib.Fatal("pem.Decode() failed: %v", err)
+		lib.Fatal("pem.Decode() failed")
 	}
 	if certBlock.Type != "CERTIFICATE" {
-		lib.Fatal("Cert type != CERTIFICATE")
+		lib.Fatal("Block is not of type CERTIFICATE: %v", certBlock.Type)
 	}
 
 	cert, err := x509.ParseCertificate(certBlock.Bytes)
