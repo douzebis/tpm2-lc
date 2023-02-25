@@ -67,7 +67,7 @@ func main() {
 		"Attestor/ak",         // IN
 		"Attestor/attempt",    // OUT
 	)
-	return
+
 	// Verifier: request PCR quote
 	steps.RequestQuote()
 
@@ -78,7 +78,13 @@ func main() {
 	steps.VerifyQuote()
 
 	// Verifier/Owner: create Owner AK Cert
-	steps.CreateAKCert()
+	steps.CreateAKCert(
+		"Verifier/nonce",   // IN
+		"Attestor/attempt", // IN
+		"TPM AK",           // IN
+		"Verifier/ak",      // IN/OUT
+		"Owner/owner-ca",   // IN
+	)
 
 	// Attestor: clear TPM owner hierarchy
 	tpm.Clear(rwc) // On Attestor
