@@ -32,6 +32,6 @@ func VerifyCredential(
 	lib.Print("Attestor attempt matches Verifier nonce")
 
 	// Copy AK Pub to Verifier directory
-	akPub := lib.Read(fmt.Sprint("%s.pub", attestorAkPath))
-	lib.Write(fmt.Sprint("%s.pub", verifierAkPath), akPub, 0644)
+	akPub := lib.Read(fmt.Sprintf("%s.pub", attestorAkPath))
+	lib.Write(fmt.Sprintf("%s.pub", verifierAkPath), akPub, 0644)
 }
