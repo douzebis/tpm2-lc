@@ -25,7 +25,7 @@ func CreateAK(
 	attestorAkPath string, // OUT
 ) {
 
-	lib.PRINT("=== VERIFIER: CREATE AK ========================================================")
+	lib.PRINT("=== ATTESTOR: CREATE AK ========================================================")
 
 	// --- Create EK in TPM ----------------------------------------------------
 	ek, ekPublicKeyCrypto, err := tpm.CreateEK(rwc)
