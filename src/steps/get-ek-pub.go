@@ -73,12 +73,11 @@ func GetEKPub(
 	// See https://stackoverflow.com/a/44317246
 	switch ekPubTyp := ekPubKey.(type) {
 	case *rsa.PublicKey:
-		lib.Comment("ekPublicKey is of type RSA")
 	default:
 		lib.Fatal("ekPublicKey is not of type RSA: %v", ekPubTyp)
 	}
 	ekPublicKey, _ = ekPubKey.(*rsa.PublicKey)
-	lib.Comment("ekPublicKey %v", ekPublicKey)
+	lib.Verbose("ekPublicKey %v", ekPublicKey)
 
 	return ekPublicKey, ekPubBytes
 }

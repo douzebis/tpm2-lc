@@ -48,7 +48,7 @@ func VerifyEKPub(
 	)
 	badSAN := true
 	for _, ext := range ekCert.Extensions {
-		lib.Comment("extension %s", ext.Id.String())
+		lib.Verbose("extension %s", ext.Id.String())
 		if ext.Id.Equal(asn1.ObjectIdentifier{2, 5, 29, 17}) {
 			if !ext.Critical {
 				lib.Fatal("SAN should be critical")
