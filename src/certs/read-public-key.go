@@ -23,8 +23,8 @@ func ReadPublicKey(
 	if publicKeyBlock == nil {
 		lib.Fatal("pem.Decode() failed")
 	}
-	if publicKeyBlock.Type != "RSA" {
-		lib.Fatal("Block is not of type RSA: %v", publicKeyBlock.Type)
+	if publicKeyBlock.Type != "PUBLIC KEY" {
+		lib.Fatal("Block is not of type PUBLIC KEY: %v", publicKeyBlock.Type)
 	}
 
 	pubKey, err := x509.ParsePKIXPublicKey(publicKeyBlock.Bytes)
