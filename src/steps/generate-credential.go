@@ -34,8 +34,8 @@ func GenerateCredential(
 	if err != nil {
 		lib.Fatal("tpm2.DecodeName(): %v", err)
 	}
-	lib.Comment("akName     : 0x%s", hex.EncodeToString(akName))
-	lib.Comment("name.Digest: 0x%04x%s", int(name.Digest.Alg), hex.EncodeToString(name.Digest.Value))
+	lib.Verbose("akName     : 0x%s", hex.EncodeToString(akName))
+	lib.Verbose("name.Digest: 0x%04x%s", int(name.Digest.Alg), hex.EncodeToString(name.Digest.Value))
 
 	if name.Digest == nil {
 		lib.Fatal("ak.name was not a digest")

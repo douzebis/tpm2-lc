@@ -55,7 +55,7 @@ func CreateAK(
 		lib.Fatal("tpm2.ContextLoad() failed for EK: %v", err)
 	}
 	defer tpm2.FlushContext(rwc, ek)
-	lib.Comment("ek: 0x%08x", ek)
+	lib.Verbose("ek: 0x%08x", ek)
 
 	ekPublicKeyDER, err := x509.MarshalPKIXPublicKey(ekPublicKeyCrypto)
 	if err != nil {
@@ -69,7 +69,7 @@ func CreateAK(
 			Bytes: ekPublicKeyDER,
 		},
 	)
-	lib.Comment("ekPublicKeyPEM:\n%s", string(ekPublicKeyPEM))
+	lib.Verbose("ekPublicKeyPEM:\n%s", string(ekPublicKeyPEM))
 
 	lib.Write(fmt.Sprintf("%s.pub", attestorEkPath), ekPublicKeyPEM, 0644)
 
@@ -239,7 +239,7 @@ func CreateAK(
 			Bytes: akPublicKeyDER,
 		},
 	)
-	lib.Comment("akPublicKeyPEM_:\n%v", string(akPublicKeyPEM))
+	lib.Verbose("akPublicKeyPEM_:\n%v", string(akPublicKeyPEM))
 
 	lib.Write(fmt.Sprintf("%s.pub", attestorAkPath), akPublicKeyPEM, 0644)
 	lib.Write(fmt.Sprintf("%s-pub.blob", attestorAkPath), akPublicBlob, 0644)
