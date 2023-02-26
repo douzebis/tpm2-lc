@@ -5,7 +5,10 @@ package main
 import (
 	"flag"
 
+	"github.com/google/go-attestation/attest"
+
 	"main/src/certs"
+	"main/src/lib"
 	"main/src/steps"
 	"main/src/tpm"
 )
@@ -19,6 +22,29 @@ var (
 
 func main() {
 	flag.Parse()
+
+	//eventsLog := lib.Read("CICD/event-log.bin")
+	//parsedEventsLog, err := attest.ParseEventLog(eventsLog)
+	//if err != nil {
+	//	lib.Fatal("attest.ParseEventLog() failed: %v", err)
+	//}
+
+	//	attest.EventLog
+	//	// EventLog is a parsed measurement log. This contains unverified data representing
+	//	// boot events that must be replayed against PCR values to determine authenticity.
+	//	type EventLog struct {
+	//		// Algs holds the set of algorithms that the event log uses.
+	//		Algs []HashAlg
+	//		rawEvents   []rawEvent
+	//		specIDEvent *specIDEvent
+	//	}
+
+	titi := attest.EventLog{}
+	lib.Print("%v", titi)
+	//toto = parsedEventsLog.rawEvent
+	//for e := range parsedEventsLog.rawEvent {
+	//}
+	return
 
 	rwc := tpm.OpenFlush(*tpmPath, *flush)
 	defer rwc.Close()
