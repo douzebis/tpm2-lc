@@ -24,7 +24,7 @@ var (
 func main() {
 	flag.Parse()
 
-	eventsLog := []byte{} // lib.Read("CICD/event-log.bin")
+	eventsLog := lib.Read("CICD/event-log.bin")
 	parsedEventsLog, err := attest.ParseEventLog(eventsLog)
 	if err != nil {
 		lib.Fatal("attest.ParseEventLog() failed: %v", err)
