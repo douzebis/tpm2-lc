@@ -92,6 +92,8 @@ func main() {
 	// Attestor: perform PCR quote
 	steps.PerformQuote(
 		rwc,
+		"Attestor/ek",          // IN
+		"Attestor/ak",          // IN
 		"Verifier/nonce-quote", // IN
 		"Attestor/quote",       // OUT
 	)
