@@ -41,6 +41,7 @@ func main() {
 
 	titi := attest.EventLog{}
 	lib.Print("%v", titi)
+	lib.Print("%v", titi.rawEvents)
 	//toto = parsedEventsLog.rawEvent
 	//for e := range parsedEventsLog.rawEvent {
 	//}
