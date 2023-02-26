@@ -4,6 +4,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 
 	"main/src/certs"
 	"main/src/lib"
@@ -38,6 +39,13 @@ func main() {
 	// Open TPM
 	rwc := tpm.OpenFlush(*tpmPath, *flush)
 	defer rwc.Close()
+
+	// Read and save TPM PCRs values
+	lib.PRINT("=== INIT: RETRIEVE TPM PLATFORM CONFIGURATION REGISTERS ========================")
+	for pcr := 0; pcr < 32; pcr++ {
+		val := tpm.ReadPCR(rwc, pcr)
+		lib.Write(fmt.Sprintf("CICD/pcr-%d.bin", pcr), val, 0644)
+	}
 
 	// Read and save TPM EK Pub
 	steps.GetEKPub(
