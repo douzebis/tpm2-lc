@@ -36,7 +36,7 @@ func VerifyQuote(
 
 	if string(nonce) != string(att.ExtraData) {
 		lib.Fatal("Nonce Value mismatch Got: (0x%s) Expected: (0x%s)",
-			hex.EncodeToString(att.ExtraData), hex.EncodeToString(cc))
+			hex.EncodeToString(att.ExtraData), hex.EncodeToString(nonce))
 	}
 
 	sigL := tpm2.SignatureRSA{
@@ -54,8 +54,8 @@ func VerifyQuote(
 	//glog.V(5).Infof("     sha256 of Expected PCR Value: --> %x", pcrHash)
 
 	if !bytes.Equal(pcrDigest[:], att.AttestedQuoteInfo.PCRDigest) {
-		lib.Fatal("Unexpected PCR hash Value expected: 0x%s Got 0x%s",
-			hex.EncodeToString(pcrDigest[:]), hex.EncodeToString(att.AttestedQuoteInfo.PCRDigest))
+		lib.Fatal("Unexpected PCR hash Value Got 0x%s Expected: 0x%s",
+			hex.EncodeToString(att.AttestedQuoteInfo.PCRDigest), hex.EncodeToString(pcrDigest[:]))
 	}
 
 	//	glog.V(2).Infof("     Decoding PublicKey for AK ========")
