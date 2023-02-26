@@ -77,7 +77,9 @@ func main() {
 	)
 
 	// Verifier: request PCR quote
-	steps.RequestQuote()
+	steps.RequestQuote(
+		"Verifier/nonce-quote", // IN
+	)
 
 	// Attestor: perform PCR quote
 	steps.PerformQuote(rwc)
