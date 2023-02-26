@@ -69,7 +69,7 @@ func PerformQuote(
 
 	// Write quote to disk
 	lib.Write(fmt.Sprintf("%s-attest.bin", attestorQuotePath), attestation, 0644)
-	lib.Write(fmt.Sprintf("%s-sig.bin", attestorQuotePath), signature, 0644)
+	lib.Write(fmt.Sprintf("%s-signature.bin", attestorQuotePath), signature, 0644)
 
 	return attestation, signature
 }

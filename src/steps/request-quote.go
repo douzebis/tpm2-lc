@@ -4,6 +4,7 @@ package steps
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 
 	"main/src/lib"
@@ -22,6 +23,7 @@ func RequestQuote(
 	if err != nil {
 		lib.Fatal("rand.Read() failed: %v", err)
 	}
+	lib.Verbose("Quote nonce: 0x%s", hex.EncodeToString(nonce))
 
 	// Write nonce to disk
 	lib.Write(fmt.Sprintf("%s.bin", quoteNoncePath), nonce, 0600)
