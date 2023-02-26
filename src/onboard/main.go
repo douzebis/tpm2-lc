@@ -24,7 +24,7 @@ var (
 func main() {
 	flag.Parse()
 
-	eventsLog := lib.Read("CICD/event-log.bin")
+	eventsLog := []byte{} // lib.Read("CICD/event-log.bin")
 	parsedEventsLog, err := attest.ParseEventLog(eventsLog)
 	if err != nil {
 		lib.Fatal("attest.ParseEventLog() failed: %v", err)
@@ -61,6 +61,10 @@ func main() {
 	//		// TODO(ericchiang): Provide examples or links for which event types must
 	//		// match their data to their digest.
 	//	}
+
+	pcr0 := make([]byte, 32)
+	lib.Print("pcr0: %v", pcr0)
+	return
 
 	lib.Print("%v", parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256))[0])
 	for i, e := range parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256)) {
