@@ -26,6 +26,8 @@ func PerformQuote(
 	signature tpmutil.U16Bytes,
 ) {
 
+	lib.PRINT("=== ATTESTOR: PERFORM QUOTE ====================================================")
+
 	// Load EK
 	ek := tpm.LoadEK(
 		rw,
