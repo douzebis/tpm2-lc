@@ -3,6 +3,7 @@
 package main
 
 import (
+	"crypto/sha256"
 	"flag"
 
 	"github.com/google/go-attestation/attest"
@@ -62,13 +63,20 @@ func main() {
 	//		// match their data to their digest.
 	//	}
 
-	pcr0 := make([]byte, 32)
+	//pcr0 := make([]byte, 32)
+	pcr0 := [32]byte{}
 	lib.Print("pcr0: %v", pcr0)
-	return
 
 	lib.Print("%v", parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256))[0])
 	for i, e := range parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256)) {
-		lib.Print("%d: Index%d: %v", i, e.Index, e.Digest)
+		// sudo cat pcr0.bin zero.bin | openssl dgst -sha256 -binary > futurepcr0.bin
+		if e.Index == 0 {
+			lib.Print("%d: Index%d: %v", i, e.Index, e.Digest)
+			// pcrsConcat = append(pcrsConcat, pcr...)
+			// pcrsDigest := sha256.Sum256(pcrsConcat)
+			pcr0 = sha256.Sum256(append(pcr0[:], e.Digest))
+			lib.Print("pcr0: %v", pcr0)
+		}
 	}
 	return
 
