@@ -6,8 +6,11 @@ import (
 	"flag"
 
 	"main/src/certs"
+	"main/src/lib"
 	"main/src/steps"
 	"main/src/tpm"
+
+	"github.com/google/go-tpm-tools/client"
 )
 
 var (
@@ -19,13 +22,14 @@ func main() {
 	flag.Parse()
 
 	// Create certificate for Manufacturer CA
+	lib.PRINT("=== INIT: CREATE MANUFACTURER CA CERT ==========================================")
 	certs.CreateCACert(
 		"Manufacturer",
 		"Manufacturer/manufacturer-ca",
 	)
 
 	// Create certificate for Owner CA
-	//manufacturerCert, manufacturerPrivKey :=
+	lib.PRINT("=== INIT: CREATE OWNER CA CERT =================================================")
 	certs.CreateCACert(
 		"Owner",
 		"Owner/owner-ca",
@@ -35,24 +39,14 @@ func main() {
 	rwc := tpm.OpenFlush(*tpmPath, *flush)
 	defer rwc.Close()
 
-	// In this mock-up, we fake boot image PCRs prediction by simply
-	// reading current machine PCRs status
-
-	// Read and save TPM PCRs values
-	tpm.ReadPCRs(
-		rwc,
-		[]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14}, // Used for boot measurement
-		"CICD/pcrs",
-	)
-
 	// Read and save TPM EK Pub
-	//ekPublicKey, ekPubBytes :=
 	steps.GetEKPub(
 		rwc,
 		"Manufacturer/ek",
 	)
 
 	// Create TPM EK Cert
+	lib.PRINT("=== INIT: CREATE EK CERT =======================================================")
 	certs.CreateEKCert(
 		"Manufacturer/ek",
 		"id: Google",
@@ -61,6 +55,26 @@ func main() {
 		"Manufacturer/manufacturer-ca",
 		"Manufacturer/ek",
 	)
+
+	// In this mock-up, we fake boot image PCRs prediction by simply
+	// reading current machine PCRs status
+
+	// Read and save TPM PCRs values
+	lib.PRINT("=== INIT: RETRIEVE TPM PLATFORM CONFIGURATION REGISTERS ========================")
+	tpm.ReadPCRs(
+		rwc,
+		[]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14}, // Used for boot measurement
+		"CICD/pcrs",
+	)
+
+	// Read and save TPM PCRs values
+	lib.PRINT("=== INIT: RETRIEVE EVENT LOG ===================================================")
+	lib.PRINT("=== INIT: CREATE MANUFACTURER CA CERT ==========================================")
+	eventLog, err := client.GetEventLog(rwc)
+	if err != nil {
+		lib.Fatal("client.GetEventLog(): %v", err)
+	}
+	lib.Write("CICD/event-log.bin", eventLog, 0644)
 }
 
 // --- Snippet: parse a certificate extensions -----------------------------

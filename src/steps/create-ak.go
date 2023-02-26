@@ -27,7 +27,7 @@ func CreateAK(
 
 	lib.PRINT("=== ATTESTOR: CREATE AK ========================================================")
 
-	// --- Create EK in TPM ----------------------------------------------------
+	// Create EK in TPM
 	ek, ekPublicKeyCrypto, err := tpm.CreateEK(rwc)
 	if err != nil {
 		lib.Fatal("tpm2.CreatePrimary() failed for EK: %v", err)
@@ -36,27 +36,20 @@ func CreateAK(
 	lib.Verbose("ek: 0x%08x", ek)
 	lib.Verbose("ekPublicKey : %v", ekPublicKeyCrypto)
 
-	// --- Save then load EK context -------------------------------------------
-	ekCtx, err := tpm2.ContextSave(rwc, ek)
-	if err != nil {
-		lib.Fatal("tpm2.ContextSave() failed for EK: %v", err)
-	}
-	lib.Verbose("ekCtx 0x%s", hex.EncodeToString(ekCtx))
+	// Save EK context
+	ekCtx := tpm.ContextSave(rwc, ek)
 
+	// Flush EK context
+	tpm.FlushContext(rwc, ek)
+
+	// Write EK to disk
 	lib.Write(fmt.Sprintf("%s.ctx", attestorEkPath), ekCtx, 0644)
 
-	err = tpm2.FlushContext(rwc, ek)
-	if err != nil {
-		lib.Fatal("tpm2.FlushContext() failed: %v", err)
-	}
-
-	ek, err = tpm2.ContextLoad(rwc, ekCtx)
-	if err != nil {
-		lib.Fatal("tpm2.ContextLoad() failed for EK: %v", err)
-	}
+	// Load EK context
+	ek = tpm.ContextLoad(rwc, ekCtx)
 	defer tpm2.FlushContext(rwc, ek)
-	lib.Verbose("ek: 0x%08x", ek)
 
+	// Write EK Pub to disk
 	ekPublicKeyDER, err := x509.MarshalPKIXPublicKey(ekPublicKeyCrypto)
 	if err != nil {
 		lib.Fatal("x509.MarshalPKIXPublicKey() failed for EK Pub: %v", err)
@@ -73,53 +66,25 @@ func CreateAK(
 
 	lib.Write(fmt.Sprintf("%s.pub", attestorEkPath), ekPublicKeyPEM, 0644)
 
-	// --- Start auth session for creating AK ----------------------------------
-	// (Auth sessions are required for EK children)
-	createSession, createSessionNonce, err := tpm2.StartAuthSession(
-		rwc,
-		tpm2.HandleNull,    // tpmKey
-		tpm2.HandleNull,    // bindKey
-		make([]byte, 16),   // noneCaller
-		nil,                // secret
-		tpm2.SessionPolicy, // sessionType
-		tpm2.AlgNull,       // sym algorithm
-		tpm2.AlgSHA256,     // hash algorithm
-	)
-	if err != nil {
-		lib.Fatal("tpm2.StartAuthSession() failed: %v", err)
-	}
-	defer tpm2.FlushContext(rwc, createSession)
-	lib.Verbose("createSession: 0x%08x", createSession)
-	lib.Verbose("createSessionNonce: 0x%s", hex.EncodeToString(createSessionNonce))
+	// Auth sessions are required for working with EK children...
 
-	_, _, err = tpm2.PolicySecret(
+	// Start auth session for creating AK
+	session := tpm.CreateSession(
 		rwc,
-		tpm2.HandleEndorsement, // entityHandle
+		tpm2.HandlePasswordSession,
+	)
+	defer tpm2.FlushContext(rwc, session)
+
+	// Create AK
+	akPrivateBlob, akPublicBlob, creationData, creationHash, creationTicket,
+		err := tpm2.CreateKeyUsingAuth(
+		rwc,
+		ek,                  // owner
+		tpm2.PCRSelection{}, // selection
 		tpm2.AuthCommand{
-			Session:    tpm2.HandlePasswordSession,
+			Session:    session,
 			Attributes: tpm2.AttrContinueSession,
-		}, // entityAuth
-		createSession, // sessionHandle
-		nil,           // policyNonce
-		nil,           // cpHash
-		nil,           // policyRef
-		0,             // expiry
-	)
-	if err != nil {
-		lib.Fatal("tpm2.PolicySecret() failed for create session: %v", err)
-	}
-
-	authCommandCreateAuth := tpm2.AuthCommand{
-		Session:    createSession,
-		Attributes: tpm2.AttrContinueSession,
-	}
-
-	// --- Create AK -----------------------------------------------------------
-	akPrivateBlob, akPublicBlob, creationData, creationHash, creationTicket, err := tpm2.CreateKeyUsingAuth(
-		rwc,
-		ek,                     // owner
-		tpm2.PCRSelection{},    // selection
-		authCommandCreateAuth,  // authCommand
+		}, // authCommand
 		"",                     // ownerPassword
 		client.AKTemplateRSA(), // template
 	)
@@ -132,62 +97,32 @@ func CreateAK(
 	if err != nil {
 		lib.Fatal("tpm2.DecodeCreationData() failed: %v", err)
 	}
-	lib.Verbose("CredentialData.ParentName.Digest.Value 0x%s", hex.EncodeToString(cr.ParentName.Digest.Value))
+	lib.Verbose("CredentialData.ParentName.Digest.Value 0x%s",
+		hex.EncodeToString(cr.ParentName.Digest.Value))
 	lib.Verbose("CredentialHash 0x%s", hex.EncodeToString(creationHash))
-	lib.Verbose("CredentialTicket 0x%s", hex.EncodeToString(creationTicket.Digest))
+	lib.Verbose("CredentialTicket 0x%s",
+		hex.EncodeToString(creationTicket.Digest))
 
-	err = tpm2.FlushContext(rwc, createSession)
-	if err != nil {
-		lib.Fatal("tpm2.FlushContext() failed: %v", err)
-	}
+	// Flush TPM context
+	tpm.FlushContext(rwc, session)
 
-	// --- Start auth session for loading AK -----------------------------------
-	// (Auth sessions are required for EK children)
-	loadSession, loadSessionNonce, err := tpm2.StartAuthSession(
+	// Start auth session for loading AK
+	session = tpm.CreateSession(
 		rwc,
-		tpm2.HandleNull,    // tpmKey
-		tpm2.HandleNull,    // bindKey
-		make([]byte, 16),   // noneCaller
-		nil,                // secret
-		tpm2.SessionPolicy, // sessionType
-		tpm2.AlgNull,       // sym algorithm
-		tpm2.AlgSHA256,     // hash algorithm
+		tpm2.HandlePasswordSession,
 	)
-	if err != nil {
-		lib.Fatal("tpm2.StartAuthSession() failed: %v", err)
-	}
-	defer tpm2.FlushContext(rwc, loadSession)
-	lib.Verbose("createSession: 0x%08x", loadSession)
-	lib.Verbose("createSessionNonce: 0x%s", hex.EncodeToString(loadSessionNonce))
+	defer tpm2.FlushContext(rwc, session)
 
-	_, _, err = tpm2.PolicySecret(
-		rwc,
-		tpm2.HandleEndorsement, // entityHandle
-		tpm2.AuthCommand{ // entityAuth
-			Session:    tpm2.HandlePasswordSession,
-			Attributes: tpm2.AttrContinueSession,
-		},
-		loadSession, // sessionHandle
-		nil,         // policyNonce
-		nil,         // cpHash
-		nil,         // policyRef
-		0,           // expiry
-	)
-	if err != nil {
-		lib.Fatal("tpm2.PolicySecret() failed: %v", err)
-	}
-
-	authCommandLoad := tpm2.AuthCommand{
-		Session: loadSession, Attributes: tpm2.AttrContinueSession}
-
-	// --- Load AK -------------------------------------------------------------
-
+	// Load AK
 	ak, akName, err := tpm2.LoadUsingAuth(
 		rwc,
-		ek,              // parentHandle
-		authCommandLoad, // authCommand
-		akPublicBlob,    // publicBlob
-		akPrivateBlob,   // privateBlob
+		ek, // parentHandle
+		tpm2.AuthCommand{
+			Session:    session,
+			Attributes: tpm2.AttrContinueSession,
+		}, // authCommand
+		akPublicBlob,  // publicBlob
+		akPrivateBlob, // privateBlob
 	)
 	if err != nil {
 		lib.Fatal("tpm2.LoadUsingAuth() failed: %v", err)
@@ -199,13 +134,12 @@ func CreateAK(
 	// 00 0b: Algorighm is SHA256
 	// xx...: 32 bytes for key hash
 	// See https://github.com/tpm2-software/tpm2-tools/issues/1872
-	lib.Verbose("akName     : 0x%s", hex.EncodeToString(akName))
+	lib.Verbose("akName: 0x%s", hex.EncodeToString(akName))
 
-	err = tpm2.FlushContext(rwc, loadSession)
-	if err != nil {
-		lib.Fatal("tpm2.FlushContext() failed: %v", err)
-	}
+	// Flush session context
+	tpm.FlushContext(rwc, session)
 
+	// Read the public part of AK
 	akPublicKey, akName_, akQualName_, err := tpm2.ReadPublic(
 		rwc,
 		ak, // handle
@@ -217,7 +151,7 @@ func CreateAK(
 	// akName_ consists of 34 bytes only (size header is missing):
 	// 00 0b: Algorighm is SHA256
 	// xx...: 32 bytes for key hash
-	lib.Verbose("akName_    : 0x%s", hex.EncodeToString(akName_))
+	lib.Verbose("akName_: 0x%s", hex.EncodeToString(akName_))
 	lib.Verbose("akQualName2: 0x%s", hex.EncodeToString(akQualName_))
 
 	akPublicKeyCrypto, err := akPublicKey.Key()
@@ -225,7 +159,8 @@ func CreateAK(
 		lib.Fatal("akTpmPublicKey.Key() failed: %v", err)
 	}
 	lib.Verbose("akPublicKeyCrypto: %v", akPublicKeyCrypto)
-	lib.Verbose("akPublicKeyCrypto.Modulus: 0x%x", akPublicKeyCrypto.(*rsa.PublicKey).N)
+	lib.Verbose("akPublicKeyCrypto.Modulus: 0x%x",
+		akPublicKeyCrypto.(*rsa.PublicKey).N)
 
 	akPublicKeyDER, err := x509.MarshalPKIXPublicKey(akPublicKeyCrypto)
 	if err != nil {
@@ -239,7 +174,7 @@ func CreateAK(
 			Bytes: akPublicKeyDER,
 		},
 	)
-	lib.Verbose("akPublicKeyPEM_:\n%v", string(akPublicKeyPEM))
+	//	lib.Verbose("akPublicKeyPEM_:\n%v", string(akPublicKeyPEM))
 
 	lib.Write(fmt.Sprintf("%s.pub", attestorAkPath), akPublicKeyPEM, 0644)
 	lib.Write(fmt.Sprintf("%s-pub.blob", attestorAkPath), akPublicBlob, 0644)
