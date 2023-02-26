@@ -25,66 +25,14 @@ var (
 func main() {
 	flag.Parse()
 
-	eventsLog := lib.Read("CICD/cicd-digests.bin")
-	parsedEventsLog, err := attest.ParseEventLog(eventsLog)
-	if err != nil {
-		lib.Fatal("attest.ParseEventLog() failed: %v", err)
-	}
-
-	//	attest.EventLog
-	//	// EventLog is a parsed measurement log. This contains unverified data representing
-	//	// boot events that must be replayed against PCR values to determine authenticity.
-	//	type EventLog struct {
-	//		// Algs holds the set of algorithms that the event log uses.
-	//		Algs []HashAlg
-	//		rawEvents   []rawEvent
-	//		specIDEvent *specIDEvent
-	//	}
-
-	//	type Event struct {
-	//		// order of the event in the event log.
-	//		sequence int
-	//		// Index of the PCR that this event was replayed against.
-	//		Index int
-	//		// Untrusted type of the event. This value is not verified by event log replays
-	//		// and can be tampered with. It should NOT be used without additional context,
-	//		// and unrecognized event types should result in errors.
-	//		Type EventType
-	//
-	//		// Data of the event. For certain kinds of events, this must match the event
-	//		// digest to be valid.
-	//		Data []byte
-	//		// Digest is the verified digest of the event data. While an event can have
-	//		// multiple for different hash values, this is the one that was matched to the
-	//		// PCR value.
-	//		Digest []byte
-	//
-	//		// TODO(ericchiang): Provide examples or links for which event types must
-	//		// match their data to their digest.
-	//	}
-
-	//pcr0 := make([]byte, 32)
-	pcr0 := [32]byte{}
-	lib.Print("pcr0: %v", pcr0)
-
-	lib.Print("%v", parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256))[0])
-	for i, e := range parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256)) {
-		// sudo cat pcr0.bin zero.bin | openssl dgst -sha256 -binary > futurepcr0.bin
-		if e.Index == 0 {
-			lib.Print("%d: Index%d: %v", i, e.Index, e.Digest)
-			// pcrsConcat = append(pcrsConcat, pcr...)
-			// pcrsDigest := sha256.Sum256(pcrsConcat)
-			pcr0 = sha256.Sum256(append(pcr0[:], e.Digest...))
-			lib.Print("pcr0: %v", pcr0)
-		}
-	}
-	return
-
 	rwc := tpm.OpenFlush(*tpmPath, *flush)
 	defer rwc.Close()
 
 	// Attestor: retrieve EK Pub from TPM
-	steps.GetEKPub(rwc, "Attestor/ek")
+	steps.GetEKPub(
+		rwc,
+		"Attestor/ek", // OUT
+	)
 
 	// Verifier: verify EK Pub with Manufacturer EK Cert
 	steps.VerifyEKPub(
@@ -107,7 +55,7 @@ func main() {
 	// Attestor: create AK
 	steps.CreateAK(
 		rwc,
-		"Attestor/ek", // OUT
+		"Attestor/ek", // IN
 		"Attestor/ak", // OUT
 	)
 
@@ -138,21 +86,45 @@ func main() {
 
 	// Verifier: request PCR quote
 	steps.RequestQuote(
-		"Verifier/nonce-quote", // IN
+		"Verifier/nonce-quote", // OUT
 	)
 
 	// Attestor: perform PCR quote
-	steps.PerformQuote(rwc)
+	steps.PerformQuote(
+		rwc,
+		"Verifier/nonce-quote", // IN
+		"Attestor/quote",       // OUT
+	)
 
 	// Verifier: verify PCR quote
-	steps.VerifyQuote()
+	steps.VerifyQuote(
+		"Verifier/ak",          // IN
+		"Verifier/nonce-quote", // IN
+		"Attestor/quote",       // OUT
+	)
+
+	eventsLog := lib.Read("CICD/cicd-digests.bin")
+	parsedEventsLog, err := attest.ParseEventLog(eventsLog)
+	if err != nil {
+		lib.Fatal("attest.ParseEventLog() failed: %v", err)
+	}
+
+	pcr0 := [32]byte{}
+	lib.Print("pcr0: %v", pcr0)
+
+	lib.Print("%v", parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256))[0])
+	for i, e := range parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256)) {
+		// sudo cat pcr0.bin zero.bin | openssl dgst -sha256 -binary > futurepcr0.bin
+		if e.Index == 0 {
+			lib.Print("%d: Index%d: %v", i, e.Index, e.Digest)
+			// pcrsConcat = append(pcrsConcat, pcr...)
+			// pcrsDigest := sha256.Sum256(pcrsConcat)
+			pcr0 = sha256.Sum256(append(pcr0[:], e.Digest...))
+			lib.Print("pcr0: %v", pcr0)
+		}
+	}
 
 	// Verifier/Owner: create Owner AK Cert
-	//steps.CreateAKCert(
-	//	"TPM AK",         // IN
-	//	"Verifier/ak",    // IN/OUT
-	//	"Owner/owner-ca", // IN
-	//)
 	certs.CreateAKCert(
 		"Verifier/ak",    // IN
 		"TPM AK",         // IN

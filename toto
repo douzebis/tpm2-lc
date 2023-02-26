@@ -13,13 +13,12 @@ import (
 	"github.com/google/go-tpm/tpm2"
 
 	"main/src/lib"
-	"main/src/tpm"
 )
 
-// === Attestor: get EK Pub ====================================================
+// ### Attestor: get EK Pub### #################################################
 
 func GetEKPub(
-	rw io.ReadWriter,
+	rwc io.ReadWriter,
 	ekPath string,
 ) (
 	ekPublicKey *rsa.PublicKey,
@@ -28,9 +27,9 @@ func GetEKPub(
 
 	lib.PRINT("=== ATTESTOR: GET EK PUB =======================================================")
 
-	// Create EK and retrieve EK Pub
+	// Retrieve TPM EK Pub
 	ek, ekPubKey, err := tpm2.CreatePrimary(
-		rw,
+		rwc,
 		tpm2.HandleEndorsement,
 		tpm2.PCRSelection{},
 		"",
@@ -41,20 +40,25 @@ func GetEKPub(
 		lib.Fatal("tpm2.CreatePrimary() failed: %v", err)
 	}
 
-	// Save EK context
-	ekCtx := tpm.ContextSave(rw, ek)
+	ekCtx, err := tpm2.ContextSave(rwc, ek)
+	if err != nil {
+		lib.Fatal("tpm2.ContextSave() failed: %v", err)
+	}
 
-	// Write EK context to disk
+	err = tpm2.FlushContext(rwc, ek)
+	if err != nil {
+		lib.Fatal("tpm2.FlushContext(0x%x) failed: %v", ek, err)
+	}
+
 	lib.Write(fmt.Sprintf("%s.ctx", ekPath), ekCtx, 0644)
 
-	// Flush EK context
-	tpm.FlushContext(rw, ek)
+	// === Write EK Pub to disk ================================================
 
-	// Convert EK Pub to PEM
 	ekPubBytes, err = x509.MarshalPKIXPublicKey(ekPubKey)
 	if err != nil {
 		lib.Fatal("x509.MarshalPKIXPublicKey() failed: %v", err)
 	}
+
 	ekPubPEM := pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "PUBLIC KEY",
@@ -62,18 +66,15 @@ func GetEKPub(
 		},
 	)
 
-	// Write EK Pub to disk
 	lib.Write(fmt.Sprintf("%s.pub", ekPath), ekPubPEM, 0644)
 
-	// Assert EK is RSA key
+	// Retrieve EK Pub as *rsa.PublicKey
 	// See https://stackoverflow.com/a/44317246
 	switch ekPubTyp := ekPubKey.(type) {
 	case *rsa.PublicKey:
 	default:
 		lib.Fatal("ekPublicKey is not of type RSA: %v", ekPubTyp)
 	}
-
-	// Convert EK Pub to *rsa.PublicKey
 	ekPublicKey, _ = ekPubKey.(*rsa.PublicKey)
 	lib.Verbose("ekPublicKey %v", ekPublicKey)
 

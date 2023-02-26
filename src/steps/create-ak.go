@@ -20,65 +20,71 @@ import (
 // === Attestor: create AK =====================================================
 
 func CreateAK(
-	rwc io.ReadWriter, // IN
-	attestorEkPath string, // OUT
+	rw io.ReadWriter, // IN
+	attestorEkPath string, // IN
 	attestorAkPath string, // OUT
 ) {
 
 	lib.PRINT("=== ATTESTOR: CREATE AK ========================================================")
 
-	// Create EK in TPM
-	ek, ekPublicKeyCrypto, err := tpm.CreateEK(rwc)
-	if err != nil {
-		lib.Fatal("tpm2.CreatePrimary() failed for EK: %v", err)
-	}
-	defer tpm2.FlushContext(rwc, ek)
-	lib.Verbose("ek: 0x%08x", ek)
-	lib.Verbose("ekPublicKey : %v", ekPublicKeyCrypto)
+	//	// Create EK in TPM
+	//	ek, ekPublicKeyCrypto, err := tpm.CreateEK(rw)
+	//	if err != nil {
+	//		lib.Fatal("tpm2.CreatePrimary() failed for EK: %v", err)
+	//	}
+	//	defer tpm2.FlushContext(rw, ek)
+	//	lib.Verbose("ek: 0x%08x", ek)
+	//	lib.Verbose("ekPublicKey : %v", ekPublicKeyCrypto)
+	//
+	//	// Save EK context
+	//	ekCtx := tpm.ContextSave(rw, ek)
+	//
+	//	// Flush EK context
+	//	tpm.FlushContext(rw, ek)
+	//
+	//	// Write EK to disk
+	//	lib.Write(fmt.Sprintf("%s.ctx", attestorEkPath), ekCtx, 0644)
+	//
+	//	// Load EK context
+	//	ek = tpm.ContextLoad(rw, ekCtx)
+	//	defer tpm2.FlushContext(rw, ek)
 
-	// Save EK context
-	ekCtx := tpm.ContextSave(rwc, ek)
-
-	// Flush EK context
-	tpm.FlushContext(rwc, ek)
-
-	// Write EK to disk
-	lib.Write(fmt.Sprintf("%s.ctx", attestorEkPath), ekCtx, 0644)
-
-	// Load EK context
-	ek = tpm.ContextLoad(rwc, ekCtx)
-	defer tpm2.FlushContext(rwc, ek)
-
-	// Write EK Pub to disk
-	ekPublicKeyDER, err := x509.MarshalPKIXPublicKey(ekPublicKeyCrypto)
-	if err != nil {
-		lib.Fatal("x509.MarshalPKIXPublicKey() failed for EK Pub: %v", err)
-	}
-	lib.Verbose("ekPublicKeyDER: 0x%s", hex.EncodeToString(ekPublicKeyDER))
-
-	ekPublicKeyPEM := pem.EncodeToMemory(
-		&pem.Block{
-			Type:  "PUBLIC KEY",
-			Bytes: ekPublicKeyDER,
-		},
+	// Load EK
+	ek := tpm.LoadEK(
+		rw,
+		attestorEkPath, // IN
 	)
-	lib.Verbose("ekPublicKeyPEM:\n%s", string(ekPublicKeyPEM))
 
-	lib.Write(fmt.Sprintf("%s.pub", attestorEkPath), ekPublicKeyPEM, 0644)
+	//	// Write EK Pub to disk
+	//	ekPublicKeyDER, err := x509.MarshalPKIXPublicKey(ekPublicKeyCrypto)
+	//	if err != nil {
+	//		lib.Fatal("x509.MarshalPKIXPublicKey() failed for EK Pub: %v", err)
+	//	}
+	//	lib.Verbose("ekPublicKeyDER: 0x%s", hex.EncodeToString(ekPublicKeyDER))
+	//
+	//	ekPublicKeyPEM := pem.EncodeToMemory(
+	//		&pem.Block{
+	//			Type:  "PUBLIC KEY",
+	//			Bytes: ekPublicKeyDER,
+	//		},
+	//	)
+	//	lib.Verbose("ekPublicKeyPEM:\n%s", string(ekPublicKeyPEM))
+	//
+	//	lib.Write(fmt.Sprintf("%s.pub", attestorEkPath), ekPublicKeyPEM, 0644)
 
 	// Auth sessions are required for working with EK children...
 
 	// Start auth session for creating AK
 	session := tpm.CreateSession(
-		rwc,
+		rw,
 		tpm2.HandlePasswordSession,
 	)
-	defer tpm2.FlushContext(rwc, session)
+	defer tpm2.FlushContext(rw, session)
 
 	// Create AK
 	akPrivateBlob, akPublicBlob, creationData, creationHash, creationTicket,
 		err := tpm2.CreateKeyUsingAuth(
-		rwc,
+		rw,
 		ek,                  // owner
 		tpm2.PCRSelection{}, // selection
 		tpm2.AuthCommand{
@@ -104,18 +110,18 @@ func CreateAK(
 		hex.EncodeToString(creationTicket.Digest))
 
 	// Flush TPM context
-	tpm.FlushContext(rwc, session)
+	tpm.FlushContext(rw, session)
 
 	// Start auth session for loading AK
 	session = tpm.CreateSession(
-		rwc,
+		rw,
 		tpm2.HandlePasswordSession,
 	)
-	defer tpm2.FlushContext(rwc, session)
+	defer tpm2.FlushContext(rw, session)
 
 	// Load AK
 	ak, akName, err := tpm2.LoadUsingAuth(
-		rwc,
+		rw,
 		ek, // parentHandle
 		tpm2.AuthCommand{
 			Session:    session,
@@ -127,7 +133,7 @@ func CreateAK(
 	if err != nil {
 		lib.Fatal("tpm2.LoadUsingAuth() failed: %v", err)
 	}
-	defer tpm2.FlushContext(rwc, ak)
+	defer tpm2.FlushContext(rw, ak)
 	lib.Verbose("ak: 0x%08x", ak)
 	// akName consists of 36 bytes:
 	// 00 22: rest is 34 bytes (0x22)
@@ -137,11 +143,11 @@ func CreateAK(
 	lib.Verbose("akName: 0x%s", hex.EncodeToString(akName))
 
 	// Flush session context
-	tpm.FlushContext(rwc, session)
+	tpm.FlushContext(rw, session)
 
 	// Read the public part of AK
 	akPublicKey, akName_, akQualName_, err := tpm2.ReadPublic(
-		rwc,
+		rw,
 		ak, // handle
 	)
 	if err != nil {

@@ -17,21 +17,15 @@ var handleNames = map[string][]tpm2.HandleType{
 	"transient": {tpm2.HandleTypeTransient},
 }
 
-// ### Clear TPM (on Attestor) #################################################
+// === Clear TPM (on Attestor) =================================================
 
 func OpenFlush(tpmPath string, flush string) (rwc io.ReadWriteCloser) {
 
-	// === Open TPM device and flush key handles ===============================
-
+	// Open TPM device and flush key handles
 	rwc, err := tpm2.OpenTPM(tpmPath)
 	if err != nil {
 		glog.Fatalf("can't open TPM %q: %v", tpmPath, err)
 	}
-	//defer func() {
-	//	if err := rwc.Close(); err != nil {
-	//		glog.Fatalf("\ncan't close TPM %q: %v", tpmPath, err)
-	//	}
-	//}()
 
 	totalHandles := 0
 	for _, handleType := range handleNames[flush] {

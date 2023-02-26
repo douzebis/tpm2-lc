@@ -3,6 +3,10 @@
 package steps
 
 // ### VerifyQuote (on Verifier) ###############################################
-func VerifyQuote() {
+func VerifyQuote(
+	verifierAkPath string,
+	verifierNoncePath string,
+	attestorQuotePath string,
+) {
 
 }

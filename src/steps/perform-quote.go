@@ -7,6 +7,10 @@ import (
 )
 
 // ### PerformQuote (on Attestor) ##############################################
-func PerformQuote(rwc io.ReadWriter) {
+func PerformQuote(
+	rwc io.ReadWriter,
+	verifierNoncePath string,
+	attestorQuotePath string,
+) {
 
 }
