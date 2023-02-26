@@ -94,7 +94,7 @@ func main() {
 
 	// Read and save TPM PCRs values
 	lib.PRINT("=== INIT: RETRIEVE EVENT LOG ===================================================")
-	eventLog, err := client.GetEventLog(rwc)
+	eventLog, err = client.GetEventLog(rwc)
 	if err != nil {
 		lib.Fatal("client.GetEventLog(): %v", err)
 	}
