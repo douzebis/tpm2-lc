@@ -156,7 +156,7 @@ func CreateAK(
 	//	lib.Verbose("akName: 0x%s", hex.EncodeToString(akName))
 
 	// Flush session context
-	tpm.FlushContext(rw, session)
+	//tpm.FlushContext(rw, session)
 
 	// Read the public part of AK
 	akPublicKey, akName_, akQualName_ := tpm.ReadPublic(
