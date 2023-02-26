@@ -34,12 +34,13 @@ func main() {
 	if err != nil {
 		lib.Fatal("attest.ParseEventLog() failed: %v", err)
 	}
-
+	lib.Print("here 1")
 	// Compute expected PCR values
 	pcrs := [][32]byte{}
 	for i := 0; i < 24; i++ {
 		lib.Verbose("PCR[%2d]: 0x%s", i, hex.EncodeToString(pcrs[i][:]))
 	}
+	lib.Print("here 2")
 	for _, e := range parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256)) {
 		// sudo cat pcr.bin digest.bin | openssl dgst -sha256 -binary > futurepcr.bin
 		i := e.Index
