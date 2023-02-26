@@ -10,8 +10,6 @@ import (
 	"main/src/lib"
 	"main/src/steps"
 	"main/src/tpm"
-
-	"github.com/google/go-tpm-tools/client"
 )
 
 var (
@@ -22,32 +20,44 @@ var (
 func main() {
 	flag.Parse()
 
+	lib.PRINT("### INIT: CREATE CA ROOT FOR MANUFACTURER AND OWNER ############################")
+
 	// Create certificate for Manufacturer CA
-	lib.PRINT("=== INIT: CREATE MANUFACTURER CA CERT ==========================================")
+	lib.PRINT("=== MANUFACTURER: CREATE MANUFACTURER CA CERT ==================================")
 	certs.CreateCACert(
 		"Manufacturer",
 		"Manufacturer/manufacturer-ca",
 	)
 
 	// Create certificate for Owner CA
-	lib.PRINT("=== INIT: CREATE OWNER CA CERT =================================================")
+	lib.PRINT("=== OWNER: CREATE OWNER CA CERT ================================================")
 	certs.CreateCACert(
 		"Owner",
 		"Owner/owner-ca",
 	)
 
+	lib.PRINT("### CICD: PREDICT DIGESTS ######################################################")
+
+	// Retrieve and save TPM events log
+	lib.PRINT("=== INIT: RETRIEVE EVENT LOG ===================================================")
+	// In this mock-up we cheat by reading the digests from the events log.
+	// Normally the CICD should predict the digests from the assets it builds.
+	//eventsLog, err := client.GetEventLog(rwc)
+	//if err != nil {
+	//	lib.Fatal("client.GetEventLog(): %v", err)
+	//}
+	eventsLog := lib.Read("/sys/kernel/security/tpm0/binary_bios_measurements")
+	lib.Write("CICD/event-log.bin", eventsLog, 0644)
+
+	lib.PRINT("### MANUFACTURER: CREATE TPM CERT ##############################################")
+
 	// Open TPM
+	lib.PRINT("=== INIT: OPEN TPM =============================================================")
 	rwc := tpm.OpenFlush(*tpmPath, *flush)
 	defer rwc.Close()
 
-	// Read and save TPM PCRs values
-	lib.PRINT("=== INIT: RETRIEVE TPM PLATFORM CONFIGURATION REGISTERS ========================")
-	for pcr := 0; pcr < 24; pcr++ {
-		val := tpm.ReadPCR(rwc, pcr)
-		lib.Write(fmt.Sprintf("CICD/pcr-%d.bin", pcr), val, 0644)
-	}
-
 	// Read and save TPM EK Pub
+	lib.PRINT("=== INIT: RETRIEVE EK PUB ======================================================")
 	steps.GetEKPub(
 		rwc,
 		"Manufacturer/ek",
@@ -64,6 +74,15 @@ func main() {
 		"Manufacturer/ek",
 	)
 
+	return
+
+	// Read and save TPM PCRs values
+	lib.PRINT("=== INIT: RETRIEVE TPM PLATFORM CONFIGURATION REGISTERS ========================")
+	for pcr := 0; pcr < 24; pcr++ {
+		val := tpm.ReadPCR(rwc, pcr)
+		lib.Write(fmt.Sprintf("CICD/pcr-%d.bin", pcr), val, 0644)
+	}
+
 	// In this mock-up, we fake boot image PCRs prediction by simply
 	// reading current machine PCRs status
 
@@ -74,14 +93,6 @@ func main() {
 		[]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14}, // Used for boot measurement
 		"CICD/pcrs",
 	)
-
-	// Read and save TPM PCRs values
-	lib.PRINT("=== INIT: RETRIEVE EVENT LOG ===================================================")
-	eventLog, err := client.GetEventLog(rwc)
-	if err != nil {
-		lib.Fatal("client.GetEventLog(): %v", err)
-	}
-	lib.Write("CICD/event-log.bin", eventLog, 0644)
 }
 
 // --- Snippet: parse a certificate extensions -----------------------------
