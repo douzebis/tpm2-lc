@@ -24,11 +24,11 @@ var (
 func main() {
 	flag.Parse()
 
-	//eventsLog := lib.Read("CICD/event-log.bin")
-	//parsedEventsLog, err := attest.ParseEventLog(eventsLog)
-	//if err != nil {
-	//	lib.Fatal("attest.ParseEventLog() failed: %v", err)
-	//}
+	eventsLog := lib.Read("CICD/event-log.bin")
+	parsedEventsLog, err := attest.ParseEventLog(eventsLog)
+	if err != nil {
+		lib.Fatal("attest.ParseEventLog() failed: %v", err)
+	}
 
 	//	attest.EventLog
 	//	// EventLog is a parsed measurement log. This contains unverified data representing
@@ -40,10 +40,9 @@ func main() {
 	//		specIDEvent *specIDEvent
 	//	}
 
-
-	toto = parsedEventsLog.rawEvent	lib.Print("%v", titi)
-	lib.Print("%v", toto.Algs)
-	lib.Print("%v", toto.Events(attest.HashAlg(tpm2.AlgSHA256))[0])
+	lib.Print("%v", parsedEventsLog)
+	lib.Print("%v", parsedEventsLog.Algs)
+	lib.Print("%v", parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256))[0])
 	//for e := range parsedEventsLog.rawEvent {
 	//}
 	return
