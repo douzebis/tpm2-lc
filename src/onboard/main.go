@@ -40,11 +40,10 @@ func main() {
 	//		specIDEvent *specIDEvent
 	//	}
 
-	lib.Print("%v", parsedEventsLog)
-	lib.Print("%v", parsedEventsLog.Algs)
 	lib.Print("%v", parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256))[0])
-	//for e := range parsedEventsLog.rawEvent {
-	//}
+	for i, e := range parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256)) {
+		lib.Print("%d: %v", i, e)
+	}
 	return
 
 	rwc := tpm.OpenFlush(*tpmPath, *flush)
