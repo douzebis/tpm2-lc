@@ -11,11 +11,13 @@ import (
 	"github.com/google/go-tpm/tpm2"
 )
 
-// ### VerifyQuote (on Verifier) ###############################################
+// === Verifier: verify quote ==================================================
+
 func VerifyQuote(
-	verifierAkPath string,
-	verifierNoncePath string,
-	attestorQuotePath string,
+	verifierAkPath string, // IN
+	verifierNoncePath string, // IN
+	cicdDigestPath string, // IN
+	attestorQuotePath string, // OUT
 ) {
 
 	lib.PRINT("=== VERIFIER: VERIFY QUOTE =====================================================")
@@ -45,7 +47,8 @@ func VerifyQuote(
 	}
 	lib.Verbose("sigL: %v", sigL)
 
-	pcrDigest := [32]byte{}
+	// Read expected PCRs digest from disk
+	pcrDigest := lib.Read(fmt.Sprintf("%s.bin", cicdDigestPath))
 
 	//_, pcrHash, err := getPCRMap(tpm.HashAlgo_SHA256)
 	//if err != nil {
@@ -73,31 +76,5 @@ func VerifyQuote(
 	//		glog.Fatalf("Unexpected secret Value expected: %v  Got %v", string(cc), string(att.ExtraData))
 	//	}
 	//	glog.V(2).Infof("     Quote/Verify nonce Verified ")
-	//
-	//	if *readEventLog {
-	//		glog.V(2).Infof("     Reading EventLog")
-	//
-	//		evtLogPcrMap, _, err := getPCRMap(tpm.HashAlgo_SHA1)
-	//		if err != nil {
-	//			glog.Fatalf("   Error getting PCRMap")
-	//		}
-	//		pcrs := &tpmpb.PCRs{Hash: tpmpb.HashAlgo_SHA256, Pcrs: evtLogPcrMap}
-	//
-	//		ms, err := gotpmserver.ParseMachineState(qResponse.Eventlog, pcrs)
-	//		if err != nil {
-	//			glog.Fatalf("  Failed to parse EventLog: %v", err)
-	//		}
-	//
-	//		for _, event := range ms.RawEvents {
-	//			glog.V(2).Infof("     Event Type %v\n", event.UntrustedType)
-	//			glog.V(2).Infof("     PCR Index %d\n", event.PcrIndex)
-	//
-	//			if utf8string.NewString(string(event.Data)).IsASCII() {
-	//				glog.V(2).Infof("     Event Data %s\n", string(event.Data))
-	//			} else {
-	//				glog.V(2).Infof("     Event Data %s\n", hex.EncodeToString(event.Data))
-	//			}
-	//		}
-	//		glog.V(2).Infof("     EventLog Verified ")
 
 }

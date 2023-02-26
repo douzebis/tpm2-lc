@@ -4,6 +4,7 @@ package main
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
 	"flag"
 
 	"github.com/google/go-attestation/attest"
@@ -25,6 +26,42 @@ var (
 func main() {
 	flag.Parse()
 
+	lib.PRINT("=== CICD: PREDICT EXPECTED PCRS VALUES =========================================")
+
+	// Retrieve events log
+	eventsLog := lib.Read("CICD/cicd-prediction.bin")
+	parsedEventsLog, err := attest.ParseEventLog(eventsLog)
+	if err != nil {
+		lib.Fatal("attest.ParseEventLog() failed: %v", err)
+	}
+
+	// Compute expected PCR values
+	pcrs := [][32]byte{}
+	for i := 0; i < 24; i++ {
+		lib.Verbose("PCR[%2d]: 0x%s", i, hex.EncodeToString(pcrs[i][:]))
+	}
+	for _, e := range parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256)) {
+		// sudo cat pcr.bin digest.bin | openssl dgst -sha256 -binary > futurepcr.bin
+		i := e.Index
+		lib.Verbose("PCR[%2d]: 0x%s <= 0x%s", i,
+			hex.EncodeToString(pcrs[i][:]), hex.EncodeToString(e.Digest))
+		pcrs[i] = sha256.Sum256(append(pcrs[i][:], e.Digest...))
+		lib.Verbose("=> PCR[%2d]: 0x%s", i, hex.EncodeToString(pcrs[i][:]))
+	}
+
+	// Compute attestation digest
+	lib.PRINT("=== INIT: PREDICT ATTESTATION DIGEST ===========================================")
+
+	pcrsConcat := []byte{}
+	for _, i := range []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14} {
+		pcrsConcat = append(pcrsConcat, pcrs[i][:]...)
+	}
+	pcrsDigest := sha256.Sum256(pcrsConcat)
+
+	// Write attestation digest to disk
+	lib.Write("CICD/cicd-digest.bin", pcrsDigest[:], 0644)
+
+	// Open TPM and Flush handles
 	rwc := tpm.OpenFlush(*tpmPath, *flush)
 	defer rwc.Close()
 
@@ -102,29 +139,9 @@ func main() {
 	steps.VerifyQuote(
 		"Verifier/ak",          // IN
 		"Verifier/nonce-quote", // IN
+		"CICD/cicd-digest",     // IN
 		"Attestor/quote",       // OUT
 	)
-
-	eventsLog := lib.Read("CICD/cicd-digests.bin")
-	parsedEventsLog, err := attest.ParseEventLog(eventsLog)
-	if err != nil {
-		lib.Fatal("attest.ParseEventLog() failed: %v", err)
-	}
-
-	pcr0 := [32]byte{}
-	lib.Print("pcr0: %v", pcr0)
-
-	lib.Print("%v", parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256))[0])
-	for i, e := range parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256)) {
-		// sudo cat pcr0.bin zero.bin | openssl dgst -sha256 -binary > futurepcr0.bin
-		if e.Index == 0 {
-			lib.Print("%d: Index%d: %v", i, e.Index, e.Digest)
-			// pcrsConcat = append(pcrsConcat, pcr...)
-			// pcrsDigest := sha256.Sum256(pcrsConcat)
-			pcr0 = sha256.Sum256(append(pcr0[:], e.Digest...))
-			lib.Print("pcr0: %v", pcr0)
-		}
-	}
 
 	// Verifier/Owner: create Owner AK Cert
 	certs.CreateAKCert(

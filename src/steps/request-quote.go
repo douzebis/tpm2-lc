@@ -10,7 +10,8 @@ import (
 	"main/src/lib"
 )
 
-// ### RequestQuote (on Verifier) ##############################################
+// === Verifier: generate quote request ========================================
+
 func RequestQuote(
 	quoteNoncePath string,
 ) {

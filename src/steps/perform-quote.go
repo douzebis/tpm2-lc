@@ -14,7 +14,8 @@ import (
 	"main/src/tpm"
 )
 
-// ### PerformQuote (on Attestor) ##############################################
+// === Attestor: perform quote =================================================
+
 func PerformQuote(
 	rw io.ReadWriter,
 	attestorEkPath, // IN

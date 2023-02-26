@@ -37,17 +37,17 @@ func main() {
 	)
 
 	lib.PRINT("### CICD: PREDICT DIGESTS ######################################################")
-
-	// Retrieve and save TPM events log
-	lib.PRINT("=== INIT: RETRIEVE EVENT LOG ===================================================")
 	// In this mock-up we cheat by reading the digests from the events log.
 	// Normally the CICD should predict the digests from the assets it builds.
+
+	// Retrieve and save TPM events log
+	lib.PRINT("=== INIT: RETRIEVE EVENTS LOG ==================================================")
 	//eventsLog, err := client.GetEventLog(rwc)
 	//if err != nil {
 	//	lib.Fatal("client.GetEventLog(): %v", err)
 	//}
 	eventsLog := lib.Read("/sys/kernel/security/tpm0/binary_bios_measurements")
-	lib.Write("CICD/cicd-digests.bin", eventsLog, 0644)
+	lib.Write("CICD/cicd-prediction.bin", eventsLog, 0644)
 
 	lib.PRINT("### MANUFACTURER: CREATE TPM CERT ##############################################")
 
