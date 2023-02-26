@@ -47,7 +47,7 @@ func main() {
 	//	lib.Fatal("client.GetEventLog(): %v", err)
 	//}
 	eventsLog := lib.Read("/sys/kernel/security/tpm0/binary_bios_measurements")
-	lib.Write("CICD/event-log.bin", eventsLog, 0644)
+	lib.Write("CICD/cicd-digests.bin", eventsLog, 0644)
 
 	lib.PRINT("### MANUFACTURER: CREATE TPM CERT ##############################################")
 
