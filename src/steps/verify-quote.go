@@ -23,7 +23,7 @@ func VerifyQuote(
 	// Read nonce, attestation and signature from disk
 	nonce := lib.Read(fmt.Sprintf("%s.bin", verifierNoncePath))
 	attestation := lib.Read(fmt.Sprintf("%s-attest.bin", attestorQuotePath))
-	signature := lib.Read(fmt.Sprint("%s-signature.bin", attestorQuotePath))
+	signature := lib.Read(fmt.Sprintf("%s-signature.bin", attestorQuotePath))
 
 	att, err := tpm2.DecodeAttestationData(attestation)
 	if err != nil {
