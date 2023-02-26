@@ -6,6 +6,7 @@ import (
 	"flag"
 
 	"github.com/google/go-attestation/attest"
+	"github.com/google/go-tpm/tpm2"
 
 	"main/src/certs"
 	"main/src/lib"
@@ -41,7 +42,8 @@ func main() {
 
 	titi := attest.EventLog{}
 	lib.Print("%v", titi)
-	lib.Print("%v", titi.rawEvents)
+	lib.Print("%v", titi.Algs)
+	lib.Print("%v", titi.Events(attest.HashAlg(tpm2.AlgSHA256))[0])
 	//toto = parsedEventsLog.rawEvent
 	//for e := range parsedEventsLog.rawEvent {
 	//}
