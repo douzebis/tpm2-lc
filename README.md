@@ -12,9 +12,11 @@ vm, as ubuntu user:
 ``` bash
 sudo su - ubuntu
 sudo apt-get update
-sudo apt-get install -y tpm2-tools
 sudo apt-get install -y golang
+sudo apt-get install -y tpm2-tools
+# tpm2-tools create user tss, give it read/write access to /dev/tpmrm0
 sudo usermod -a -G tss ubuntu
+sudo chgrp tss /sys/kernel/security/tpm0/binary_bios_measurements 
 sudo update-grub
 sudo reboot now
 sudo su - ubuntu
