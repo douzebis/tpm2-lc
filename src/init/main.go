@@ -21,6 +21,31 @@ var (
 func main() {
 	flag.Parse()
 
+	// Open TPM
+	rwc := tpm.OpenFlush(*tpmPath, *flush)
+	defer rwc.Close()
+
+	// In this mock-up, we fake boot image PCRs prediction by simply
+	// reading current machine PCRs status
+
+	// Read and save TPM PCRs values
+	lib.PRINT("=== INIT: RETRIEVE TPM PLATFORM CONFIGURATION REGISTERS ========================")
+	tpm.ReadPCRs(
+		rwc,
+		[]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14}, // Used for boot measurement
+		"CICD/pcrs",
+	)
+
+	// Read and save TPM PCRs values
+	lib.PRINT("=== INIT: RETRIEVE EVENT LOG ===================================================")
+	eventLog, err := client.GetEventLog(rwc)
+	if err != nil {
+		lib.Fatal("client.GetEventLog(): %v", err)
+	}
+	lib.Write("CICD/event-log.bin", eventLog, 0644)
+
+	return
+
 	// Create certificate for Manufacturer CA
 	lib.PRINT("=== INIT: CREATE MANUFACTURER CA CERT ==========================================")
 	certs.CreateCACert(
@@ -36,7 +61,7 @@ func main() {
 	)
 
 	// Open TPM
-	rwc := tpm.OpenFlush(*tpmPath, *flush)
+	rwc = tpm.OpenFlush(*tpmPath, *flush)
 	defer rwc.Close()
 
 	// Read and save TPM EK Pub
@@ -69,7 +94,6 @@ func main() {
 
 	// Read and save TPM PCRs values
 	lib.PRINT("=== INIT: RETRIEVE EVENT LOG ===================================================")
-	lib.PRINT("=== INIT: CREATE MANUFACTURER CA CERT ==========================================")
 	eventLog, err := client.GetEventLog(rwc)
 	if err != nil {
 		lib.Fatal("client.GetEventLog(): %v", err)
