@@ -22,6 +22,6 @@ func ReadPCR(
 	if err != nil {
 		lib.Fatal("tpm2.ReadPCR() failed: %v", err)
 	}
-	lib.Comment("PCR[%d] == %v ", pcr, hex.EncodeToString(val))
+	lib.Comment("PCR[%2d] == %v ", pcr, hex.EncodeToString(val))
 	return val
 }

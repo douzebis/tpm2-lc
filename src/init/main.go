@@ -42,7 +42,7 @@ func main() {
 
 	// Read and save TPM PCRs values
 	lib.PRINT("=== INIT: RETRIEVE TPM PLATFORM CONFIGURATION REGISTERS ========================")
-	for pcr := 0; pcr < 32; pcr++ {
+	for pcr := 0; pcr < 24; pcr++ {
 		val := tpm.ReadPCR(rwc, pcr)
 		lib.Write(fmt.Sprintf("CICD/pcr-%d.bin", pcr), val, 0644)
 	}
