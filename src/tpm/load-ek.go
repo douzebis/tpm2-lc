@@ -3,6 +3,7 @@
 package tpm
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/google/go-tpm/tpmutil"
@@ -19,7 +20,7 @@ func LoadEK(
 	ek tpmutil.Handle,
 ) {
 
-	ekCtx := lib.Read(attestorEkPath)
+	ekCtx := lib.Read(fmt.Sprintf("%s.ctx", attestorEkPath))
 	ek = ContextLoad(rw, ekCtx)
 	//defer tpm2.FlushContext(rw, ek)
 	return ek
