@@ -40,11 +40,10 @@ func main() {
 	//		specIDEvent *specIDEvent
 	//	}
 
-	titi := attest.EventLog{}
-	lib.Print("%v", titi)
-	lib.Print("%v", titi.Algs)
-	lib.Print("%v", titi.Events(attest.HashAlg(tpm2.AlgSHA256))[0])
-	//toto = parsedEventsLog.rawEvent
+
+	toto = parsedEventsLog.rawEvent	lib.Print("%v", titi)
+	lib.Print("%v", toto.Algs)
+	lib.Print("%v", toto.Events(attest.HashAlg(tpm2.AlgSHA256))[0])
 	//for e := range parsedEventsLog.rawEvent {
 	//}
 	return
