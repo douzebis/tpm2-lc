@@ -38,7 +38,7 @@ func main() {
 	// Compute expected PCR values
 	pcrs := [][32]byte{}
 	for i := 0; i < 24; i++ {
-		pcrs[i] = [32]byte{}
+		pcrs = append(pcrs, [32]byte{})
 		lib.Verbose("PCR[%2d]: %v", i, pcrs[i])
 		lib.Verbose("PCR[%2d]: 0x%s", i, hex.EncodeToString(pcrs[i][:]))
 	}
