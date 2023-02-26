@@ -74,7 +74,7 @@ func main() {
 			lib.Print("%d: Index%d: %v", i, e.Index, e.Digest)
 			// pcrsConcat = append(pcrsConcat, pcr...)
 			// pcrsDigest := sha256.Sum256(pcrsConcat)
-			pcr0 = sha256.Sum256(append(pcr0[:], e.Digest))
+			pcr0 = sha256.Sum256(append(pcr0[:], e.Digest...))
 			lib.Print("pcr0: %v", pcr0)
 		}
 	}
