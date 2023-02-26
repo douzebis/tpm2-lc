@@ -54,6 +54,7 @@ func CreateAK(
 		rw,
 		attestorEkPath, // IN
 	)
+	defer tpm2.FlushContext(rw, ek)
 
 	//	// Write EK Pub to disk
 	//	ekPublicKeyDER, err := x509.MarshalPKIXPublicKey(ekPublicKeyCrypto)
@@ -109,50 +110,66 @@ func CreateAK(
 	lib.Verbose("CredentialTicket 0x%s",
 		hex.EncodeToString(creationTicket.Digest))
 
-	// Flush TPM context
+	// Write AK public and private blobs to disk
+	lib.Write(fmt.Sprintf("%s-pub.blob", attestorAkPath), akPublicBlob, 0644)
+	lib.Write(fmt.Sprintf("%s-priv.blob", attestorAkPath), akPrivateBlob, 0644)
+
+	// Flush Session context
 	tpm.FlushContext(rw, session)
 
-	// Start auth session for loading AK
-	session = tpm.CreateSession(
-		rw,
-		tpm2.HandlePasswordSession,
-	)
-	defer tpm2.FlushContext(rw, session)
-
 	// Load AK
-	ak, akName, err := tpm2.LoadUsingAuth(
+	ak, akName := tpm.LoadAK(
 		rw,
-		ek, // parentHandle
-		tpm2.AuthCommand{
-			Session:    session,
-			Attributes: tpm2.AttrContinueSession,
-		}, // authCommand
-		akPublicBlob,  // publicBlob
-		akPrivateBlob, // privateBlob
+		ek,
+		attestorAkPath, // IN
 	)
-	if err != nil {
-		lib.Fatal("tpm2.LoadUsingAuth() failed: %v", err)
-	}
 	defer tpm2.FlushContext(rw, ak)
-	lib.Verbose("ak: 0x%08x", ak)
-	// akName consists of 36 bytes:
-	// 00 22: rest is 34 bytes (0x22)
-	// 00 0b: Algorighm is SHA256
-	// xx...: 32 bytes for key hash
-	// See https://github.com/tpm2-software/tpm2-tools/issues/1872
-	lib.Verbose("akName: 0x%s", hex.EncodeToString(akName))
+
+	//	// Start auth session for loading AK
+	//	session = tpm.CreateSession(
+	//		rw,
+	//		tpm2.HandlePasswordSession,
+	//	)
+	//	defer tpm2.FlushContext(rw, session)
+	//
+	//	// Load AK
+	//	ak, akName, err := tpm2.LoadUsingAuth(
+	//		rw,
+	//		ek, // parentHandle
+	//		tpm2.AuthCommand{
+	//			Session:    session,
+	//			Attributes: tpm2.AttrContinueSession,
+	//		}, // authCommand
+	//		akPublicBlob,  // publicBlob
+	//		akPrivateBlob, // privateBlob
+	//	)
+	//	if err != nil {
+	//		lib.Fatal("tpm2.LoadUsingAuth() failed: %v", err)
+	//	}
+	//	defer tpm2.FlushContext(rw, ak)
+	//	lib.Verbose("ak: 0x%08x", ak)
+	//	// akName consists of 36 bytes:
+	//	// 00 22: rest is 34 bytes (0x22)
+	//	// 00 0b: Algorighm is SHA256
+	//	// xx...: 32 bytes for key hash
+	//	// See https://github.com/tpm2-software/tpm2-tools/issues/1872
+	//	lib.Verbose("akName: 0x%s", hex.EncodeToString(akName))
 
 	// Flush session context
 	tpm.FlushContext(rw, session)
 
 	// Read the public part of AK
-	akPublicKey, akName_, akQualName_, err := tpm2.ReadPublic(
+	akPublicKey, akName_, akQualName_ := tpm.ReadPublic(
 		rw,
-		ak, // handle
+		ak,
 	)
-	if err != nil {
-		lib.Fatal("tpm2.ReadPublic() failed: %v", err)
-	}
+	//	akPublicKey, akName_, akQualName_, err := tpm2.ReadPublic(
+	//			rw,
+	//		ak, // handle
+	//	)
+	//	if err != nil {
+	//		lib.Fatal("tpm2.ReadPublic() failed: %v", err)
+	//	}
 	lib.Verbose("akPublicKey: %v", akPublicKey)
 	// akName_ consists of 34 bytes only (size header is missing):
 	// 00 0b: Algorighm is SHA256
@@ -183,7 +200,5 @@ func CreateAK(
 	//	lib.Verbose("akPublicKeyPEM_:\n%v", string(akPublicKeyPEM))
 
 	lib.Write(fmt.Sprintf("%s.pub", attestorAkPath), akPublicKeyPEM, 0644)
-	lib.Write(fmt.Sprintf("%s-pub.blob", attestorAkPath), akPublicBlob, 0644)
-	lib.Write(fmt.Sprintf("%s-priv.blob", attestorAkPath), akPrivateBlob, 0644)
 	lib.Write(fmt.Sprintf("%s-name.blob", attestorAkPath), akName, 0644)
 }

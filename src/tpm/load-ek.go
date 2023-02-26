@@ -14,7 +14,7 @@ import (
 // === Load AK (on Attestor) ===================================================
 
 func LoadEK(
-	rw io.ReadWriter, // IN
+	rw io.ReadWriter,
 	attestorEkPath string, // IN
 ) (
 	ek tpmutil.Handle,
