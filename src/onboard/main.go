@@ -40,9 +40,31 @@ func main() {
 	//		specIDEvent *specIDEvent
 	//	}
 
+	//	type Event struct {
+	//		// order of the event in the event log.
+	//		sequence int
+	//		// Index of the PCR that this event was replayed against.
+	//		Index int
+	//		// Untrusted type of the event. This value is not verified by event log replays
+	//		// and can be tampered with. It should NOT be used without additional context,
+	//		// and unrecognized event types should result in errors.
+	//		Type EventType
+	//
+	//		// Data of the event. For certain kinds of events, this must match the event
+	//		// digest to be valid.
+	//		Data []byte
+	//		// Digest is the verified digest of the event data. While an event can have
+	//		// multiple for different hash values, this is the one that was matched to the
+	//		// PCR value.
+	//		Digest []byte
+	//
+	//		// TODO(ericchiang): Provide examples or links for which event types must
+	//		// match their data to their digest.
+	//	}
+
 	lib.Print("%v", parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256))[0])
 	for i, e := range parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256)) {
-		lib.Print("%d: %v", i, e)
+		lib.Print("%d: Index%d: %v", i, e.Index, e.Digest)
 	}
 	return
 
