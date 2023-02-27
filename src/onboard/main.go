@@ -152,12 +152,12 @@ func main() {
 		"Verifier/ak",    // OUT
 	)
 
-	// Attestor: clear TPM owner hierarchy
-	tpm.Clear(
+	// Attestor: create SRK
+	steps.CreateSRK(
 		rwc,
+		"Attestor/srk", // OUT
 	)
 
 	// TODO
-	// Attestor: create SRK
 	// Verifier: create SRK Cert
 }

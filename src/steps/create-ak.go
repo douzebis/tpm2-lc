@@ -20,7 +20,7 @@ import (
 // === Attestor: create AK =====================================================
 
 func CreateAK(
-	rw io.ReadWriter, // IN
+	rw io.ReadWriter,
 	attestorEkPath string, // IN
 	attestorAkPath string, // OUT
 ) {
