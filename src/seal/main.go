@@ -21,10 +21,10 @@ func main() {
 
 	// CICD: seal secret key
 	steps.SealKey(
-		[32]byte{},                  // AES256 key
-		"Verifier/srk",              // IN
-		"CICD/CICD/cicd-prediction", // IN
-		"CICD/sealed-key",           // OUT
+		[32]byte{},             // AES256 key
+		"Verifier/srk",         // IN
+		"CICD/cicd-prediction", // IN
+		"CICD/sealed-key",      // OUT
 	)
 
 	// Open TPM and Flush handles
