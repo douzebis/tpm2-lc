@@ -13,7 +13,7 @@ import (
 	"main/src/certs"
 	"main/src/lib"
 	"main/src/steps"
-	"main/src/tpm"
+	"main/src/teepeem"
 )
 
 var (
@@ -63,7 +63,7 @@ func main() {
 	lib.Write("CICD/cicd-digest.bin", pcrsDigest[:], 0644)
 
 	// Open TPM and Flush handles
-	rwc := tpm.OpenFlush(*tpmPath, *flush)
+	rwc := teepeem.OpenFlush(*tpmPath, *flush)
 	defer rwc.Close()
 
 	// Attestor: retrieve EK Pub from TPM

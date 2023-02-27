@@ -9,7 +9,7 @@ import (
 	"main/src/certs"
 	"main/src/lib"
 	"main/src/steps"
-	"main/src/tpm"
+	"main/src/teepeem"
 )
 
 var (
@@ -53,7 +53,7 @@ func main() {
 
 	// Open TPM
 	lib.PRINT("=== INIT: OPEN TPM =============================================================")
-	rwc := tpm.OpenFlush(*tpmPath, *flush)
+	rwc := teepeem.OpenFlush(*tpmPath, *flush)
 	defer rwc.Close()
 
 	// Read and save TPM EK Pub
@@ -79,7 +79,7 @@ func main() {
 	// Read and save TPM PCRs values
 	lib.PRINT("=== INIT: RETRIEVE TPM PLATFORM CONFIGURATION REGISTERS ========================")
 	for pcr := 0; pcr < 24; pcr++ {
-		val := tpm.ReadPCR(rwc, pcr)
+		val := teepeem.ReadPCR(rwc, pcr)
 		lib.Write(fmt.Sprintf("CICD/pcr-%d.bin", pcr), val, 0644)
 	}
 
@@ -88,7 +88,7 @@ func main() {
 
 	// Read and save TPM PCRs values
 	lib.PRINT("=== INIT: RETRIEVE TPM PLATFORM CONFIGURATION REGISTERS ========================")
-	tpm.ReadPCRs(
+	teepeem.ReadPCRs(
 		rwc,
 		[]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14}, // Used for boot measurement
 		"CICD/pcrs",

@@ -12,7 +12,7 @@ import (
 	"github.com/google/go-tpm/tpm2"
 
 	"main/src/lib"
-	"main/src/tpm"
+	"main/src/teepeem"
 )
 
 // === Attestor: create SRK ====================================================
@@ -25,7 +25,7 @@ func CreateSRK(
 	lib.PRINT("=== ATTESTOR: CREATE SRK =======================================================")
 
 	// Clear TPM owner hierarchy
-	tpm.Clear(
+	teepeem.Clear(
 		rw,
 	)
 
@@ -66,7 +66,7 @@ func CreateSRK(
 	}
 
 	// Save SRK context
-	srkCtx := tpm.ContextSave(
+	srkCtx := teepeem.ContextSave(
 		rw,
 		srk,
 	)

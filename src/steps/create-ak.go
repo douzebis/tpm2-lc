@@ -14,7 +14,7 @@ import (
 	"github.com/google/go-tpm/tpm2"
 
 	"main/src/lib"
-	"main/src/tpm"
+	"main/src/teepeem"
 )
 
 // === Attestor: create AK =====================================================
@@ -50,7 +50,7 @@ func CreateAK(
 	//	defer tpm2.FlushContext(rw, ek)
 
 	// Load EK
-	ek := tpm.LoadEK(
+	ek := teepeem.LoadEK(
 		rw,
 		attestorEkPath, // IN
 	)
@@ -76,7 +76,7 @@ func CreateAK(
 	// Auth sessions are required for working with EK children...
 
 	// Start auth session for creating AK
-	session := tpm.CreateSession(
+	session := teepeem.CreateSession(
 		rw,
 		tpm2.HandlePasswordSession,
 	)
@@ -115,10 +115,10 @@ func CreateAK(
 	lib.Write(fmt.Sprintf("%s-priv.blob", attestorAkPath), akPrivateBlob, 0644)
 
 	// Flush Session context
-	tpm.FlushContext(rw, session)
+	teepeem.FlushContext(rw, session)
 
 	// Load AK
-	ak, akName := tpm.LoadAK(
+	ak, akName := teepeem.LoadAK(
 		rw,
 		ek,
 		attestorAkPath, // IN
@@ -126,7 +126,7 @@ func CreateAK(
 	defer tpm2.FlushContext(rw, ak)
 
 	//	// Start auth session for loading AK
-	//	session = tpm.CreateSession(
+	//	session = teepeem.CreateSession(
 	//		rw,
 	//		tpm2.HandlePasswordSession,
 	//	)
@@ -156,10 +156,10 @@ func CreateAK(
 	//	lib.Verbose("akName: 0x%s", hex.EncodeToString(akName))
 
 	// Flush session context
-	//tpm.FlushContext(rw, session)
+	//teepeem.FlushContext(rw, session)
 
 	// Read the public part of AK
-	akPublicKey, akName_, akQualName_ := tpm.ReadPublic(
+	akPublicKey, akName_, akQualName_ := teepeem.ReadPublic(
 		rw,
 		ak,
 	)

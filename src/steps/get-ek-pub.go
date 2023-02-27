@@ -13,7 +13,7 @@ import (
 	"github.com/google/go-tpm/tpm2"
 
 	"main/src/lib"
-	"main/src/tpm"
+	"main/src/teepeem"
 )
 
 // === Attestor: get EK Pub ====================================================
@@ -42,13 +42,13 @@ func GetEKPub(
 	}
 
 	// Save EK context
-	ekCtx := tpm.ContextSave(rw, ek)
+	ekCtx := teepeem.ContextSave(rw, ek)
 
 	// Write EK context to disk
 	lib.Write(fmt.Sprintf("%s.ctx", ekPath), ekCtx, 0644)
 
 	// Flush EK context
-	tpm.FlushContext(rw, ek)
+	teepeem.FlushContext(rw, ek)
 
 	// Convert EK Pub to PEM
 	ekPubBytes, err = x509.MarshalPKIXPublicKey(ekPubKey)

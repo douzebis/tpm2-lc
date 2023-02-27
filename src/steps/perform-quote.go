@@ -11,7 +11,7 @@ import (
 	"github.com/google/go-tpm/tpmutil"
 
 	"main/src/lib"
-	"main/src/tpm"
+	"main/src/teepeem"
 )
 
 // === Attestor: perform quote =================================================
@@ -30,14 +30,14 @@ func PerformQuote(
 	lib.PRINT("=== ATTESTOR: PERFORM QUOTE ====================================================")
 
 	// Load EK
-	ek := tpm.LoadEK(
+	ek := teepeem.LoadEK(
 		rw,
 		attestorEkPath,
 	)
 	defer tpm2.FlushContext(rw, ek)
 
 	// Load AK
-	ak, _ := tpm.LoadAK(
+	ak, _ := teepeem.LoadAK(
 		rw,
 		ek,
 		attestorAkPath, // IN
