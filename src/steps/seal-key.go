@@ -20,13 +20,15 @@ import (
 // === Verifier: seal secret key ===============================================
 
 func SealKey(
-	aesKey [32]byte, // AES256 key
+	aesKey []byte, // AES256 key
 	verifierSrkPath string, // IN
 	cicdDigestPath string, // IN
 	cicdSealedKeyPath string, // OUT
 ) {
 
 	lib.PRINT("=== CICD: SEAL SECRET KEY -=====================================================")
+
+	lib.Print("Secret key: %v", aesKey)
 
 	// Read SRK public key from disk
 	srkPublicKey := certs.ReadPublicKey(verifierSrkPath)
@@ -72,7 +74,7 @@ func SealKey(
 	// Seal AES key
 	sealedBlob, err := server.CreateImportBlob(
 		&srkPublicKey, // crypto.PublicKey
-		aesKey[:],     //[]byte
+		aesKey,        //[]byte
 		&selectedPcrs, // *tpm.PCRs
 	)
 	if err != nil {

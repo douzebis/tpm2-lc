@@ -3,8 +3,10 @@
 package main
 
 import (
+	"crypto/rand"
 	"flag"
 
+	"main/src/lib"
 	"main/src/steps"
 	"main/src/teepeem"
 )
@@ -19,9 +21,16 @@ var (
 func main() {
 	flag.Parse()
 
+	// Generate random AES26 key
+	aesKey := make([]byte, 32)
+	_, err := rand.Read(nonce)
+	if err != nil {
+		lib.Fatal("rand.Read() failed: %v", err)
+	}
+
 	// CICD: seal secret key
 	steps.SealKey(
-		[32]byte{},             // AES256 key
+		aesKey,                 // AES256 key
 		"Verifier/srk",         // IN
 		"CICD/cicd-prediction", // IN
 		"CICD/sealed-key",      // OUT
