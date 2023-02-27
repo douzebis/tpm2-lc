@@ -10,7 +10,6 @@ import (
 	"io"
 
 	"github.com/google/go-tpm-tools/client"
-	"github.com/google/go-tpm/tpm2"
 
 	"main/src/lib"
 	"main/src/teepeem"
@@ -75,20 +74,20 @@ func CreateSRK(
 	//		session session
 	//		cert    *x509.Certificate
 	//	}
-	srk := srkClient.Handle()
-	defer tpm2.FlushContext(rw, srk)
-	if err != nil {
-		lib.Fatal("tpm2.CreatePrimary() failed for SRK: %v", err)
-	}
-
-	// Save SRK context
-	srkCtx := teepeem.ContextSave(
-		rw,
-		srk,
-	)
-
-	// Write SRK context to disk
-	lib.Write(fmt.Sprintf("%s.ctx", attestorSrkPath), srkCtx, 0644)
+	//	srk := srkClient.Handle()
+	//	defer tpm2.FlushContext(rw, srk)
+	//	if err != nil {
+	//		lib.Fatal("tpm2.CreatePrimary() failed for SRK: %v", err)
+	//	}
+	//
+	//	// Save SRK context
+	//	srkCtx := teepeem.ContextSave(
+	//		rw,
+	//		srk,
+	//	)
+	//
+	//	// Write SRK context to disk
+	//	lib.Write(fmt.Sprintf("%s.ctx", attestorSrkPath), srkCtx, 0644)
 
 	// Write SRK Pub to disk
 	srkPublicKeyDER, err := x509.MarshalPKIXPublicKey(srkClient.PublicKey())
