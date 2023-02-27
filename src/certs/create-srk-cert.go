@@ -78,6 +78,6 @@ func CreateSRKCert(
 
 	// Copy SRK public key to cert path
 	publicKeyPEM := lib.Read(fmt.Sprintf("%s.pub", publicKeyPath))
-	lib.Write(fmt.Sprintf("%s.pub", publicKeyPEM), publicKeyPEM, 0644)
+	lib.Write(fmt.Sprintf("%s.pub", certPath), publicKeyPEM, 0644)
 
 }
