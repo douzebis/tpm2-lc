@@ -23,7 +23,7 @@ func main() {
 
 	// Generate random AES26 key
 	aesKey := make([]byte, 32)
-	_, err := rand.Read(nonce)
+	_, err := rand.Read(aesKey)
 	if err != nil {
 		lib.Fatal("rand.Read() failed: %v", err)
 	}
