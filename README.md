@@ -36,3 +36,9 @@ Then:
 ``` bash
 git pull && clear && go run src/onboard/main.go -alsologtostderr -v 5
 ```
+
+Then:
+
+``` bash
+git pull && clear && go run src/seal/main.go -alsologtostderr -v 5
+```
