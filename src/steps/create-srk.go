@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/google/go-tpm-tools/client"
 	"github.com/google/go-tpm/tpm2"
 
 	"main/src/lib"
@@ -29,37 +30,52 @@ func CreateSRK(
 		rw,
 	)
 
-	// Prepare template for SRK creation
-	template := tpm2.Public{
-		Type:    tpm2.AlgRSA,
-		NameAlg: tpm2.AlgSHA256,
-		Attributes: tpm2.FlagFixedTPM | // Key can't leave the TPM.
-			tpm2.FlagFixedParent | // Key can't change parent.
-			tpm2.FlagSensitiveDataOrigin | // Key created by the TPM (not imported).
-			tpm2.FlagUserWithAuth | // Uses (empty) password.
-			tpm2.FlagNoDA | // This flag doesn't do anything, but it's in the spec.
-			tpm2.FlagRestricted | // Key used for TPM challenges, not general decryption.
-			tpm2.FlagDecrypt, // Key can be used to decrypt data.
-		RSAParameters: &tpm2.RSAParams{
-			Symmetric: &tpm2.SymScheme{
-				Alg:     tpm2.AlgAES,
-				KeyBits: 128,
-				Mode:    tpm2.AlgCFB,
-			},
-			KeyBits:    2048,
-			ModulusRaw: make([]byte, 256),
-		},
-	}
+	//	// Prepare template for SRK creation
+	//	template := tpm2.Public{
+	//		Type:    tpm2.AlgRSA,
+	//		NameAlg: tpm2.AlgSHA256,
+	//		Attributes: tpm2.FlagFixedTPM | // Key can't leave the TPM.
+	//			tpm2.FlagFixedParent | // Key can't change parent.
+	//			tpm2.FlagSensitiveDataOrigin | // Key created by the TPM (not imported).
+	//			tpm2.FlagUserWithAuth | // Uses (empty) password.
+	//			tpm2.FlagNoDA | // This flag doesn't do anything, but it's in the spec.
+	//			tpm2.FlagRestricted | // Key used for TPM challenges, not general decryption.
+	//			tpm2.FlagDecrypt, // Key can be used to decrypt data.
+	//		RSAParameters: &tpm2.RSAParams{
+	//			Symmetric: &tpm2.SymScheme{
+	//				Alg:     tpm2.AlgAES,
+	//				KeyBits: 128,
+	//				Mode:    tpm2.AlgCFB,
+	//			},
+	//			KeyBits:    2048,
+	//			ModulusRaw: make([]byte, 256),
+	//		},
+	//	}
+	//
+	//	// Create SRK
+	//	srk, srkPublicKeyCrypto, err := tpm2.CreatePrimary(
+	//		rw,
+	//		tpm2.HandleOwner,    // parent
+	//		tpm2.PCRSelection{}, // sel
+	//		"",                  // parentPassword
+	//		"",                  // srkPassword
+	//		template,            // template
+	//	)
 
-	// Create SRK
-	srk, srkPublicKeyCrypto, err := tpm2.CreatePrimary(
-		rw,
-		tpm2.HandleOwner,    // parent
-		tpm2.PCRSelection{}, // sel
-		"",                  // parentPassword
-		"",                  // srkPassword
-		template,            // template
-	)
+	srkClient, err := client.StorageRootKeyRSA(rw)
+	if err != nil {
+		lib.Fatal("client.StorageRootKeyRSA() failed: %v", err)
+	}
+	//	type Key struct {
+	//		rw      io.ReadWriter
+	//		handle  tpmutil.Handle
+	//		pubArea tpm2.Public
+	//		pubKey  crypto.PublicKey
+	//		name    tpm2.Name
+	//		session session
+	//		cert    *x509.Certificate
+	//	}
+	srk := srkClient.Handle()
 	defer tpm2.FlushContext(rw, srk)
 	if err != nil {
 		lib.Fatal("tpm2.CreatePrimary() failed for SRK: %v", err)
@@ -75,7 +91,7 @@ func CreateSRK(
 	lib.Write(fmt.Sprintf("%s.ctx", attestorSrkPath), srkCtx, 0644)
 
 	// Write SRK Pub to disk
-	srkPublicKeyDER, err := x509.MarshalPKIXPublicKey(srkPublicKeyCrypto)
+	srkPublicKeyDER, err := x509.MarshalPKIXPublicKey(srkClient.PublicKey())
 	if err != nil {
 		lib.Fatal("x509.MarshalPKIXPublicKey() failed for SRK Pub: %v", err)
 	}

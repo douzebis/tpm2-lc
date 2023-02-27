@@ -30,4 +30,11 @@ func main() {
 	// Open TPM and Flush handles
 	rwc := teepeem.OpenFlush(*tpmPath, *flush)
 	defer rwc.Close()
+
+	// Attestor: unseal secret key
+	steps.UnsealKey(
+		rwc,
+		"CICD/sealed-key",       // IN
+		"Attestor/unsealed-key", // OUT
+	)
 }
