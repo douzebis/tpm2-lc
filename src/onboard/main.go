@@ -39,8 +39,7 @@ func main() {
 	pcrs := [][32]byte{}
 	for i := 0; i < 24; i++ {
 		pcrs = append(pcrs, [32]byte{})
-		//lib.Verbose("PCR[%2d]: %v", i, pcrs[i])
-		//lib.Verbose("PCR[%2d]: 0x%s", i, hex.EncodeToString(pcrs[i][:]))
+		lib.Verbose("PCR[%2d]: 0x%s", i, hex.EncodeToString(pcrs[i][:]))
 	}
 	for _, e := range parsedEventsLog.Events(attest.HashAlg(tpm2.AlgSHA256)) {
 		// sudo cat pcr.bin digest.bin | openssl dgst -sha256 -binary > futurepcr.bin
