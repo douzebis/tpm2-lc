@@ -39,6 +39,14 @@ func VerifyQuote(
 	lib.Verbose("Attestation PCR#: %v ", att.AttestedQuoteInfo.PCRSelection.PCRs)
 	lib.Verbose("Attestation Hash: 0x%s ", hex.EncodeToString(att.AttestedQuoteInfo.PCRDigest))
 
+	// Compare the nonce that is embedded within the attestation. This should
+	// match the one we sent in earlier.
+	if !bytes.Equal(nonce, att.ExtraData) {
+		lib.Fatal("Nonce Value mismatch Got: (0x%s) Expected: (0x%s)",
+			hex.EncodeToString(att.ExtraData), hex.EncodeToString(nonce))
+	}
+	lib.Print("Nonce from Quote matches expected nonce")
+
 	sigL := tpm2.SignatureRSA{
 		HashAlg:   tpm2.AlgSHA256,
 		Signature: signature,
@@ -58,6 +66,7 @@ func VerifyQuote(
 		lib.Fatal("Unexpected PCR hash Value Got 0x%s Expected: 0x%s",
 			hex.EncodeToString(att.AttestedQuoteInfo.PCRDigest), hex.EncodeToString(pcrDigest[:]))
 	}
+	lib.Print("PCRs digest from Quote matches expected digest")
 
 	// Verify AK signature
 	// use the AK from the original attestation to verify the signature of the Attestation
@@ -74,10 +83,5 @@ func VerifyQuote(
 	if err != nil {
 		lib.Fatal("rsa.VerifyPKCS1v15() failed: %v", err)
 	}
-
-	// Now compare the nonce that is embedded within the attestation.  This should match the one we sent in earlier.
-	if !bytes.Equal(nonce, att.ExtraData) {
-		lib.Fatal("Nonce Value mismatch Got: (0x%s) Expected: (0x%s)",
-			hex.EncodeToString(att.ExtraData), hex.EncodeToString(nonce))
-	}
+	lib.Print("Quote signature is valid")
 }
