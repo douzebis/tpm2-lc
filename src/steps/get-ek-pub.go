@@ -20,7 +20,7 @@ import (
 
 func GetEKPub(
 	rw io.ReadWriter,
-	ekPath string,
+	ekPath string, // OUT
 ) (
 	ekPublicKey *rsa.PublicKey,
 	ekPubBytes []byte,

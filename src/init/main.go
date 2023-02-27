@@ -4,7 +4,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 
 	"main/src/certs"
 	"main/src/lib"
@@ -60,68 +59,17 @@ func main() {
 	lib.PRINT("=== INIT: RETRIEVE EK PUB ======================================================")
 	steps.GetEKPub(
 		rwc,
-		"Manufacturer/ek",
+		"Manufacturer/ek", // OUT
 	)
 
 	// Create TPM EK Cert
 	lib.PRINT("=== INIT: CREATE EK CERT =======================================================")
 	certs.CreateEKCert(
-		"Manufacturer/ek",
+		"Manufacturer/ek", // IN
 		"id: Google",
 		"Shielded VM vTPM",
 		"id: 00010001",
-		"Manufacturer/manufacturer-ca",
-		"Manufacturer/ek",
-	)
-
-	return
-
-	// Read and save TPM PCRs values
-	lib.PRINT("=== INIT: RETRIEVE TPM PLATFORM CONFIGURATION REGISTERS ========================")
-	for pcr := 0; pcr < 24; pcr++ {
-		val := teepeem.ReadPCR(rwc, pcr)
-		lib.Write(fmt.Sprintf("CICD/pcr-%d.bin", pcr), val, 0644)
-	}
-
-	// In this mock-up, we fake boot image PCRs prediction by simply
-	// reading current machine PCRs status
-
-	// Read and save TPM PCRs values
-	lib.PRINT("=== INIT: RETRIEVE TPM PLATFORM CONFIGURATION REGISTERS ========================")
-	teepeem.ReadPCRs(
-		rwc,
-		[]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14}, // Used for boot measurement
-		"CICD/pcrs",
+		"Manufacturer/manufacturer-ca", // IN
+		"Manufacturer/ek",              // OUT
 	)
 }
-
-// --- Snippet: parse a certificate extensions -----------------------------
-
-//	testPem, err := ioutil.ReadFile("TPM-CA/tpm.crt")
-//	if err != nil {
-//		glog.Fatalf("ioutil.ReadFile() failed: %v", err)
-//	}
-//	block, _ := pem.Decode([]byte(testPem))
-//	if block == nil {
-//		glog.Fatalf("pem.Decode() failed: %v", err)
-//	}
-//
-//	if block.Type == "CERTIFICATE" {
-//		glog.V(0).Infof("Block has type CERTIFICATE")
-//		certificate, err := x509.ParseCertificate(block.Bytes)
-//		if err != nil {
-//			glog.Fatalf("x509.ParseCertificate() failed: %v", err)
-//		}
-//		for _, ext := range certificate.Extensions {
-//			// filter the custom extensions by customOID
-//			glog.V(0).Infof("extension %s", ext.Id.String())
-//			if ext.Id.String() == "2.5.29.17" {
-//				parse(ext.Value, "")
-//			}
-//		}
-//	} else {
-//		glog.V(0).Infof("Block has type %s", block.Type)
-//	}
-
-// Since GCP Shielded VMs TPM Endorsement Keys come without a proper
-// certificate, we fake a TPM CA and a fake TPM EK certificate.

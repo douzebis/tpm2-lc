@@ -19,12 +19,12 @@ import (
 func CreateEKCert(
 	// See https://upgrades.intel.com/content/CRL/ekcert/EKcertPolicyStatement.pdf
 	// See https://marc.info/?l=openssl-users&m=135119943225986&w=2
-	publicKeyPath string,
+	publicKeyPath string, // IN
 	manufacturerID string,
 	modelName string,
 	version string,
-	caCertPath string,
-	certPath string,
+	caCertPath string, // IN
+	certPath string, // OUT
 ) {
 
 	lib.PRINT("=== VERIFIER: CREATE EK CERT ===================================================")
