@@ -158,6 +158,11 @@ func main() {
 		"Attestor/srk", // OUT
 	)
 
-	// TODO
-	// Verifier: create SRK Cert
+	// Verifier/Owner: create Owner AK Cert
+	certs.CreateSRKCert(
+		"Attestor/srk",   // IN
+		"TPM SRK",        // IN
+		"Owner/owner-ca", // IN
+		"Verifier/srk",   // OUT
+	)
 }
