@@ -10,6 +10,7 @@ import (
 	"io"
 
 	"github.com/google/go-tpm-tools/client"
+	"github.com/google/go-tpm/tpm"
 
 	"main/src/lib"
 )
@@ -27,6 +28,10 @@ func CreateSRK(
 	//	teepeem.Clear(
 	//		rw,
 	//	)
+	err := tpm.OwnerClear(
+		rw,
+		[20]byte{},
+	)
 
 	//	// Prepare template for SRK creation
 	//	template := tpm2.Public{
