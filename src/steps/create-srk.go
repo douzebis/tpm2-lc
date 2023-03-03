@@ -32,6 +32,9 @@ func CreateSRK(
 		rw,
 		[20]byte{},
 	)
+	if err != nil {
+		lib.Fatal("tpm.OwnerClear() failed: %v", err)
+	}
 
 	//	// Prepare template for SRK creation
 	//	template := tpm2.Public{
