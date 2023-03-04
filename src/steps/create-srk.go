@@ -10,9 +10,9 @@ import (
 	"io"
 
 	"github.com/google/go-tpm-tools/client"
-	"github.com/google/go-tpm/tpm"
 
 	"main/src/lib"
+	"main/src/teepeem"
 )
 
 // === Attestor: create SRK ====================================================
@@ -24,17 +24,17 @@ func CreateSRK(
 
 	lib.PRINT("=== ATTESTOR: CREATE SRK =======================================================")
 
-	//	// Clear TPM owner hierarchy
-	//	teepeem.Clear(
-	//		rw,
-	//	)
-	err := tpm.OwnerClear(
+	// Clear TPM owner hierarchy
+	teepeem.Clear(
 		rw,
-		[20]byte{},
 	)
-	if err != nil {
-		lib.Fatal("tpm.OwnerClear() failed: %v", err)
-	}
+	//	err := tpm.OwnerClear(
+	//		rw,
+	//		[20]byte{},
+	//	)
+	//	if err != nil {
+	//		lib.Fatal("tpm.OwnerClear() failed: %v", err)
+	//	}
 
 	//	// Prepare template for SRK creation
 	//	template := tpm2.Public{
