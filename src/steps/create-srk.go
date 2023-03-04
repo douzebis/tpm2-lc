@@ -3,6 +3,7 @@
 package steps
 
 import (
+	"crypto/sha1"
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
@@ -40,7 +41,17 @@ func CreateSRK(
 
 	// Compute the auth values as needed.
 	var ownerAuth [20]byte
+	ownerInput := "" // os.Getenv(ownerAuthEnvVar)
+	if ownerInput != "" {
+		oa := sha1.Sum([]byte(ownerInput))
+		copy(ownerAuth[:], oa[:])
+	}
 	var srkAuth [20]byte
+	srkInput := "" // os.Getenv(srkAuthEnvVar)
+	if srkInput != "" {
+		sa := sha1.Sum([]byte(srkInput))
+		copy(srkAuth[:], sa[:])
+	}
 	pubEK, err := tpm.ReadPubEK(rw)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Couldn't read the endorsement key: %s\n", err)
