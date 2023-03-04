@@ -8,8 +8,10 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/google/go-tpm-tools/client"
+	"github.com/google/go-tpm/tpm"
 
 	"main/src/lib"
 	"main/src/teepeem"
@@ -23,6 +25,19 @@ func CreateSRK(
 ) {
 
 	lib.PRINT("=== ATTESTOR: CREATE SRK =======================================================")
+
+	// Compute the auth values as needed.
+	var ownerAuth [20]byte
+	var srkAuth [20]byte
+	pubEK, err := tpm.ReadPubEK(rw)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Couldn't read the endorsement key: %s\n", err)
+		return
+	}
+	if err := tpm.TakeOwnership(rw, ownerAuth, srkAuth, pubEK); err != nil {
+		fmt.Fprintf(os.Stderr, "Couldn't take ownership of the TPM: %s\n", err)
+		return
+	}
 
 	// Clear TPM owner hierarchy
 	teepeem.Clear(
