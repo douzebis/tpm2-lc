@@ -3,16 +3,18 @@
 package steps
 
 import (
+	"crypto/sha1"
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/google/go-tpm-tools/client"
+	"github.com/google/go-tpm/tpm"
 
 	"main/src/lib"
-	"main/src/teepeem"
 )
 
 // === Attestor: create SRK ====================================================
@@ -25,38 +27,27 @@ func CreateSRK(
 	lib.PRINT("=== ATTESTOR: CREATE SRK =======================================================")
 
 	// Clear TPM owner hierarchy
-	teepeem.Clear(
-		rw,
-	)
+	//teepeem.Clear(
+	//	rw,
+	//)
+
+	var ownerAuth [20]byte
+	ownerInput := ""
+	if ownerInput != "" {
+		oa := sha1.Sum([]byte(ownerInput))
+		copy(ownerAuth[:], oa[:])
+	}
+	if err := tpm.OwnerClear(rw, ownerAuth); err != nil {
+		fmt.Fprintf(os.Stderr, "Couldn't clear the TPM using owner auth: %s\n", err)
+		return
+	}
+
 	//	err := tpm.OwnerClear(
 	//		rw,
 	//		[20]byte{},
 	//	)
 	//	if err != nil {
 	//		lib.Fatal("tpm.OwnerClear() failed: %v", err)
-	//	}
-
-	//	// Compute the auth values as needed.
-	//	var ownerAuth [20]byte
-	//	ownerInput := "" // os.Getenv(ownerAuthEnvVar)
-	//	if ownerInput != "" {
-	//		oa := sha1.Sum([]byte(ownerInput))
-	//		copy(ownerAuth[:], oa[:])
-	//	}
-	//	var srkAuth [20]byte
-	//	srkInput := "" // os.Getenv(srkAuthEnvVar)
-	//	if srkInput != "" {
-	//		sa := sha1.Sum([]byte(srkInput))
-	//		copy(srkAuth[:], sa[:])
-	//	}
-	//	pubEK, err := tpm.OwnerReadPubEK(rw)
-	//	if err != nil {
-	//		fmt.Fprintf(os.Stderr, "Couldn't read the endorsement key: %s\n", err)
-	//		return
-	//	}
-	//	if err := tpm.TakeOwnership(rw, ownerAuth, srkAuth, pubEK); err != nil {
-	//		fmt.Fprintf(os.Stderr, "Couldn't take ownership of the TPM: %s\n", err)
-	//		return
 	//	}
 
 	//	// Prepare template for SRK creation
