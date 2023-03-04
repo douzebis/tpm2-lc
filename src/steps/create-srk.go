@@ -26,6 +26,18 @@ func CreateSRK(
 
 	lib.PRINT("=== ATTESTOR: CREATE SRK =======================================================")
 
+	// Clear TPM owner hierarchy
+	teepeem.Clear(
+		rw,
+	)
+	//	err := tpm.OwnerClear(
+	//		rw,
+	//		[20]byte{},
+	//	)
+	//	if err != nil {
+	//		lib.Fatal("tpm.OwnerClear() failed: %v", err)
+	//	}
+
 	// Compute the auth values as needed.
 	var ownerAuth [20]byte
 	var srkAuth [20]byte
@@ -38,18 +50,6 @@ func CreateSRK(
 		fmt.Fprintf(os.Stderr, "Couldn't take ownership of the TPM: %s\n", err)
 		return
 	}
-
-	// Clear TPM owner hierarchy
-	teepeem.Clear(
-		rw,
-	)
-	//	err := tpm.OwnerClear(
-	//		rw,
-	//		[20]byte{},
-	//	)
-	//	if err != nil {
-	//		lib.Fatal("tpm.OwnerClear() failed: %v", err)
-	//	}
 
 	//	// Prepare template for SRK creation
 	//	template := tpm2.Public{

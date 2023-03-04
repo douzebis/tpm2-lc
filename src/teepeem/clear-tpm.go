@@ -14,7 +14,7 @@ import (
 func Clear(rwc io.ReadWriter) {
 	err := tpm2.Clear(
 		rwc,
-		tpm2.HandleOwner,
+		tpm2.HandlePlatform,
 		tpm2.AuthCommand{
 			Session:    tpm2.HandlePasswordSession,
 			Attributes: tpm2.AttrContinueSession,
