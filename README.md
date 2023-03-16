@@ -42,3 +42,9 @@ Then:
 ``` bash
 go run src/seal/main.go -alsologtostderr -v 5
 ```
+
+## Diagram sequences
+
+The mock-up implements the following diagram sequences:
+
+![onboarding](./directory_1/directory_2/.../directory_n/plot.png)
