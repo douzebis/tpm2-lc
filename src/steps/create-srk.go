@@ -3,18 +3,16 @@
 package steps
 
 import (
-	"crypto/sha1"
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/google/go-tpm-tools/client"
-	"github.com/google/go-tpm/tpm"
 
 	"main/src/lib"
+	"main/src/teepeem"
 )
 
 // === Attestor: create SRK ====================================================
@@ -27,20 +25,20 @@ func CreateSRK(
 	lib.PRINT("=== ATTESTOR: CREATE SRK =======================================================")
 
 	// Clear TPM owner hierarchy
-	//teepeem.Clear(
-	//	rw,
-	//)
+	teepeem.Clear(
+		rw,
+	)
 
-	var ownerAuth [20]byte
-	ownerInput := ""
-	if ownerInput != "" {
-		oa := sha1.Sum([]byte(ownerInput))
-		copy(ownerAuth[:], oa[:])
-	}
-	if err := tpm.OwnerClear(rw, ownerAuth); err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't clear the TPM using owner auth: %s\n", err)
-		return
-	}
+	//var ownerAuth [20]byte
+	//ownerInput := ""
+	//if ownerInput != "" {
+	//	oa := sha1.Sum([]byte(ownerInput))
+	//	copy(ownerAuth[:], oa[:])
+	//}
+	//if err := tpm.OwnerClear(rw, ownerAuth); err != nil {
+	//	fmt.Fprintf(os.Stderr, "Couldn't clear the TPM using owner auth: %s\n", err)
+	//	return
+	//}
 
 	//	err := tpm.OwnerClear(
 	//		rw,
